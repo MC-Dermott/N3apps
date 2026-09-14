@@ -60,6 +60,60 @@ from topics.managing_money.pie_charts import (
     generate_pie_charts_l2,
 )
 
+from topics.numeracy.rounding import (
+    generate_rounding_question,
+    generate_rounding_l1,
+    generate_rounding_l2,
+)
+from topics.numeracy.number_problem_solving import (
+    generate_number_problem_solving_question,
+    generate_number_problem_solving_l1,
+    generate_number_problem_solving_l2,
+    generate_number_problem_solving_l3,
+)
+from topics.numeracy.decimal_addition_subtraction import (
+    generate_decimal_addition_subtraction_question,
+    generate_decimal_addition_subtraction_l1,
+    generate_decimal_addition_subtraction_l2,
+)
+from topics.numeracy.decimal_multiplication_division import (
+    generate_decimal_multiplication_division_question,
+    generate_decimal_multiplication_division_l1,
+    generate_decimal_multiplication_division_l2,
+)
+from topics.numeracy.decimal_word_problems import (
+    generate_decimal_word_problems_question,
+    generate_decimal_word_problems_l1,
+    generate_decimal_word_problems_l2,
+)
+from topics.numeracy.fraction_of_amount import (
+    generate_fraction_of_amount_question,
+    generate_fraction_of_amount_l1,
+    generate_fraction_of_amount_l2,
+)
+from topics.numeracy.fraction_word_problems import (
+    generate_fraction_word_problems_question,
+    generate_fraction_word_problems_l1,
+    generate_fraction_word_problems_l2,
+)
+from topics.numeracy.numeracy_percentages import (
+    generate_numeracy_percentages_question,
+    generate_numeracy_percentages_l1,
+    generate_numeracy_percentages_l2,
+    generate_numeracy_percentages_l3,
+)
+from topics.numeracy.reading_scales import (
+    generate_reading_scales_question,
+    generate_reading_scales_l1,
+    generate_reading_scales_l2,
+)
+from topics.numeracy.probability import (
+    generate_probability_question,
+    generate_probability_l1,
+    generate_probability_l2,
+    generate_probability_l3,
+)
+
 # ---------------------------------------------------------------------------
 # Registry
 #
@@ -83,6 +137,18 @@ _N3_TOPICS = {
         "Bar Graphs": generate_bar_graphs_question,
         "Line Graphs": generate_line_graphs_question,
         "Pie Charts": generate_pie_charts_question,
+    },
+    "Numeracy": {
+        "Rounding": generate_rounding_question,
+        "Number Problem Solving": generate_number_problem_solving_question,
+        "Decimal Addition and Subtraction": generate_decimal_addition_subtraction_question,
+        "Decimal Multiplication and Division": generate_decimal_multiplication_division_question,
+        "Decimal Word Problems": generate_decimal_word_problems_question,
+        "Fraction of an Amount": generate_fraction_of_amount_question,
+        "Fraction Word Problems": generate_fraction_word_problems_question,
+        "Percentages": generate_numeracy_percentages_question,
+        "Reading Scales": generate_reading_scales_question,
+        "Probability": generate_probability_question,
     },
 }
 
@@ -135,6 +201,51 @@ _N3_LEVELS = {
         "Pie Charts": {
             "Angle to Percentage": generate_pie_charts_l1,
             "Missing Sector": generate_pie_charts_l2,
+        },
+    },
+    "Numeracy": {
+        "Rounding": {
+            "Whole Number / Ten / Hundred / Thousand": generate_rounding_l1,
+            "Decimal Places": generate_rounding_l2,
+        },
+        "Number Problem Solving": {
+            "Sums, Differences & Evens/Odds": generate_number_problem_solving_l1,
+            "Number Sequences": generate_number_problem_solving_l2,
+            "Estimating": generate_number_problem_solving_l3,
+        },
+        "Decimal Addition and Subtraction": {
+            "Column Addition/Subtraction": generate_decimal_addition_subtraction_l1,
+            "Word Problems": generate_decimal_addition_subtraction_l2,
+        },
+        "Decimal Multiplication and Division": {
+            "By a Single Digit": generate_decimal_multiplication_division_l1,
+            "By 10, 100 or 1000": generate_decimal_multiplication_division_l2,
+        },
+        "Decimal Word Problems": {
+            "Total or Difference": generate_decimal_word_problems_l1,
+            "Sharing & Multiplying": generate_decimal_word_problems_l2,
+        },
+        "Fraction of an Amount": {
+            "Unit Fraction": generate_fraction_of_amount_l1,
+            "Non-Unit Fraction": generate_fraction_of_amount_l2,
+        },
+        "Fraction Word Problems": {
+            "Single-Step Problems": generate_fraction_word_problems_l1,
+            "Two-Step Problems": generate_fraction_word_problems_l2,
+        },
+        "Percentages": {
+            "Common Percentages (Non-Calculator)": generate_numeracy_percentages_l1,
+            "Any Percentage (Calculator)": generate_numeracy_percentages_l2,
+            "VAT & Comparing Offers": generate_numeracy_percentages_l3,
+        },
+        "Reading Scales": {
+            "Ruler, Container & Thermometer": generate_reading_scales_l1,
+            "Unit Conversion": generate_reading_scales_l2,
+        },
+        "Probability": {
+            "Likelihood in Words": generate_probability_l1,
+            "Probability as a Fraction": generate_probability_l2,
+            "Without Replacement & Frequency Tables": generate_probability_l3,
         },
     },
 }

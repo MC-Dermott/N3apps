@@ -17,6 +17,8 @@ def render_question(question, suffix="default"):
         _render_line_chart(question.metadata["diagram_params"])
     elif diagram == "pictograph":
         _render_pictograph(question.metadata["diagram_params"])
+    elif diagram == "graduated_scale":
+        _render_graduated_scale(question.metadata["diagram_params"])
 
     return st.text_input("Your answer", key=f"ans_{question.qid}_{suffix}")
 
@@ -173,6 +175,86 @@ def _render_pictograph(p):
     ax.set_ylim(0.3, len(categories) + 0.7)
     ax.axis("off")
     ax.set_title(f"{title}\n(1 symbol = {unit_value} {icon_label})", fontsize=12, fontweight="bold")
+    fig.patch.set_facecolor("white")
+    plt.tight_layout()
+    st.pyplot(fig, width="content")
+    plt.close(fig)
+
+
+def _scale_label(v):
+    """Fixed-point tick label — never scientific notation."""
+    if float(v).is_integer():
+        return str(int(v))
+    return f"{v:.2f}".rstrip("0").rstrip(".")
+
+
+def _render_graduated_scale(p):
+    """New renderer for Numeracy's Reading Scales topic: a generic "graduated scale with a
+    marker" that covers three physical widgets with one function, parameterised by `style`:
+    - 'ruler'       — a horizontal number-line/ruler with labelled major ticks (+ optional
+                      unlabelled minor ticks) and a red arrow pointing at `marker_value`.
+    - 'container'   — a vertical rectangle outline (a measuring jug/cylinder) with a
+                      graduated scale down the side and a shaded blue fill level.
+    - 'thermometer' — the same vertical fill idea as 'container', narrower and red-filled,
+                      and happy to run with a negative `min_value`.
+    Required params: min_value, max_value, major_step, marker_value. Optional: minor_step
+    (finer unlabelled ticks), unit_label, title."""
+    style = p.get("style", "ruler")
+    lo = p["min_value"]
+    hi = p["max_value"]
+    major = p["major_step"]
+    minor = p.get("minor_step")
+    marker = p["marker_value"]
+    unit = p.get("unit_label", "")
+    title = p.get("title", "")
+
+    majors = np.arange(lo, hi + major / 2, major)
+
+    if style == "ruler":
+        fig, ax = plt.subplots(figsize=(9, 2.6))
+        ax.hlines(0, lo, hi, color="#2c3e50", linewidth=2.5)
+        for m in majors:
+            ax.vlines(m, -0.14, 0.14, color="#2c3e50", linewidth=2)
+            ax.text(m, -0.34, _scale_label(m), ha="center", va="top", fontsize=10)
+        if minor:
+            for mi in np.arange(lo, hi + minor / 2, minor):
+                if not any(abs(mi - m) < minor / 4 for m in majors):
+                    ax.vlines(mi, -0.07, 0.07, color="#2c3e50", linewidth=1)
+        ax.annotate("", xy=(marker, 0.05), xytext=(marker, 0.6),
+                    arrowprops=dict(arrowstyle="-|>", color="#e74c3c", linewidth=2.2))
+        ax.set_xlim(lo - major * 0.4, hi + major * 0.4)
+        ax.set_ylim(-0.6, 0.85)
+        ax.axis("off")
+        if title:
+            ax.set_title(title, fontsize=12, fontweight="bold", pad=8)
+        if unit:
+            ax.text(hi + major * 0.4, 0, unit, ha="left", va="center", fontsize=10, style="italic")
+    else:
+        is_thermo = style == "thermometer"
+        width = 0.55 if is_thermo else 1.5
+        fill_color = "#e74c3c" if is_thermo else "#3498db"
+        fig, ax = plt.subplots(figsize=(2.4 if is_thermo else 3.4, 5.6))
+        ax.add_patch(plt.Rectangle((-width / 2, lo), width, hi - lo, fill=False,
+                                    edgecolor="#2c3e50", linewidth=2.2, zorder=2))
+        fill_top = max(lo, min(hi, marker))
+        ax.add_patch(plt.Rectangle((-width / 2, lo), width, fill_top - lo,
+                                    facecolor=fill_color, alpha=0.55, edgecolor=None, zorder=1))
+        for m in majors:
+            ax.hlines(m, -width / 2 - 0.16, -width / 2, color="#2c3e50", linewidth=1.6)
+            ax.text(-width / 2 - 0.28, m, _scale_label(m), ha="right", va="center", fontsize=9)
+        if minor:
+            for mi in np.arange(lo, hi + minor / 2, minor):
+                if not any(abs(mi - m) < minor / 4 for m in majors):
+                    ax.hlines(mi, -width / 2 - 0.08, -width / 2, color="#2c3e50", linewidth=1)
+        pad = (hi - lo) * 0.06
+        ax.set_xlim(-width / 2 - 1.5, width / 2 + 0.5)
+        ax.set_ylim(lo - pad, hi + pad)
+        ax.axis("off")
+        if title:
+            ax.set_title(title, fontsize=12, fontweight="bold", pad=8)
+        if unit:
+            ax.text(0, hi + pad * 1.6, unit, ha="center", va="bottom", fontsize=10, style="italic")
+
     fig.patch.set_facecolor("white")
     plt.tight_layout()
     st.pyplot(fig, width="content")
