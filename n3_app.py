@@ -1,8 +1,10 @@
 import streamlit as st
 
 from core.engine.question_factory import generate_question, get_levels, _N3_TOPICS
+from core.engine.session_manager import initialise_session, reset_test
 from core.ui.question_ui import render_question
 from core.ui.scaffold_ui import render_notes, render_scaffold, render_solution
+from core.ui.test_ui import render_test
 
 
 def _parse_numeric(s):
@@ -23,10 +25,7 @@ def _answers_match(user, expected):
 
 st.set_page_config(page_title="National 3 Maths Practice")
 
-if "quiz" not in st.session_state:
-    st.session_state.quiz = {"current_question": None}
-if "submitted" not in st.session_state:
-    st.session_state.submitted = False
+initialise_session()
 
 st.title("National 3 Maths Practice")
 st.caption("Applications of Mathematics — National 3")
@@ -61,34 +60,43 @@ if st.session_state.get("last_level") != selected_level:
     st.session_state.submitted = False
     st.session_state.quiz["current_question"] = None
 
+mode = st.radio("Mode", ["Practice", "Test"], horizontal=True, index=0)
+
+if st.session_state.mode != mode:
+    st.session_state.mode = mode
+    reset_test()
+
 st.divider()
 
-quiz = st.session_state.quiz
+if mode == "Test":
+    render_test(unit, question_type, level=selected_level)
+else:
+    quiz = st.session_state.quiz
 
-if st.button("Generate Question"):
-    quiz["current_question"] = generate_question(unit, question_type, level=selected_level)
-    st.session_state.submitted = False
-    st.rerun()
-
-question = quiz.get("current_question")
-
-if question:
-    render_notes(question)
-    user_answer = render_question(question, suffix="main")
-
-    if not st.session_state.submitted:
-        render_scaffold(question, suffix="main")
-
-    if st.button("Submit Answer"):
-        st.session_state.submitted = True
+    if st.button("Generate Question"):
+        quiz["current_question"] = generate_question(unit, question_type, level=selected_level)
+        st.session_state.submitted = False
         st.rerun()
 
-    if st.session_state.submitted:
-        correct = _answers_match(user_answer.strip(), question.correct_answer)
-        if correct:
-            st.success("✅ Correct!")
-        else:
-            st.error(f"❌ Incorrect. Correct answer: {question.correct_answer}")
-        render_solution(question)
-else:
-    st.info("Click **Generate Question** to get started.")
+    question = quiz.get("current_question")
+
+    if question:
+        render_notes(question)
+        user_answer = render_question(question, suffix="main")
+
+        if not st.session_state.submitted:
+            render_scaffold(question, suffix="main")
+
+        if st.button("Submit Answer"):
+            st.session_state.submitted = True
+            st.rerun()
+
+        if st.session_state.submitted:
+            correct = _answers_match(user_answer.strip(), question.correct_answer)
+            if correct:
+                st.success("✅ Correct!")
+            else:
+                st.error(f"❌ Incorrect. Correct answer: {question.correct_answer}")
+            render_solution(question)
+    else:
+        st.info("Click **Generate Question** to get started.")
