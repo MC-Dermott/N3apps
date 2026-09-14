@@ -114,14 +114,58 @@ from topics.numeracy.probability import (
     generate_probability_l3,
 )
 
+from topics.shape_space_and_measures.clock_conversion import (
+    generate_clock_conversion_question,
+    generate_clock_conversion_l1,
+    generate_clock_conversion_l2,
+)
+from topics.shape_space_and_measures.time_intervals import (
+    generate_time_intervals_question,
+    generate_time_intervals_l1,
+    generate_time_intervals_l2,
+    generate_time_intervals_l3,
+)
+from topics.shape_space_and_measures.timetables import (
+    generate_timetables_question,
+    generate_timetables_l1,
+    generate_timetables_l2,
+)
+from topics.shape_space_and_measures.perimeter import (
+    generate_perimeter_question,
+    generate_perimeter_l1,
+    generate_perimeter_l2,
+)
+from topics.shape_space_and_measures.area_rectangles import (
+    generate_area_rectangles_question,
+    generate_area_rectangles_l1,
+    generate_area_rectangles_l2,
+)
+from topics.shape_space_and_measures.area_triangles import (
+    generate_area_triangles_question,
+    generate_area_triangles_l1,
+    generate_area_triangles_l2,
+)
+from topics.shape_space_and_measures.area_composite import (
+    generate_area_composite_question,
+    generate_area_composite_l1,
+    generate_area_composite_l2,
+)
+from topics.shape_space_and_measures.volume_cuboids import (
+    generate_volume_cuboids_question,
+    generate_volume_cuboids_l1,
+    generate_volume_cuboids_l2,
+)
+from topics.shape_space_and_measures.directions import (
+    generate_directions_question,
+    generate_directions_l1,
+    generate_directions_l2,
+)
+
 # ---------------------------------------------------------------------------
 # Registry
 #
 # _N3_TOPICS["<Unit>"]["<Question Type>"] = generate_<type>_question   (dispatcher)
 # _N3_LEVELS["<Unit>"]["<Question Type>"] = {"Level label": generate_<type>_lN, ...}
-#
-# Only "Managing Money" exists so far. A second unit (e.g. "Shape, Space and
-# Measures" or "Numeracy") slots in as another top-level key in both dicts.
 # ---------------------------------------------------------------------------
 
 _N3_TOPICS = {
@@ -149,6 +193,17 @@ _N3_TOPICS = {
         "Percentages": generate_numeracy_percentages_question,
         "Reading Scales": generate_reading_scales_question,
         "Probability": generate_probability_question,
+    },
+    "Shape, Space & Measures": {
+        "Clock Conversion": generate_clock_conversion_question,
+        "Time Intervals": generate_time_intervals_question,
+        "Timetables": generate_timetables_question,
+        "Perimeter": generate_perimeter_question,
+        "Area of Rectangles": generate_area_rectangles_question,
+        "Area of Triangles": generate_area_triangles_question,
+        "Area of Composite Shapes": generate_area_composite_question,
+        "Volume of Cuboids": generate_volume_cuboids_question,
+        "Directions": generate_directions_question,
     },
 }
 
@@ -246,6 +301,45 @@ _N3_LEVELS = {
             "Likelihood in Words": generate_probability_l1,
             "Probability as a Fraction": generate_probability_l2,
             "Without Replacement & Frequency Tables": generate_probability_l3,
+        },
+    },
+    "Shape, Space & Measures": {
+        "Clock Conversion": {
+            "On the Hour / Half Hour": generate_clock_conversion_l1,
+            "Any Minutes": generate_clock_conversion_l2,
+        },
+        "Time Intervals": {
+            "Whole Hours or Minutes": generate_time_intervals_l1,
+            "Hours and Minutes": generate_time_intervals_l2,
+            "Word Problems": generate_time_intervals_l3,
+        },
+        "Timetables": {
+            "Reading a Timetable": generate_timetables_l1,
+            "Which Service": generate_timetables_l2,
+        },
+        "Perimeter": {
+            "All Sides Given": generate_perimeter_l1,
+            "Missing Sides": generate_perimeter_l2,
+        },
+        "Area of Rectangles": {
+            "From a Diagram": generate_area_rectangles_l1,
+            "From Given Dimensions": generate_area_rectangles_l2,
+        },
+        "Area of Triangles": {
+            "Whole Numbers": generate_area_triangles_l1,
+            "Decimals (Calculator)": generate_area_triangles_l2,
+        },
+        "Area of Composite Shapes": {
+            "Sides Given": generate_area_composite_l1,
+            "Missing Sides": generate_area_composite_l2,
+        },
+        "Volume of Cuboids": {
+            "From a Diagram": generate_volume_cuboids_l1,
+            "From Given Dimensions": generate_volume_cuboids_l2,
+        },
+        "Directions": {
+            "Single Turn": generate_directions_l1,
+            "Two Turns": generate_directions_l2,
         },
     },
 }
