@@ -22,8 +22,8 @@ def _rect_shape(w, h):
     return vertices, edges
 
 
-def _diagram(vertices, edge_labels, title="Perimeter"):
-    return {
+def _diagram(vertices, edge_labels, title="Perimeter", l_shape=None):
+    metadata = {
         "diagram": "rect_shape",
         "diagram_params": {
             "vertices": vertices,
@@ -31,6 +31,13 @@ def _diagram(vertices, edge_labels, title="Perimeter"):
             "title": title,
         },
     }
+    if l_shape is not None:
+        W, H, a, b = l_shape
+        metadata["scaffold_widget"] = "l_shape_perimeter"
+        metadata["scaffold_widget_params"] = {
+            "width": W, "height": H, "notch_width": a, "notch_height": b,
+        }
+    return metadata
 
 
 # ---------------------------------------------------------------------------
@@ -50,6 +57,7 @@ def generate_perimeter_l1():
             f"Perimeter = {' + '.join(str(e) for e in edges)} = {answer} cm",
             f"(Or: 2 × ({w} + {h}) = {answer} cm)",
         ]
+        l_shape_dims = None
     else:
         shape = make_l_shape()
         edges = shape["edges"]
@@ -57,6 +65,7 @@ def generate_perimeter_l1():
         answer = sum(edges)
         edge_labels = [f"{e} cm" for e in edges]
         worked = [f"Perimeter = {' + '.join(str(e) for e in edges)} = {answer} cm"]
+        l_shape_dims = (shape["W"], shape["H"], shape["a"], shape["b"])
 
     question_text = (
         "Every side of this shape is labelled.\n\n"
@@ -71,7 +80,7 @@ def generate_perimeter_l1():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
-        metadata=_diagram(vertices, edge_labels),
+        metadata=_diagram(vertices, edge_labels, l_shape=l_shape_dims),
     )
 
 
@@ -136,7 +145,7 @@ def generate_perimeter_l2():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
-        metadata=_diagram(vertices, edge_labels),
+        metadata=_diagram(vertices, edge_labels, l_shape=(W, H, a, b)),
     )
 
 

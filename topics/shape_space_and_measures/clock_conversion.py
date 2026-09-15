@@ -18,6 +18,7 @@ NOTES = """
 
 
 def _make_question(t, to24):
+    direction = "12to24" if to24 else "24to12"
     if to24:
         shown = fmt12(t)
         answer = fmt24(t)
@@ -43,6 +44,10 @@ def _make_question(t, to24):
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "time_conversion",
+            "scaffold_widget_params": {"direction": direction},
+        },
     )
 
 

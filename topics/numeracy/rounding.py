@@ -78,6 +78,7 @@ def generate_rounding_l1():
         question_text = f"Round {value} to the nearest thousand."
 
     worked = [f"{_fmt(value)} rounded to the nearest {target} = {answer}"]
+    place_e = {"whole number": 0, "ten": 1, "hundred": 2, "thousand": 3}[target]
 
     return Question(
         question_text=question_text,
@@ -87,6 +88,10 @@ def generate_rounding_l1():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "rounding",
+            "scaffold_widget_params": {"value": _fmt(value), "place_e": place_e},
+        },
     )
 
 
@@ -115,6 +120,10 @@ def generate_rounding_l2():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "rounding",
+            "scaffold_widget_params": {"value": _fmt(value, src_dp), "place_e": -dp},
+        },
     )
 
 

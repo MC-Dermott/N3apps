@@ -1,0 +1,3801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Maths Scaffolds</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+  /* ---- shared / rounding-tool styles ---- */
+:root{
+    --paper: #faf7f0;
+    --ink: #22282f;
+    --ink-soft: #5b6470;
+    --line: #d8d2c4;
+    --down: #2f6f6b;
+    --down-tint: #e3efee;
+    --up: #c25b2e;
+    --up-tint: #fbeae0;
+    --mark: #d9a62c;
+    --mark-deep: #a97a13;
+    --guess: #8a8fa3;
+    --good: #2f6f4a;
+    --good-tint: #eaf3ec;
+    --bad: #b3402b;
+    --bad-tint: #fbeae6;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--ink);
+    background:
+      linear-gradient(var(--paper), var(--paper)),
+      repeating-linear-gradient(0deg, rgba(90,80,60,0.05) 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, rgba(90,80,60,0.05) 0 1px, transparent 1px 28px);
+    padding: 28px 18px 44px;
+  }
+
+  .wrap{ max-width: 760px; margin: 0 auto; }
+
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: clamp(26px, 5vw, 38px);
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .sub{
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin: 0 0 24px;
+    max-width: 60ch;
+    line-height:1.5;
+  }
+
+  .panel{
+    background: #fffdf9;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px 22px 24px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  }
+
+  label{
+    display:block;
+    font-size: 13px;
+    font-weight:600;
+    color: var(--ink-soft);
+    margin-bottom: 7px;
+  }
+
+  #rn-numInput{
+    width: 100%;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 26px;
+    font-weight:600;
+    padding: 10px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--ink);
+    outline: none;
+  }
+  #rn-numInput:focus{ border-color: var(--mark-deep); }
+
+  .field{ margin-bottom: 18px; }
+
+  .pills{ display:flex; flex-wrap:wrap; gap: 8px; }
+  .pill{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight:500;
+    padding: 8px 13px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: border-color .12s, color .12s, background .12s;
+  }
+  .pill:hover{ border-color: var(--mark-deep); color: var(--ink); }
+  .pill.active{ background: var(--ink); border-color: var(--ink); color: #fff; }
+
+  .btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    font-weight:600;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    color: #fff;
+    background: var(--ink);
+    transition: transform .08s, opacity .12s;
+  }
+  .btn:hover{ opacity: .9; }
+  .btn:active{ transform: scale(0.98); }
+  .btn.secondary{
+    background: #fff;
+    color: var(--ink);
+    border: 1.5px solid var(--line);
+  }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+  .startRow{ margin-top: 20px; }
+
+  #rn-presentation{ display:none; }
+
+  .stageLabel{
+    font-size: 12.5px;
+    font-weight:600;
+    letter-spacing: .02em;
+    color: var(--mark-deep);
+    margin-bottom: 6px;
+  }
+  .prompt{
+    font-family:'Fraunces', serif;
+    font-size: clamp(19px, 3.4vw, 23px);
+    font-weight:600;
+    margin: 0 0 18px;
+    line-height:1.4;
+  }
+
+  svg{ width:100%; height:auto; display:block; touch-action: none; }
+  .estimateHint{
+    text-align:center;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 6px 0 18px;
+  }
+
+  .legend{
+    display:flex;
+    gap: 18px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin: 4px 0 20px;
+  }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+  .choiceRow{
+    display:flex;
+    gap: 12px;
+    margin: 4px 0 20px;
+  }
+  .choiceBtn{
+    flex:1;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 19px;
+    font-weight:600;
+    padding: 16px 10px;
+    border-radius: 9px;
+    border: 2px solid var(--line);
+    background: #fff;
+    cursor: pointer;
+    text-align:center;
+    transition: border-color .12s, background .12s;
+  }
+  .choiceBtn:hover:not(:disabled){ border-color: var(--mark-deep); }
+  .choiceBtn:disabled{ cursor:default; }
+  .choiceBtn.correct{ border-color: var(--good); background: var(--good-tint); color: var(--good); }
+  .choiceBtn.wrong{ border-color: var(--bad); background: var(--bad-tint); color: var(--bad); }
+
+  .feedback{
+    font-size: 14px;
+    font-weight:600;
+    margin: -8px 0 18px;
+  }
+  .feedback.good{ color: var(--good); }
+  .feedback.bad{ color: var(--bad); }
+
+  .sentenceBox{
+    font-family:'Fraunces', serif;
+    font-size: clamp(19px, 3.6vw, 25px);
+    font-weight: 600;
+    line-height:1.7;
+    margin: 6px 0 18px;
+  }
+  .sentenceBox .num{ font-family:'IBM Plex Mono', monospace; font-weight:600; }
+  .sentenceBox .phrase{ color: var(--mark-deep); }
+
+  .blankInput{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 21px;
+    font-weight:600;
+    width: 130px;
+    text-align:center;
+    padding: 6px 8px;
+    border: none;
+    border-bottom: 2.5px solid var(--ink);
+    background: transparent;
+    color: var(--ink);
+    outline: none;
+    margin: 0 2px;
+  }
+  .blankInput:focus{ border-bottom-color: var(--mark-deep); }
+  .blankInput.correct{ border-bottom-color: var(--good); color: var(--good); background: var(--good-tint); }
+  .blankInput.wrong{ border-bottom-color: var(--bad); color: var(--bad); background: var(--bad-tint); }
+  .blankInput:disabled{ opacity:1; }
+
+  .checkRow{ display:flex; align-items:center; gap: 14px; margin-bottom: 6px; }
+
+  .checkFeedback{
+    font-size: 14px;
+    font-weight:600;
+    margin: 10px 0 4px;
+  }
+  .checkFeedback.good{ color: var(--good); }
+  .checkFeedback.bad{ color: var(--bad); }
+
+  .verdict{
+    font-family:'Fraunces', serif;
+    font-size: clamp(17px, 3vw, 20px);
+    font-weight: 500;
+    line-height:1.4;
+    margin: 14px 0 4px;
+    color: var(--ink-soft);
+  }
+  .verdict .num{ font-family:'IBM Plex Mono', monospace; font-weight:600; color: var(--ink); }
+  .verdict .down{ color: var(--down); }
+  .verdict .up{ color: var(--up); }
+
+  .controls{
+    display:flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap:wrap;
+  }
+
+  .foot{
+    text-align:center;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 18px;
+  }
+
+  @media (max-width:480px){
+    .panel{ padding: 16px; }
+    .choiceRow{ flex-direction: column; }
+  }
+
+  /* ---- bus-stop-tool-specific styles ---- */
+:root{
+    --paper: #faf7f0;
+    --ink: #22282f;
+    --ink-soft: #5b6470;
+    --line: #d8d2c4;
+    --mark: #d9a62c;
+    --mark-deep: #a97a13;
+    --good: #2f6f4a;
+    --good-tint: #eaf3ec;
+    --bad: #b3402b;
+    --bad-tint: #fbeae6;
+    --exchange: #a9455f;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--ink);
+    background:
+      linear-gradient(var(--paper), var(--paper)),
+      repeating-linear-gradient(0deg, rgba(90,80,60,0.05) 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, rgba(90,80,60,0.05) 0 1px, transparent 1px 28px);
+    padding: 28px 18px 44px;
+  }
+  .wrap{ max-width: 820px; margin: 0 auto; }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: clamp(24px, 5vw, 36px);
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .sub{ color: var(--ink-soft); font-size: 15px; margin: 0 0 24px; max-width: 62ch; line-height:1.5; }
+
+  .panel{
+    background: #fffdf9;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  }
+
+  label{ display:block; font-size: 13px; font-weight:600; color: var(--ink-soft); margin-bottom: 7px; }
+  .field{ margin-bottom: 18px; }
+
+  .pills{ display:flex; flex-wrap:wrap; gap: 8px; }
+  .pill{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 13.5px; font-weight:500;
+    padding: 8px 13px; border-radius: 999px;
+    border: 1.5px solid var(--line); background: #fff; color: var(--ink-soft);
+    cursor: pointer; transition: border-color .12s, color .12s, background .12s;
+  }
+  .pill:hover{ border-color: var(--mark-deep); color: var(--ink); }
+  .pill.active{ background: var(--ink); border-color: var(--ink); color: #fff; }
+
+  .numRow{ display:flex; gap: 14px; }
+  .numRow .field{ flex:1; }
+  #bs-answerInput{
+    width: 100px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 20px; font-weight:600;
+    padding: 9px 11px;
+    border: 1.5px solid var(--line); border-radius: 7px;
+    background: #fff; color: var(--ink); outline: none;
+  }
+  #bs-answerInput:focus{ border-color: var(--mark-deep); }
+
+  .btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 15px; font-weight:600;
+    padding: 12px 20px; border-radius: 8px; border: none;
+    cursor: pointer; color: #fff; background: var(--ink);
+    transition: transform .08s, opacity .12s;
+  }
+  .btn:hover{ opacity:.9; }
+  .btn:active{ transform: scale(0.98); }
+  .btn.secondary{ background:#fff; color:var(--ink); border:1.5px solid var(--line); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn.small{ font-size:13px; padding:8px 14px; }
+
+  #bs-presentation{ display:none; }
+
+  .topRow{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom: 6px; }
+  .questionLabel{ font-size: 12.5px; font-weight:600; letter-spacing:.02em; color: var(--mark-deep); }
+
+  .layoutRow{ display:flex; gap: 26px; align-items:flex-start; flex-wrap:wrap; }
+  .busstopCol{ flex: 1 1 380px; min-width: 300px; }
+  .tableCol{ flex: 0 0 150px; }
+
+  .busstopGrid{
+    display:grid;
+    grid-template-columns: max-content 1fr;
+    row-gap: 4px; column-gap: 10px;
+    align-items:end;
+    margin: 18px 0 8px;
+  }
+  #bs-quotientRow{ grid-row:1; grid-column:2; display:flex; align-items:flex-end; gap:3px; padding: 0 12px; min-height: 32px; }
+  #bs-divisorLabel{
+    grid-row:2; grid-column:1;
+    font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:24px;
+    padding-bottom: 10px;
+  }
+  #bs-dividendArea{
+    grid-row:2; grid-column:2;
+    border-left: 3px solid var(--ink); border-top: 3px solid var(--ink);
+    border-top-left-radius: 3px;
+    display:flex; gap:3px; padding: 8px 12px 8px 12px;
+  }
+  .digitCell{
+    position:relative;
+    font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:600;
+    width:36px; text-align:center;
+  }
+  .digitCell.active{ color: var(--mark-deep); }
+  .quotDigit{
+    font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:700;
+    width:36px; height:32px; line-height:32px;
+    box-sizing:border-box;
+    text-align:center; color: var(--ink);
+  }
+  .quotDigit.overline{ text-decoration: overline; text-decoration-thickness: 2.5px; text-underline-offset: 3px; }
+  .quotInputBox{
+    font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:700;
+    width:36px; height:32px; line-height:normal;
+    box-sizing:border-box;
+    text-align:center;
+    border: none; border-bottom: 2.5px solid var(--ink);
+    background: transparent; color: var(--ink); outline:none;
+    padding:0; margin:0;
+  }
+  .quotInputBox:focus{ border-bottom-color: var(--mark-deep); background: #fffaf0; }
+  /* hide number input spinners */
+  .quotInputBox::-webkit-outer-spin-button, .quotInputBox::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .quotInputBox[type=number]{ -moz-appearance:textfield; }
+
+  .divisorInputBox{
+    font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:700;
+    width:48px; text-align:center;
+    border:none; border-bottom:2.5px solid var(--ink);
+    background:transparent; color:var(--ink); outline:none; padding:0 0 6px;
+  }
+  .divisorInputBox:focus{ border-bottom-color: var(--mark-deep); background:#fffaf0; }
+  .divisorInputBox::-webkit-outer-spin-button, .divisorInputBox::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+
+  .digitPlaceholder{
+    width:36px; height:32px; box-sizing:border-box;
+    border-bottom: 2.5px dashed var(--line);
+  }
+  .pointGap{ width:12px; display:flex; align-items:flex-end; font-weight:700; font-size:22px; }
+  .exchangeBadge{
+    position:absolute; top:-16px; left:-2px;
+    font-size:12.5px; font-weight:700; color: var(--exchange);
+  }
+  .exchangeInputBox{
+    position:absolute; top:-19px; left:-5px;
+    width:24px; height:17px;
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; font-weight:700;
+    text-align:center; line-height:normal;
+    border:none; border-bottom:2px solid var(--exchange);
+    background:transparent; color:var(--exchange); outline:none; padding:0; margin:0;
+  }
+  .exchangeInputBox:focus{ background:#fdf0f2; }
+  .exchangeInputBox::-webkit-outer-spin-button, .exchangeInputBox::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .exchangeInputBox[type=number]{ -moz-appearance:textfield; }
+  .digitCell.exchangeTarget{ background:#fdf6e3; border-radius:4px; }
+
+  .stagePrompt{
+    font-family:'Fraunces', serif;
+    font-size: clamp(17px, 3vw, 20px);
+    font-weight:600;
+    margin: 6px 0 12px;
+    line-height:1.4;
+  }
+  .stagePrompt .n{ font-family:'IBM Plex Mono', monospace; font-weight:700; color: var(--mark-deep); }
+
+  .answerRow{ display:flex; gap:10px; align-items:center; margin-bottom: 8px; }
+  .quotHint{ font-size: 12.5px; color: var(--ink-soft); margin: -6px 0 12px; }
+
+  .checkFeedback{ font-size: 13.5px; font-weight:600; margin: 2px 0 14px; min-height: 18px; }
+  .checkFeedback.good{ color: var(--good); }
+  .checkFeedback.bad{ color: var(--bad); }
+
+  .finishBox{
+    background: var(--good-tint);
+    border: 1.5px solid var(--good);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 10px 0 4px;
+  }
+  .finishBox .headline{ font-family:'Fraunces', serif; font-weight:700; font-size:18px; color: var(--good); margin-bottom:6px; }
+  .finishBox p{ margin: 2px 0; font-size: 14px; color: var(--ink); line-height:1.5; }
+  .finishBox .ans{ font-family:'IBM Plex Mono', monospace; font-weight:700; }
+
+  .tableToggle{ margin-bottom: 10px; }
+  .timesTable{
+    display:none;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 14px;
+    line-height: 1.9;
+  }
+  .timesTable.show{ display:block; }
+  .timesTable .ttHead{ font-family:'IBM Plex Sans', sans-serif; font-weight:600; font-size:12.5px; color:var(--ink-soft); margin-bottom:6px; }
+
+  .controls{ display:flex; gap: 10px; margin-top: 22px; flex-wrap:wrap; }
+
+  .foot{ text-align:center; font-size: 12px; color: var(--ink-soft); margin-top: 18px; }
+
+  @media (max-width:480px){
+    .panel{ padding: 16px; }
+    .numRow{ flex-direction:column; }
+  }
+
+  /* ---- chimney-sum-tool-specific styles ---- */
+  .subGrid{
+    display:grid;
+    gap: 4px 10px;
+    justify-content:start;
+    margin: 22px 0 18px;
+  }
+  .subLabel{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 15px; font-weight:600; color: var(--ink-soft);
+    text-align:center; align-self:end; padding-bottom:4px;
+  }
+  .subOpCell{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 36px; font-weight:700;
+    text-align:center; align-self:end; padding-bottom: 6px;
+  }
+  .subDigitCell{
+    position:relative;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700; font-size:36px;
+    width:66px; height:54px; line-height:54px;
+    text-align:center; color: var(--ink);
+  }
+  .subDigitCell.twoDigit{ font-size:27px; }
+  .subDigitCell.modified{ color: var(--exchange); }
+  .subDigitCell.top.isActive, .subDigitCell.bottom.isActive{
+    background:#fdf6e3; border-radius:8px;
+  }
+  .subBadgeRow{
+    position:absolute; top:-21px; left:-8px; right:-8px;
+    display:flex; align-items:baseline; justify-content:center; gap:4px;
+    font-size:14px; font-weight:700; white-space:nowrap;
+    pointer-events:none;
+  }
+  .subBadgeRow s{ color: var(--ink-soft); font-weight:600; }
+  .subBadgeRow .plusTen{ color: var(--exchange); }
+  .subRule{ border-top: 4px solid var(--ink); height:0; align-self:end; margin-bottom:3px; }
+  .subAnswerCell{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:36px; font-weight:700;
+    width:66px; height:52px; line-height:52px;
+    text-align:center; color: var(--good);
+  }
+  .subAnswerCell.placeholder{ color: transparent; border-bottom: 3px dashed var(--line); }
+  .subAnswerCell.twoDigit{ font-size:27px; }
+  .subAnswerInput{
+    width:66px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:36px; font-weight:700;
+    text-align:center;
+    border:none; border-bottom:3px solid var(--ink);
+    background: transparent; color: var(--ink); outline:none;
+    padding:0;
+  }
+  .subAnswerInput.wide{ width:74px; font-size:27px; }
+  .subAnswerInput:focus{ border-bottom-color: var(--mark-deep); background:#fffaf0; }
+  .subAnswerInput::-webkit-outer-spin-button, .subAnswerInput::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .subComposeInput{
+    width:66px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:32px; font-weight:600;
+    text-align:center;
+    padding: 8px 2px;
+    border: 1.5px solid var(--line); border-radius:7px;
+    background:#fff; color: var(--ink); outline:none;
+  }
+  .subComposeInput:focus{ border-color: var(--mark-deep); }
+  .subComposeInput::-webkit-outer-spin-button, .subComposeInput::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .carryCell{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 18px; font-weight:700;
+    width:66px; height:26px; line-height:26px;
+    text-align:center; color: var(--exchange);
+  }
+  .carryInput{
+    display:block;
+    width:66px; height:26px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:18px; font-weight:700;
+    text-align:center; line-height:normal;
+    border:none; border-bottom:2.5px solid var(--exchange);
+    background: transparent; color: var(--exchange); outline:none;
+    padding:0; margin:0;
+  }
+  .carryInput:focus{ background:#fdf0f2; }
+  .carryInput::-webkit-outer-spin-button, .carryInput::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .exArrowBtn{
+    position:absolute; top:-18px; right:-16px;
+    width:30px; height:30px; border-radius:50%;
+    border:2px solid var(--exchange); background:#fff; color:var(--exchange);
+    font-size:15px; font-weight:700; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; padding:0; z-index:2;
+  }
+  .exArrowBtn:hover:not(:disabled){ background:var(--exchange); color:#fff; }
+  .exArrowBtn:disabled{ opacity:.2; cursor:default; }
+  .colClickable{ cursor:pointer; transition: background-color .12s; }
+  .colClickable:hover{ background:#fdf6e3; border-radius:8px; }
+  .colWrongFlash{ background:var(--bad-tint) !important; color:var(--bad) !important; border-radius:8px; }
+  .colCorrectFlash{ background:var(--good-tint) !important; color:var(--good) !important; border-radius:8px; }
+  .warnBanner{
+    background: var(--bad-tint);
+    border: 1.5px solid var(--bad);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    font-weight:600;
+    color: var(--bad);
+    margin: 4px 0 16px;
+    line-height:1.45;
+  }
+
+  @media (max-width:480px){
+    .panel{ padding: 16px; }
+    .subDigitCell, .subAnswerCell, .subAnswerInput, .subComposeInput{ width:50px; font-size:26px; }
+    .subAnswerInput.wide{ width:56px; }
+    .subDigitCell.twoDigit, .subAnswerCell.twoDigit{ font-size:20px; }
+    .subOpCell{ font-size:26px; }
+    .carryCell, .carryInput{ width:50px; font-size:15px; height:22px; line-height:22px; }
+  }
+
+  /* ---- L-shape perimeter tool specific styles ---- */
+  .shapeLabel{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size: 19px;
+  }
+  .shapeInput{
+    box-sizing:border-box;
+    width:110px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:20px; font-weight:700;
+    text-align:center;
+    padding:9px 10px;
+    border:1.5px solid var(--line);
+    border-radius:7px;
+    background:#fff; color:var(--ink); outline:none;
+  }
+  .shapeInput:focus{ border-color: var(--mark-deep); }
+  .shapeInput.correct{ border-color: var(--good); color: var(--good); background: var(--good-tint); }
+  .shapeInput.wrong{ border-color: var(--bad); color: var(--bad); background: var(--bad-tint); }
+  .shapeInput::-webkit-outer-spin-button, .shapeInput::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+
+  @media (max-width:480px){
+    .shapeLabel{ font-size:15px; }
+  }
+
+  /* ---- HCF tool styles ---- */
+  #hcf-presentation{ display:none; }
+  .hcfRow{ display:flex; gap:24px; flex-wrap:wrap; margin:18px 0 8px; }
+  .hcfTable{ flex:1 1 150px; min-width:130px; }
+  .hcfTable .hcfHead{
+    font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:22px;
+    text-align:center; padding-bottom:8px; border-bottom:3px solid var(--ink); margin-bottom:6px;
+  }
+  .hcfTable.active .hcfHead{ color: var(--mark-deep); border-bottom-color: var(--mark-deep); }
+  .hcfPairRow{ display:flex; justify-content:center; border-bottom:1px solid var(--line); }
+  .hcfCell{ flex:1; text-align:center; font-family:'IBM Plex Mono', monospace; font-size:16.5px; font-weight:600; padding:6px 4px; border-right:1.5px solid var(--line); }
+  .hcfCell:last-child{ border-right:none; }
+  .hcfFactorList{ font-size:13px; color:var(--ink-soft); margin-top:10px; }
+  .hcfFactorList .tag{
+    display:inline-block; background:var(--good-tint); color:var(--good); border-radius:5px;
+    padding:2px 7px; margin:2px 3px 0 0; font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:12.5px;
+  }
+  .hcfPairInput{
+    width:56px; font-family:'IBM Plex Mono', monospace; font-size:17px; font-weight:600;
+    text-align:center; border:none; border-bottom:2.5px solid var(--ink);
+    background:transparent; color:var(--ink); outline:none; padding:2px 0;
+  }
+  .hcfPairInput:focus{ border-bottom-color: var(--mark-deep); background:#fffaf0; }
+  .hcfPairInput::-webkit-outer-spin-button, .hcfPairInput::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .hcf-numInput{
+    width:90px; font-family:'IBM Plex Mono', monospace; font-size:18px; font-weight:600;
+    padding:8px 10px; border:1.5px solid var(--line); border-radius:7px;
+    background:#fff; color:var(--ink); outline:none;
+  }
+  .hcf-numInput:focus{ border-color: var(--mark-deep); }
+  .hcf-numInput::-webkit-outer-spin-button, .hcf-numInput::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+
+  /* ---- hub / home screen ---- */
+
+  #home{ max-width: 720px; margin: 0 auto; }
+  #home h1{ font-family:'Fraunces', serif; font-weight:700; font-size: clamp(28px, 5vw, 42px); margin: 0 0 6px; letter-spacing: -0.01em; }
+  #home .sub{ color: var(--ink-soft); font-size: 15px; margin: 0 0 32px; max-width: 60ch; line-height:1.5; }
+  .cardGrid{ display:flex; gap: 20px; flex-wrap: wrap; }
+  .scaffoldCard{
+    flex: 1 1 260px;
+    text-align: left;
+    background: #fffdf9;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 26px 24px;
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    transition: border-color .12s, transform .08s, box-shadow .12s;
+  }
+  .scaffoldCard:hover{ border-color: var(--mark-deep); box-shadow: 0 2px 10px rgba(169,122,19,0.08); }
+  .scaffoldCard:active{ transform: scale(0.99); }
+  .scaffoldCard .cardIcon{ font-size: 26px; margin-bottom: 14px; display:block; }
+  .scaffoldCard h2{ font-family:'Fraunces', serif; font-weight:700; font-size: 21px; margin: 0 0 8px; color: var(--ink); }
+  .scaffoldCard p{ font-size: 13.5px; color: var(--ink-soft); line-height:1.5; margin: 0; }
+
+  .appContainer{ display:none; }
+  .backBtn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 13.5px; font-weight:600;
+    background: none; border: none; color: var(--ink-soft);
+    cursor: pointer; padding: 0 0 18px; display:inline-flex; align-items:center; gap:6px;
+  }
+  .backBtn:hover{ color: var(--mark-deep); }
+
+</style>
+</head>
+<body>
+
+<div class="wrap" id="home">
+  <h1>Maths scaffolds</h1>
+  <p class="sub">Pick the tool you need.</p>
+  <div class="cardGrid">
+    <div class="scaffoldCard" onclick="showApp('rn-app')">
+      <span class="cardIcon">📏</span>
+      <h2>Rounding number line</h2>
+      <p>Plot a number on a line, estimate where it sits, then work out which way it rounds.</p>
+    </div>
+    <div class="scaffoldCard" onclick="showApp('bs-app')">
+      <span class="cardIcon">➗</span>
+      <h2>Bus stop division</h2>
+      <p>Work through long division with decimals, column by column, with exchanges along the way.</p>
+    </div>
+    <div class="scaffoldCard" onclick="showApp('cs-app')">
+      <span class="cardIcon">🧱</span>
+      <h2>Chimney sum subtraction</h2>
+      <p>Column subtraction with exchanging — press the small arrows to borrow a ten as you work through each column.</p>
+    </div>
+    <div class="scaffoldCard" onclick="showApp('ca-app')">
+      <span class="cardIcon">➕</span>
+      <h2>Chimney sum addition</h2>
+      <p>Column addition with carrying — write the carried digit in the small space above the next column as you work through each column.</p>
+    </div>
+    <div class="scaffoldCard" onclick="showApp('ls-app')">
+      <span class="cardIcon">📐</span>
+      <h2>L-shape perimeter</h2>
+      <p>Work out the two missing sides on an L-shaped diagram, then add all six sides together to find the perimeter.</p>
+    </div>
+    <div class="scaffoldCard" onclick="showApp('tc-app')">
+      <span class="cardIcon">🕐</span>
+      <h2>Time conversion</h2>
+      <p>Convert between 12-hour and 24-hour time — decide whether the hour needs to change, then work out the new time.</p>
+    </div>
+    <div class="scaffoldCard" onclick="showApp('hcf-app')">
+      <span class="cardIcon">🔢</span>
+      <h2>Highest common factor</h2>
+      <p>Build a factor T-table for two or three numbers, then spot the biggest factor they share.</p>
+    </div>
+  </div>
+</div>
+
+<div class="appContainer" id="rn-app">
+  <div class="wrap">
+    <button class="backBtn" onclick="showHome()">&larr; Back to menu</button>
+  </div>
+<div class="wrap" style="margin-top:0">
+  <h1>Rounding number line — guided</h1>
+  <p class="sub">Set the number and rounding target, then step through as a class: estimate first, reveal the position, decide which value it's closer to, then complete the rounding sentence.</p>
+
+  <div class="panel" id="rn-setup">
+    <div class="field">
+      <label for="numInput">Number</label>
+      <input id="rn-numInput" type="text" inputmode="decimal" value="7.9831" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label>Round to</label>
+      <div class="pills" id="rn-pillRow"></div>
+    </div>
+    <div class="startRow">
+      <button class="btn" id="rn-startBtn">Start</button>
+    </div>
+  </div>
+
+  <div class="panel" id="rn-presentation">
+    <div class="stageLabel" id="rn-stageLabel"></div>
+    <p class="prompt" id="rn-promptText"></p>
+
+    <div id="rn-svgHost"></div>
+    <div class="estimateHint" id="rn-estimateHint"></div>
+
+    <div class="legend" id="rn-legendRow" style="display:none">
+      <span><span class="dot" style="background:var(--guess)"></span>your estimate</span>
+      <span><span class="dot" style="background:var(--mark)"></span>actual position</span>
+    </div>
+
+    <div class="choiceRow" id="rn-choiceRow" style="display:none"></div>
+    <div class="feedback" id="rn-feedbackText"></div>
+
+    <div id="rn-blankHost"></div>
+
+    <div id="rn-verdictHost"></div>
+
+    <div class="controls">
+      <button class="btn" id="rn-advanceBtn"></button>
+      <button class="btn secondary" id="rn-resetBtn">New number</button>
+    </div>
+  </div>
+
+  <p class="foot">Click or tap anywhere on the line during the estimate step to drop a guess marker.</p>
+</div>
+</div>
+
+<div class="appContainer" id="bs-app">
+  <div class="wrap">
+    <button class="backBtn" onclick="showHome()">&larr; Back to menu</button>
+  </div>
+<div class="wrap" style="margin-top:0">
+  <h1>Bus stop division with decimals</h1>
+  <p class="sub">Generates a division question, then walks pupils through it column by column: how many go in, how many left over, exchange, repeat — down into the decimal places.</p>
+
+  <div class="panel" id="bs-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="bs-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+
+    <div id="bs-customOptions" style="display:none">
+      <div class="field">
+        <label>Size of the number to divide</label>
+        <div class="pills" id="bs-composeDigitPills">
+          <button class="pill active" data-digits="2">2-digit</button>
+          <button class="pill" data-digits="3">3-digit</button>
+        </div>
+      </div>
+      <p class="quotHint" style="margin:0 0 4px;">Pupils will type the divisor and the number itself straight into the empty bus stop.</p>
+    </div>
+
+    <button class="btn" id="bs-startBtn">Start</button>
+  </div>
+
+  <div class="panel" id="bs-presentation">
+    <div class="topRow">
+      <div class="questionLabel" id="bs-questionLabel"></div>
+      <button class="btn secondary small" id="bs-tableToggleBtn"></button>
+    </div>
+
+    <div class="layoutRow">
+      <div class="busstopCol">
+        <div class="busstopGrid">
+          <div id="bs-quotientRow"></div>
+          <div id="bs-divisorLabel"></div>
+          <div id="bs-dividendArea"></div>
+        </div>
+
+        <p class="stagePrompt" id="bs-stagePrompt"></p>
+        <div class="quotHint" id="bs-quotHint"></div>
+        <div class="answerRow" id="bs-answerRow">
+          <input type="number" id="bs-answerInput" inputmode="numeric">
+        </div>
+        <div class="answerRow">
+          <button class="btn" id="bs-checkBtn">Check</button>
+        </div>
+        <div class="checkFeedback" id="bs-checkFeedback"></div>
+
+        <div id="bs-finishHost"></div>
+      </div>
+
+      <div class="tableCol">
+        <div class="timesTable" id="bs-timesTable"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn secondary" id="bs-resetBtn">New question</button>
+    </div>
+  </div>
+
+  <p class="foot">Toggle the times table on the right for a quick reference of the divisor's multiples, just like jotting them down before starting.</p>
+</div>
+</div>
+
+<div class="appContainer" id="cs-app">
+  <div class="wrap">
+    <button class="backBtn" onclick="showHome()">&larr; Back to menu</button>
+  </div>
+<div class="wrap" style="margin-top:0">
+  <h1>Chimney sum subtraction</h1>
+  <p class="sub">Generates a subtraction question, or lets pupils build their own, then walks through it column by column — pressing the small arrows to exchange a ten whenever a column needs one.</p>
+
+  <div class="panel" id="cs-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="cs-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="cs-digitCountInput">Number of digits</label>
+      <input id="cs-digitCountInput" type="number" inputmode="numeric" min="2" max="8" value="3" style="width:80px; font-family:'IBM Plex Mono', monospace; font-size:20px; font-weight:600; padding:8px 10px; border:1.5px solid var(--line); border-radius:7px; background:#fff; color:var(--ink); outline:none;">
+    </div>
+    <button class="btn" id="cs-startBtn">Start</button>
+  </div>
+
+  <div class="panel" id="cs-presentation">
+    <div class="topRow">
+      <div class="questionLabel" id="cs-questionLabel"></div>
+    </div>
+
+    <div class="subGrid" id="cs-subGrid"></div>
+
+    <div class="warnBanner" id="cs-wrongWayBanner" style="display:none"></div>
+
+    <div class="checkFeedback" id="cs-numbersFeedback"></div>
+    <div class="answerRow" id="cs-numbersActionRow" style="display:none">
+      <button class="btn" id="cs-numbersCheckBtn">Check numbers</button>
+    </div>
+
+    <p class="stagePrompt" id="cs-stagePrompt"></p>
+    <div class="quotHint" id="cs-quotHint"></div>
+    <div class="checkRow" id="cs-checkRow" style="display:none">
+      <button class="btn" id="cs-checkBtn">Check</button>
+    </div>
+    <div class="checkFeedback" id="cs-checkFeedback"></div>
+
+    <div id="cs-finishHost"></div>
+
+    <div class="controls">
+      <button class="btn secondary" id="cs-resetBtn">New question</button>
+    </div>
+  </div>
+
+  <p class="foot">Click the column you want to start with, then tap the small arrow above a digit in the top number to exchange a ten into the column on its right.</p>
+</div>
+</div>
+
+<div class="appContainer" id="ca-app">
+  <div class="wrap">
+    <button class="backBtn" onclick="showHome()">&larr; Back to menu</button>
+  </div>
+<div class="wrap" style="margin-top:0">
+  <h1>Chimney sum addition</h1>
+  <p class="sub">Generates an addition question, or lets pupils build their own, then walks through it column by column, right to left — with a space above each column to carry a ten into the next one.</p>
+
+  <div class="panel" id="ca-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="ca-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="ca-digitCountInput">Number of digits</label>
+      <input id="ca-digitCountInput" type="number" inputmode="numeric" min="2" max="8" value="3" style="width:80px; font-family:'IBM Plex Mono', monospace; font-size:20px; font-weight:600; padding:8px 10px; border:1.5px solid var(--line); border-radius:7px; background:#fff; color:var(--ink); outline:none;">
+    </div>
+    <button class="btn" id="ca-startBtn">Start</button>
+  </div>
+
+  <div class="panel" id="ca-presentation">
+    <div class="topRow">
+      <div class="questionLabel" id="ca-questionLabel"></div>
+    </div>
+
+    <div class="subGrid" id="ca-subGrid"></div>
+
+    <div class="checkFeedback" id="ca-numbersFeedback"></div>
+    <div class="answerRow" id="ca-numbersActionRow" style="display:none">
+      <button class="btn" id="ca-numbersCheckBtn">Check numbers</button>
+    </div>
+
+    <p class="stagePrompt" id="ca-stagePrompt"></p>
+    <div class="quotHint" id="ca-quotHint"></div>
+    <div class="checkRow" id="ca-checkRow" style="display:none">
+      <button class="btn" id="ca-checkBtn">Check</button>
+    </div>
+    <div class="checkFeedback" id="ca-checkFeedback"></div>
+
+    <div id="ca-finishHost"></div>
+
+    <div class="controls">
+      <button class="btn secondary" id="ca-resetBtn">New question</button>
+    </div>
+  </div>
+
+  <p class="foot">Always start with the units column on the right. When a column totals 10 or more, carry the ten into the small box above the next column.</p>
+</div>
+</div>
+
+<div class="appContainer" id="ls-app">
+  <div class="wrap">
+    <button class="backBtn" onclick="showHome()">&larr; Back to menu</button>
+  </div>
+<div class="wrap" style="margin-top:0">
+  <h1>L-shape perimeter</h1>
+  <p class="sub">Generates an L-shaped diagram with two sides missing, or lets pupils build their own — work out the missing sides first, then add all six sides to find the perimeter.</p>
+
+  <div class="panel" id="ls-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="ls-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+
+    <div id="ls-customOptions" style="display:none">
+      <div class="field">
+        <label>Which corner is cut away?</label>
+        <div class="pills" id="ls-orientationPills">
+          <button class="pill active" data-orient="BR">Bottom right</button>
+          <button class="pill" data-orient="BL">Bottom left</button>
+          <button class="pill" data-orient="TR">Top right</button>
+          <button class="pill" data-orient="TL">Top left</button>
+        </div>
+      </div>
+      <div class="field" style="display:flex; gap:14px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:130px;">
+          <label for="ls-widthInput">Overall width</label>
+          <input id="ls-widthInput" type="number" inputmode="numeric" min="4" max="60" value="15" style="width:100%; font-family:'IBM Plex Mono', monospace; font-size:18px; font-weight:600; padding:8px 10px; border:1.5px solid var(--line); border-radius:7px; background:#fff; color:var(--ink); outline:none;">
+        </div>
+        <div style="flex:1; min-width:130px;">
+          <label for="ls-heightInput">Overall height</label>
+          <input id="ls-heightInput" type="number" inputmode="numeric" min="4" max="60" value="18" style="width:100%; font-family:'IBM Plex Mono', monospace; font-size:18px; font-weight:600; padding:8px 10px; border:1.5px solid var(--line); border-radius:7px; background:#fff; color:var(--ink); outline:none;">
+        </div>
+        <div style="flex:1; min-width:130px;">
+          <label for="ls-notchWInput">Notch width</label>
+          <input id="ls-notchWInput" type="number" inputmode="numeric" min="1" max="55" value="6" style="width:100%; font-family:'IBM Plex Mono', monospace; font-size:18px; font-weight:600; padding:8px 10px; border:1.5px solid var(--line); border-radius:7px; background:#fff; color:var(--ink); outline:none;">
+        </div>
+        <div style="flex:1; min-width:130px;">
+          <label for="ls-notchHInput">Notch height</label>
+          <input id="ls-notchHInput" type="number" inputmode="numeric" min="1" max="55" value="9" style="width:100%; font-family:'IBM Plex Mono', monospace; font-size:18px; font-weight:600; padding:8px 10px; border:1.5px solid var(--line); border-radius:7px; background:#fff; color:var(--ink); outline:none;">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn" id="ls-startBtn">Start</button>
+  </div>
+
+  <div class="panel" id="ls-presentation">
+    <div class="topRow">
+      <div class="questionLabel" id="ls-questionLabel"></div>
+    </div>
+
+    <div id="ls-svgHost"></div>
+
+    <p class="stagePrompt" id="ls-stagePrompt"></p>
+    <div id="ls-answerHost"></div>
+
+    <div id="ls-perimeterHost"></div>
+
+    <div class="checkRow" id="ls-checkRow" style="display:none">
+      <button class="btn" id="ls-checkBtn">Check</button>
+    </div>
+    <div class="checkFeedback" id="ls-checkFeedback"></div>
+
+    <div id="ls-finishHost"></div>
+
+    <div class="controls">
+      <button class="btn secondary" id="ls-resetBtn">New question</button>
+    </div>
+  </div>
+
+  <p class="foot">Work out the two missing sides first and type them straight onto the diagram, then add all six sides together to find the perimeter.</p>
+</div>
+</div>
+
+<div class="appContainer" id="tc-app">
+  <div class="wrap">
+    <button class="backBtn" onclick="showHome()">&larr; Back to menu</button>
+  </div>
+<div class="wrap" style="margin-top:0">
+  <h1>Time conversion</h1>
+  <p class="sub">Generates a random time — decide whether the hour needs to change to convert it, then write the converted time.</p>
+
+  <div class="panel" id="tc-setup">
+    <div class="field">
+      <label>Which conversion?</label>
+      <div class="pills" id="tc-directionPills">
+        <button class="pill active" data-direction="12to24">12-hour &rarr; 24-hour</button>
+        <button class="pill" data-direction="24to12">24-hour &rarr; 12-hour</button>
+      </div>
+    </div>
+
+    <button class="btn" id="tc-startBtn">Start</button>
+  </div>
+
+  <div class="panel" id="tc-presentation">
+    <div class="topRow">
+      <div class="questionLabel" id="tc-questionLabel"></div>
+    </div>
+
+    <div class="sentenceBox" id="tc-timeDisplay"></div>
+
+    <p class="stagePrompt" id="tc-stagePrompt"></p>
+    <div id="tc-answerHost"></div>
+
+    <div class="checkRow" id="tc-checkRow" style="display:none">
+      <button class="btn" id="tc-checkBtn">Check</button>
+    </div>
+    <div class="checkFeedback" id="tc-checkFeedback"></div>
+
+    <div id="tc-finishHost"></div>
+
+    <div class="controls">
+      <button class="btn secondary" id="tc-resetBtn">New question</button>
+    </div>
+  </div>
+
+  <p class="foot">Work out whether the hour needs to change first, then write the time in its new form.</p>
+</div>
+</div>
+
+<div class="appContainer" id="hcf-app">
+  <div class="wrap">
+    <button class="backBtn" onclick="showHome()">&larr; Back to menu</button>
+  </div>
+<div class="wrap" style="margin-top:0">
+  <h1>Highest common factor</h1>
+  <p class="sub">Build a factor T-table for each number — testing 1, 2, 3… in turn — then spot the biggest factor they all share.</p>
+
+  <div class="panel" id="hcf-setup">
+    <div class="field">
+      <label>How many numbers?</label>
+      <div class="pills" id="hcf-countPills">
+        <button class="pill active" data-count="2">Two numbers</button>
+        <button class="pill" data-count="3">Three numbers</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="hcf-modePills">
+        <button class="pill active" data-mode="random">Random numbers</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div class="field" id="hcf-customNums" style="display:none">
+      <label>Enter the numbers</label>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <input type="number" inputmode="numeric" id="hcf-num1" placeholder="e.g. 24" class="hcf-numInput">
+        <input type="number" inputmode="numeric" id="hcf-num2" placeholder="e.g. 36" class="hcf-numInput">
+        <span id="hcf-thirdField" style="display:none">
+          <input type="number" inputmode="numeric" id="hcf-num3" placeholder="e.g. 60" class="hcf-numInput">
+        </span>
+      </div>
+    </div>
+    <div class="startRow">
+      <button class="btn" id="hcf-startBtn">Start</button>
+    </div>
+  </div>
+
+  <div class="panel" id="hcf-presentation">
+    <div class="stageLabel" id="hcf-stageLabel"></div>
+    <p class="prompt" id="hcf-promptText"></p>
+
+    <div class="hcfRow" id="hcf-tablesHost"></div>
+
+    <div class="choiceRow" id="hcf-choiceRow" style="display:none"></div>
+    <div class="feedback" id="hcf-feedbackText"></div>
+
+    <div id="hcf-pairHost"></div>
+    <div id="hcf-finalHost"></div>
+
+    <div class="controls">
+      <button class="btn secondary" id="hcf-resetBtn">New numbers</button>
+    </div>
+  </div>
+
+  <p class="foot">Test each number in turn: is it a factor? If yes, find its pair. Keep going until the table meets itself in the middle, then compare the lists.</p>
+</div>
+</div>
+
+<script>
+function showApp(id){
+  document.getElementById('home').style.display = 'none';
+  document.getElementById('rn-app').style.display = 'none';
+  document.getElementById('bs-app').style.display = 'none';
+  document.getElementById('cs-app').style.display = 'none';
+  document.getElementById('ca-app').style.display = 'none';
+  document.getElementById('ls-app').style.display = 'none';
+  document.getElementById('tc-app').style.display = 'none';
+  document.getElementById('hcf-app').style.display = 'none';
+  document.getElementById(id).style.display = 'block';
+  window.scrollTo(0,0);
+}
+function showHome(){
+  showApp('home');
+}
+</script>
+
+<script>
+(function(){
+const LEVELS = [
+  { label: "Nearest 1000", e: 3,  phrase: "the nearest 1000" },
+  { label: "Nearest 100",  e: 2,  phrase: "the nearest 100" },
+  { label: "Nearest 10",   e: 1,  phrase: "the nearest 10" },
+  { label: "Nearest whole", e: 0, phrase: "the nearest whole number" },
+  { label: "1 d.p.", e: -1, phrase: "1 decimal place" },
+  { label: "2 d.p.", e: -2, phrase: "2 decimal places" },
+  { label: "3 d.p.", e: -3, phrase: "3 decimal places" },
+];
+
+const LAYOUT = { W: 680, H: 200, padL: 60, padR: 60, y: 104 };
+LAYOUT.xLower = LAYOUT.padL;
+LAYOUT.xUpper = LAYOUT.W - LAYOUT.padR;
+LAYOUT.xMid = (LAYOUT.xLower + LAYOUT.xUpper) / 2;
+
+let currentE = -1;
+let num = 7.9831;
+let r = null;
+let stage = 'estimate';      // 'estimate' -> 'revealed' -> 'answered'
+let guessT = null;           // 0..1 or null
+let chosen = null;           // 'lower' | 'upper' | null
+let checked = false;
+let isCorrect = false;
+
+const pillRow = document.getElementById('rn-pillRow');
+LEVELS.forEach(lv => {
+  const b = document.createElement('button');
+  b.className = 'pill';
+  b.textContent = lv.label;
+  b.dataset.e = lv.e;
+  b.addEventListener('click', () => { currentE = lv.e; syncPills(); });
+  pillRow.appendChild(b);
+});
+function syncPills(){
+  [...pillRow.children].forEach(b => b.classList.toggle('active', Number(b.dataset.e) === currentE));
+}
+syncPills();
+
+function currentLevel(){ return LEVELS.find(lv => lv.e === currentE); }
+
+function fmt(value, decimals){
+  const d = Math.max(decimals, 0);
+  return Number(value).toFixed(d);
+}
+function decimalsFor(e){ return e < 0 ? -e : 0; }
+
+function computeRounding(n, e){
+  const step = Math.pow(10, e);
+  let scaled = n / step;
+  scaled = Math.round(scaled * 1e9) / 1e9;
+  const lowerScaled = Math.floor(scaled);
+  const upperScaled = lowerScaled + 1;
+  const frac = scaled - lowerScaled;
+  const goesUp = frac >= 0.5;
+  return {
+    lower: lowerScaled * step,
+    upper: upperScaled * step,
+    midpoint: (lowerScaled + 0.5) * step,
+    rounded: (goesUp ? upperScaled : lowerScaled) * step,
+    frac, goesUp,
+    exactlyHalf: Math.abs(frac - 0.5) < 1e-9
+  };
+}
+
+document.getElementById('rn-startBtn').addEventListener('click', () => {
+  const raw = document.getElementById('rn-numInput').value.trim();
+  const n = parseFloat(raw);
+  if (raw === '' || isNaN(n)) { alert('Enter a valid number first.'); return; }
+  num = n;
+  r = computeRounding(num, currentE);
+  stage = 'estimate';
+  guessT = null;
+  chosen = null;
+  checked = false;
+  isCorrect = false;
+  document.getElementById('rn-setup').style.display = 'none';
+  document.getElementById('rn-presentation').style.display = 'block';
+  renderStage();
+});
+
+document.getElementById('rn-resetBtn').addEventListener('click', () => {
+  document.getElementById('rn-presentation').style.display = 'none';
+  document.getElementById('rn-setup').style.display = 'block';
+});
+
+function buildSVG(){
+  const { W, H, y, xLower, xUpper, xMid } = LAYOUT;
+  const e = currentE;
+  const decLower = decimalsFor(e);
+  const decMid = e <= 0 ? decimalsFor(e) + 1 : 0;
+
+  const showMid = stage !== 'estimate';
+  const showActual = stage !== 'estimate';
+  const showGuess = guessT !== null;
+  const colorize = stage === 'answered' && checked;
+  const lowerIsAnswer = colorize ? !r.goesUp : null;
+
+  const t = (r.upper === r.lower) ? 0.5 : (num - r.lower) / (r.upper - r.lower);
+  const clampT = Math.min(Math.max(t, 0), 1);
+  const xActual = xLower + clampT * (xUpper - xLower);
+  const xGuess = showGuess ? xLower + guessT * (xUpper - xLower) : null;
+
+  let bandLower = '#eef0ee', bandUpper = '#eef0ee';
+  let lowerColor = '#9aa0a8', upperColor = '#9aa0a8';
+  let lowerWidth = 2, upperWidth = 2;
+  if (colorize){
+    bandLower = lowerIsAnswer ? 'var(--down-tint)' : '#f2efe8';
+    bandUpper = !lowerIsAnswer ? 'var(--up-tint)' : '#f2efe8';
+    lowerColor = lowerIsAnswer ? 'var(--down)' : '#9aa0a8';
+    upperColor = !lowerIsAnswer ? 'var(--up)' : '#9aa0a8';
+    lowerWidth = lowerIsAnswer ? 3 : 2;
+    upperWidth = !lowerIsAnswer ? 3 : 2;
+  }
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+  svg += `<rect id="rn-clickTarget" x="${xLower}" y="${y-24}" width="${xUpper-xLower}" height="48" fill="transparent"/>`;
+  svg += `<rect x="${xLower}" y="${y-3}" width="${(xUpper-xLower)/2}" height="6" fill="${bandLower}"/>`;
+  svg += `<rect x="${xMid}" y="${y-3}" width="${(xUpper-xLower)/2}" height="6" fill="${bandUpper}"/>`;
+  svg += `<line x1="${xLower}" y1="${y}" x2="${xUpper}" y2="${y}" stroke="var(--line)" stroke-width="2"/>`;
+
+  svg += `<line x1="${xLower}" y1="${y-12}" x2="${xLower}" y2="${y+12}" stroke="${lowerColor}" stroke-width="${lowerWidth}"/>`;
+  svg += `<line x1="${xUpper}" y1="${y-12}" x2="${xUpper}" y2="${y+12}" stroke="${upperColor}" stroke-width="${upperWidth}"/>`;
+  svg += `<line x1="${xMid}" y1="${y-9}" x2="${xMid}" y2="${y+9}" stroke="#b9b2a0" stroke-width="1.5" stroke-dasharray="3,3"/>`;
+
+  svg += `<text x="${xLower}" y="${y+36}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="18" font-weight="600" fill="${lowerColor}">${fmt(r.lower, decLower)}</text>`;
+  svg += `<text x="${xUpper}" y="${y+36}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="18" font-weight="600" fill="${upperColor}">${fmt(r.upper, decLower)}</text>`;
+  if (showMid){
+    svg += `<text x="${xMid}" y="${y-20}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#9a927e">midpoint ${fmt(r.midpoint, decMid)}</text>`;
+  }
+
+  if (showGuess){
+    svg += `<line x1="${xGuess}" y1="${y+14}" x2="${xGuess}" y2="${y+34}" stroke="var(--guess)" stroke-width="2" stroke-dasharray="2,3"/>`;
+    svg += `<polygon points="${xGuess-7},${y+34} ${xGuess+7},${y+34} ${xGuess},${y+46}" fill="var(--guess)"/>`;
+  }
+
+  if (showActual){
+    svg += `<line x1="${xActual}" y1="${y-38}" x2="${xActual}" y2="${y-8}" stroke="var(--mark-deep)" stroke-width="2"/>`;
+    svg += `<circle cx="${xActual}" cy="${y}" r="7.5" fill="var(--mark)" stroke="var(--mark-deep)" stroke-width="2"/>`;
+    svg += `<rect x="${xActual-46}" y="${y-64}" width="92" height="26" rx="6" fill="var(--mark)" stroke="var(--mark-deep)" stroke-width="1.5"/>`;
+    svg += `<text x="${xActual}" y="${y-46}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="14" font-weight="600" fill="#3a2c05">${num}</text>`;
+  }
+
+  svg += `</svg>`;
+  return svg;
+}
+
+function attachClickHandler(){
+  if (stage !== 'estimate') return;
+  const svgEl = document.querySelector('#rn-svgHost svg');
+  if (!svgEl) return;
+  svgEl.style.cursor = 'pointer';
+  svgEl.addEventListener('pointerdown', (evt) => {
+    const pt = svgEl.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const ctm = svgEl.getScreenCTM();
+    if (!ctm) return;
+    const loc = pt.matrixTransform(ctm.inverse());
+    let t = (loc.x - LAYOUT.xLower) / (LAYOUT.xUpper - LAYOUT.xLower);
+    t = Math.min(Math.max(t, 0), 1);
+    guessT = t;
+    renderStage();
+  });
+}
+
+function doCheck(){
+  const input = document.getElementById('rn-blankInput');
+  const decLower = decimalsFor(currentE);
+  const val = parseFloat((input.value || '').trim());
+  checked = true;
+  if (isNaN(val)){
+    isCorrect = false;
+  } else {
+    isCorrect = Math.abs(val - r.rounded) < 1e-9;
+  }
+  renderStage();
+  // refocus for quick retry if wrong
+  const reInput = document.getElementById('rn-blankInput');
+  if (reInput && !isCorrect) reInput.focus();
+}
+
+function renderStage(){
+  const stageLabel = document.getElementById('rn-stageLabel');
+  const promptText = document.getElementById('rn-promptText');
+  const svgHost = document.getElementById('rn-svgHost');
+  const estimateHint = document.getElementById('rn-estimateHint');
+  const legendRow = document.getElementById('rn-legendRow');
+  const choiceRow = document.getElementById('rn-choiceRow');
+  const feedbackText = document.getElementById('rn-feedbackText');
+  const blankHost = document.getElementById('rn-blankHost');
+  const verdictHost = document.getElementById('rn-verdictHost');
+  const advanceBtn = document.getElementById('rn-advanceBtn');
+
+  const decLower = decimalsFor(currentE);
+  const lowerStr = fmt(r.lower, decLower);
+  const upperStr = fmt(r.upper, decLower);
+  const level = currentLevel();
+
+  svgHost.innerHTML = buildSVG();
+  attachClickHandler();
+
+  if (stage === 'estimate'){
+    stageLabel.textContent = 'Step 1 of 3 — Estimate';
+    promptText.textContent = `Where does ${num} sit between ${lowerStr} and ${upperStr}?`;
+    estimateHint.textContent = 'Click or tap the line to drop your estimate — then reveal the exact position.';
+    legendRow.style.display = guessT !== null ? 'flex' : 'none';
+    choiceRow.style.display = 'none';
+    feedbackText.textContent = '';
+    blankHost.innerHTML = '';
+    verdictHost.innerHTML = '';
+    advanceBtn.textContent = 'Reveal exact position';
+    advanceBtn.disabled = false;
+    advanceBtn.onclick = () => { stage = 'revealed'; renderStage(); };
+  }
+  else if (stage === 'revealed'){
+    stageLabel.textContent = 'Step 2 of 3 — Which is it closer to?';
+    promptText.textContent = `${num} is placed exactly. Which value is it closer to?`;
+    estimateHint.textContent = '';
+    legendRow.style.display = guessT !== null ? 'flex' : 'none';
+
+    choiceRow.style.display = 'flex';
+    choiceRow.innerHTML = '';
+    ['lower','upper'].forEach(side => {
+      const val = side === 'lower' ? lowerStr : upperStr;
+      const btn = document.createElement('button');
+      btn.className = 'choiceBtn';
+      btn.textContent = val;
+      btn.disabled = chosen !== null;
+      if (chosen !== null){
+        const correctSide = r.goesUp ? 'upper' : 'lower';
+        if (side === correctSide) btn.classList.add('correct');
+        if (side === chosen && side !== correctSide) btn.classList.add('wrong');
+      }
+      btn.addEventListener('click', () => {
+        chosen = side;
+        renderStage();
+      });
+      choiceRow.appendChild(btn);
+    });
+
+    if (chosen === null){
+      feedbackText.textContent = '';
+    } else {
+      const correctSide = r.goesUp ? 'upper' : 'lower';
+      if (chosen === correctSide){
+        feedbackText.className = 'feedback good';
+        feedbackText.textContent = 'Correct!';
+      } else {
+        feedbackText.className = 'feedback bad';
+        feedbackText.textContent = 'Not quite — have another look at the line.';
+      }
+    }
+
+    blankHost.innerHTML = '';
+    verdictHost.innerHTML = '';
+    advanceBtn.textContent = 'Continue to answer';
+    advanceBtn.disabled = false;
+    advanceBtn.onclick = () => {
+      stage = 'answered';
+      checked = false;
+      isCorrect = false;
+      renderStage();
+      const inp = document.getElementById('rn-blankInput');
+      if (inp) inp.focus();
+    };
+  }
+  else if (stage === 'answered'){
+    stageLabel.textContent = 'Step 3 of 3 — Complete the sentence';
+    promptText.textContent = 'Fill in the final blank.';
+    estimateHint.textContent = '';
+    legendRow.style.display = guessT !== null ? 'flex' : 'none';
+    choiceRow.style.display = 'none';
+    feedbackText.textContent = '';
+
+    const inputClass = checked ? (isCorrect ? 'correct' : 'wrong') : '';
+    blankHost.innerHTML = `
+      <div class="sentenceBox">
+        <span class="num">${num}</span> rounded to <span class="phrase">${level.phrase}</span> is
+        <input id="rn-blankInput" class="blankInput ${inputClass}" type="text" inputmode="decimal" autocomplete="off" placeholder="?" value="${checked && isCorrect ? fmt(r.rounded, decLower) : ''}" ${checked && isCorrect ? 'disabled' : ''}>
+      </div>
+      <div class="checkRow">
+        <button class="btn" id="rn-checkBtn">Check answer</button>
+      </div>
+      <div class="checkFeedback ${checked ? (isCorrect ? 'good' : 'bad') : ''}" id="rn-checkFeedback">
+        ${checked ? (isCorrect ? 'Correct — well done!' : `Not quite — try again.`) : ''}
+      </div>
+    `;
+
+    document.getElementById('rn-checkBtn').addEventListener('click', doCheck);
+    const blankInput = document.getElementById('rn-blankInput');
+    blankInput.addEventListener('keydown', (evt) => {
+      if (evt.key === 'Enter') doCheck();
+    });
+
+    if (checked && isCorrect){
+      const dirClass = r.goesUp ? 'up' : 'down';
+      const halfNote = r.exactlyHalf
+        ? `<div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px;">Exactly halfway between ${lowerStr} and ${upperStr} — rounds up by convention.</div>`
+        : '';
+      verdictHost.innerHTML = `
+        <p class="verdict">
+          <span class="num">${num}</span> is closer to
+          <span class="num ${dirClass}">${r.goesUp ? upperStr : lowerStr}</span>.
+        </p>
+        ${halfNote}
+      `;
+    } else {
+      verdictHost.innerHTML = '';
+    }
+
+    advanceBtn.textContent = 'Done';
+    advanceBtn.disabled = !(checked && isCorrect);
+    advanceBtn.onclick = () => {};
+  }
+}
+})();
+</script>
+
+<script>
+(function(){
+/* ---------- division engine ---------- */
+function computeSteps(dividend, divisor, maxDecimals){
+  const wholeDigits = String(dividend).split('').map(Number);
+  let running = 0;
+  const steps = [];
+  wholeDigits.forEach(d => {
+    const combined = running*10 + d;
+    const q = Math.floor(combined/divisor);
+    const rem = combined % divisor;
+    steps.push({ phase:'whole', digit:d, combined, quotient:q, remainder:rem });
+    running = rem;
+  });
+  const decimals = [];
+  const seen = new Map();
+  let repeatStart = null, terminates = false;
+  for (let i=0; i<maxDecimals; i++){
+    if (running === 0){ terminates = true; break; }
+    if (seen.has(running)){ repeatStart = seen.get(running); break; }
+    seen.set(running, i);
+    const combined = running*10;
+    const q = Math.floor(combined/divisor);
+    const rem = combined % divisor;
+    steps.push({ phase:'decimal', digit:0, combined, quotient:q, remainder:rem, decimalIndex:i });
+    decimals.push(q);
+    running = rem;
+  }
+  return { wholeDigits, steps, decimals, terminates, repeatStart, wholeValue: Math.floor(dividend/divisor) };
+}
+
+function generateRandom(digitCount, type){
+  const pool = [3,4,6,7,8,9,11,12];
+  const min = digitCount === 2 ? 10 : 100;
+  const max = digitCount === 2 ? 99 : 999;
+  for (let attempt=0; attempt<4000; attempt++){
+    const divisor = pool[Math.floor(Math.random()*pool.length)];
+    const dividend = Math.floor(Math.random()*(max-min+1)) + min;
+    if (dividend <= divisor) continue;
+    if (dividend % divisor === 0) continue;
+    const res = computeSteps(dividend, divisor, 10);
+    if (type === 'term2' && res.terminates && res.decimals.length === 2) return { dividend, divisor, res };
+    if (type === 'term3' && res.terminates && res.decimals.length === 3) return { dividend, divisor, res };
+    if (type === 'recurring' && !res.terminates && res.repeatStart !== null) return { dividend, divisor, res };
+  }
+  return null;
+}
+
+/* ---------- setup UI ---------- */
+let mode = 'random';
+document.querySelectorAll('#bs-modePills .pill').forEach(b => {
+  b.addEventListener('click', () => {
+    mode = b.dataset.mode;
+    document.querySelectorAll('#bs-modePills .pill').forEach(x => x.classList.toggle('active', x === b));
+    document.getElementById('bs-customOptions').style.display = mode === 'custom' ? 'block' : 'none';
+  });
+});
+let composeDigitChoice = 2;
+document.querySelectorAll('#bs-composeDigitPills .pill').forEach(b => {
+  b.addEventListener('click', () => {
+    composeDigitChoice = Number(b.dataset.digits);
+    document.querySelectorAll('#bs-composeDigitPills .pill').forEach(x => x.classList.toggle('active', x === b));
+  });
+});
+
+/* ---------- state ---------- */
+let dividend, divisor, result;
+let columns = [];        // {type:'digit', digit, quotient, exchange} | {type:'point'}
+let stepIndex = 0;
+let substage = 'quotient'; // 'quotient' | 'remainder'
+let finished = false;
+let pendingNextColIdx = null; // column index awaiting pupil-entered exchange, or null
+let composeMode = false;      // true while pupils are freely typing their own question into an empty bus stop
+let composeDigitCount = 2;
+let divisorRevealed = true;
+
+document.getElementById('bs-startBtn').addEventListener('click', () => {
+  if (mode === 'random'){
+    const digitChoice = Math.random() < 0.5 ? 2 : 3;
+    const typeChoice = ['term2','term3','recurring'][Math.floor(Math.random()*3)];
+    const gen = generateRandom(digitChoice, typeChoice);
+    if (!gen){ alert('Could not generate a question — try again.'); return; }
+    dividend = gen.dividend; divisor = gen.divisor; result = gen.res;
+
+    columns = result.wholeDigits.map(d => ({ type:'digit', digit:String(d), quotient:null, exchange:null, revealed:true }));
+    composeMode = false;
+    divisorRevealed = true;
+    stepIndex = 0; substage = 'quotient'; finished = false; pendingNextColIdx = null;
+
+    document.getElementById('bs-setup').style.display = 'none';
+    document.getElementById('bs-presentation').style.display = 'block';
+    document.getElementById('bs-questionLabel').textContent = `${dividend} ÷ ${divisor}`;
+    document.getElementById('bs-tableToggleBtn').style.display = 'inline-block';
+    buildTimesTable();
+    document.getElementById('bs-timesTable').classList.remove('show');
+    document.getElementById('bs-tableToggleBtn').textContent = `Show ×${divisor} table`;
+  } else {
+    dividend = null; divisor = null; result = null;
+    composeMode = true;
+    composeDigitCount = composeDigitChoice;
+    divisorRevealed = false;
+    columns = Array.from({ length: composeDigitCount }, () => ({ type:'digit', digit:null, quotient:null, exchange:null, revealed:false }));
+    stepIndex = 0; substage = 'quotient'; finished = false; pendingNextColIdx = null;
+
+    document.getElementById('bs-setup').style.display = 'none';
+    document.getElementById('bs-presentation').style.display = 'block';
+    document.getElementById('bs-questionLabel').textContent = 'Build your own question below';
+    document.getElementById('bs-tableToggleBtn').style.display = 'none';
+    document.getElementById('bs-timesTable').classList.remove('show');
+  }
+  render();
+});
+
+document.getElementById('bs-resetBtn').addEventListener('click', () => {
+  document.getElementById('bs-presentation').style.display = 'none';
+  document.getElementById('bs-setup').style.display = 'block';
+});
+
+document.getElementById('bs-tableToggleBtn').addEventListener('click', () => {
+  const t = document.getElementById('bs-timesTable');
+  t.classList.toggle('show');
+  document.getElementById('bs-tableToggleBtn').textContent =
+    t.classList.contains('show') ? 'Hide table' : `Show ×${divisor} table`;
+});
+
+function buildTimesTable(){
+  const t = document.getElementById('bs-timesTable');
+  let html = `<div class="ttHead">÷${divisor} table</div>`;
+  for (let i=1; i<=12; i++){
+    html += `${i} × ${divisor} = ${i*divisor}<br>`;
+  }
+  t.innerHTML = html;
+}
+
+/* ---------- render ---------- */
+function render(){
+  const quotientRow = document.getElementById('bs-quotientRow');
+  const dividendArea = document.getElementById('bs-dividendArea');
+  const divisorLabel = document.getElementById('bs-divisorLabel');
+  const stagePrompt = document.getElementById('bs-stagePrompt');
+  const answerRow = document.getElementById('bs-answerRow');
+  const checkFeedback = document.getElementById('bs-checkFeedback');
+  const finishHost = document.getElementById('bs-finishHost');
+  const quotHint = document.getElementById('bs-quotHint');
+  const checkBtn = document.getElementById('bs-checkBtn');
+
+  if (divisorRevealed){
+    divisorLabel.textContent = divisor;
+  } else {
+    divisorLabel.innerHTML = `<input type="number" inputmode="numeric" class="divisorInputBox" id="bs-divisorInput">`;
+  }
+
+  quotientRow.innerHTML = '';
+  dividendArea.innerHTML = '';
+  columns.forEach((col, idx) => {
+    if (col.type === 'point'){
+      quotientRow.innerHTML += `<div class="pointGap">.</div>`;
+      dividendArea.innerHTML += `<div class="pointGap">.</div>`;
+      return;
+    }
+
+    if (composeMode){
+      quotientRow.innerHTML += `<div class="quotDigit"></div>`;
+      dividendArea.innerHTML += `<input type="number" inputmode="numeric" class="quotInputBox" id="bs-composeDigit${idx}">`;
+      return;
+    }
+
+    const isActive = !finished && idx === activeColumnIndex();
+    const isQuotientTurn = isActive && substage === 'quotient';
+    if (isQuotientTurn){
+      quotientRow.innerHTML += `<input type="number" inputmode="numeric" class="quotInputBox" id="bs-quotInput">`;
+    } else {
+      quotientRow.innerHTML += `<div class="quotDigit ${col.overline ? 'overline' : ''}">${col.quotient !== null ? col.quotient : ''}</div>`;
+    }
+
+    const exchangeHtml = col.exchangeInputActive
+      ? `<input type="number" inputmode="numeric" class="exchangeInputBox" id="bs-exchangeInput">`
+      : (col.exchange ? `<span class="exchangeBadge">${col.exchange}</span>` : '');
+    dividendArea.innerHTML += `<div class="digitCell ${isActive ? 'active' : ''} ${col.exchangeInputActive ? 'exchangeTarget' : ''}">${exchangeHtml}${col.digit}</div>`;
+  });
+
+  if (composeMode){
+    checkFeedback.textContent = '';
+    checkFeedback.className = 'checkFeedback';
+    finishHost.innerHTML = '';
+    answerRow.style.display = 'none';
+    checkBtn.textContent = 'Start dividing';
+    stagePrompt.innerHTML = `Type the divisor and the number you want to divide into the boxes above.`;
+    quotHint.textContent = 'Fill in every box, then press "Start dividing".';
+    const composeInputs = document.querySelectorAll('#bs-divisorInput, [id^="bs-composeDigit"]');
+    composeInputs.forEach(el => el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleCheckClick(); }));
+    const divisorInput = document.getElementById('bs-divisorInput');
+    if (divisorInput) setTimeout(() => divisorInput.focus(), 30);
+    return;
+  }
+  checkBtn.textContent = 'Check';
+
+  if (finished){
+    stagePrompt.textContent = '';
+    answerRow.style.display = 'none';
+    checkFeedback.textContent = '';
+    return;
+  }
+
+  finishHost.innerHTML = '';
+  const step = result.steps[stepIndex];
+
+  if (substage === 'quotient'){
+    stagePrompt.innerHTML = `How many <span class="n">${divisor}s</span> go into <span class="n">${step.combined}</span>?`;
+    quotHint.textContent = 'Type your answer in the box above the line, then check it.';
+    answerRow.style.display = 'none';
+    const quotInput = document.getElementById('bs-quotInput');
+    if (quotInput){
+      quotInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doCheck(); });
+      setTimeout(() => quotInput.focus(), 30);
+    }
+  } else {
+    stagePrompt.innerHTML = `How many are left over?`;
+    if (pendingNextColIdx !== null){
+      quotHint.textContent = 'Type it in the small box above the next number, then check it.';
+      answerRow.style.display = 'none';
+      const exchangeInput = document.getElementById('bs-exchangeInput');
+      if (exchangeInput){
+        exchangeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doCheck(); });
+        setTimeout(() => exchangeInput.focus(), 30);
+      }
+    } else {
+      quotHint.textContent = '';
+      answerRow.style.display = 'flex';
+      const answerInput = document.getElementById('bs-answerInput');
+      answerInput.value = '';
+      setTimeout(() => answerInput.focus(), 30);
+    }
+  }
+  checkFeedback.textContent = '';
+  checkFeedback.className = 'checkFeedback';
+}
+
+function activeColumnIndex(){
+  // index within `columns` (digit-only, ignoring point) matching stepIndex
+  let count = -1;
+  for (let i=0;i<columns.length;i++){
+    if (columns[i].type === 'digit'){ count++; if (count === stepIndex) return i; }
+  }
+  return -1;
+}
+
+/* ---------- interaction ---------- */
+document.getElementById('bs-checkBtn').addEventListener('click', handleCheckClick);
+document.getElementById('bs-answerInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') doCheck(); });
+
+function handleCheckClick(){
+  if (composeMode){
+    finalizeCompose();
+  } else {
+    doCheck();
+  }
+}
+
+function doCheck(){
+  const checkFeedback = document.getElementById('bs-checkFeedback');
+
+  const step = result.steps[stepIndex];
+  const colIdx = activeColumnIndex();
+  const input = substage === 'quotient'
+    ? document.getElementById('bs-quotInput')
+    : (pendingNextColIdx !== null ? document.getElementById('bs-exchangeInput') : document.getElementById('bs-answerInput'));
+
+  if (!input) return;
+  const val = parseInt(input.value, 10);
+
+  if (isNaN(val)){
+    checkFeedback.textContent = 'Type a number in the box first.';
+    checkFeedback.className = 'checkFeedback bad';
+    return;
+  }
+
+  if (substage === 'quotient'){
+    if (val === step.quotient){
+      columns[colIdx].quotient = val;
+      checkFeedback.textContent = 'Correct!';
+      checkFeedback.className = 'checkFeedback good';
+      substage = 'remainder';
+      revealNextColumnForExchange();
+      setTimeout(() => { render(); }, 350);
+    } else {
+      checkFeedback.textContent = 'Not quite — try again.';
+      checkFeedback.className = 'checkFeedback bad';
+      input.value = '';
+      input.focus();
+    }
+  } else {
+    if (val === step.remainder){
+      checkFeedback.textContent = 'Correct!';
+      checkFeedback.className = 'checkFeedback good';
+      if (pendingNextColIdx !== null){
+        columns[pendingNextColIdx].exchange = val > 0 ? val : null;
+        columns[pendingNextColIdx].exchangeInputActive = false;
+      }
+      goToNextStepOrFinish();
+    } else {
+      checkFeedback.textContent = 'Not quite — try again.';
+      checkFeedback.className = 'checkFeedback bad';
+      input.value = '';
+      input.focus();
+    }
+  }
+}
+
+/* Reads whatever the pupils typed into the empty bus stop (divisor + each
+   dividend digit), validates it's a sensible question, and locks it in as
+   the question the rest of the tool will work through. */
+function finalizeCompose(){
+  const divisorInput = document.getElementById('bs-divisorInput');
+  const dsVal = parseInt(divisorInput.value, 10);
+  if (isNaN(dsVal) || dsVal < 2){
+    alert('Enter a divisor of 2 or more.');
+    return;
+  }
+
+  const digits = [];
+  for (let i = 0; i < composeDigitCount; i++){
+    const el = document.getElementById(`bs-composeDigit${i}`);
+    const v = parseInt(el.value, 10);
+    if (isNaN(v) || v < 0 || v > 9){
+      alert('Fill in every box with a single digit (0–9).');
+      return;
+    }
+    digits.push(v);
+  }
+  if (digits[0] === 0){
+    alert(`Make sure the first digit isn't 0 — you want a genuine ${composeDigitCount}-digit number.`);
+    return;
+  }
+
+  const dv = parseInt(digits.join(''), 10);
+  if (dv <= dsVal){
+    alert("Make sure the number you're dividing is bigger than the divisor.");
+    return;
+  }
+
+  dividend = dv;
+  divisor = dsVal;
+  result = computeSteps(dv, dsVal, 10);
+  columns = result.wholeDigits.map(d => ({ type:'digit', digit:String(d), quotient:null, exchange:null }));
+  composeMode = false;
+  divisorRevealed = true;
+  stepIndex = 0;
+  substage = 'quotient';
+  finished = false;
+  pendingNextColIdx = null;
+
+  document.getElementById('bs-questionLabel').textContent = `${dividend} ÷ ${divisor}`;
+  document.getElementById('bs-tableToggleBtn').style.display = 'inline-block';
+  buildTimesTable();
+  document.getElementById('bs-timesTable').classList.remove('show');
+  document.getElementById('bs-tableToggleBtn').textContent = `Show ×${divisor} table`;
+
+  render();
+}
+
+/* Reveal (or mark) the column that will hold the pupil-entered exchange,
+   right after the quotient digit for the current step is confirmed. */
+function revealNextColumnForExchange(){
+  const nextIndex = stepIndex + 1;
+  if (nextIndex >= result.steps.length){
+    pendingNextColIdx = null;
+    return;
+  }
+  const nextStep = result.steps[nextIndex];
+  const curStep = result.steps[stepIndex];
+
+  if (nextStep.phase === 'decimal' && curStep.phase === 'whole'){
+    columns.push({ type:'point' });
+  }
+
+  if (nextStep.phase === 'decimal'){
+    columns.push({ type:'digit', digit:'0', quotient:null, exchange:null, exchangeInputActive:true });
+    pendingNextColIdx = columns.length - 1;
+  } else {
+    const idx = activeColumnIndexFor(nextIndex);
+    columns[idx].exchangeInputActive = true;
+    pendingNextColIdx = idx;
+  }
+}
+
+function goToNextStepOrFinish(){
+  const nextIndex = stepIndex + 1;
+  if (nextIndex < result.steps.length){
+    stepIndex = nextIndex;
+    substage = 'quotient';
+    pendingNextColIdx = null;
+    setTimeout(() => { render(); }, 350);
+  } else {
+    setTimeout(() => finish(), 350);
+  }
+}
+
+function activeColumnIndexFor(stepIdx){
+  let count = -1;
+  for (let i=0;i<columns.length;i++){
+    if (columns[i].type === 'digit'){ count++; if (count === stepIdx) return i; }
+  }
+  return -1;
+}
+
+function finish(){
+  finished = true;
+  const finishHost = document.getElementById('bs-finishHost');
+  const decLen = result.decimals.length;
+
+  if (result.terminates){
+    if (decLen === 0){
+      finishHost.innerHTML = `
+        <div class="finishBox">
+          <div class="headline">Remainder 0 — division complete!</div>
+          <p><span class="n">${dividend}</span> ÷ <span class="n">${divisor}</span> = <span class="ans">${result.wholeValue}</span> exactly.</p>
+        </div>`;
+    } else {
+      const decStr = result.decimals.join('');
+      finishHost.innerHTML = `
+        <div class="finishBox">
+          <div class="headline">Remainder 0 — division complete!</div>
+          <p><span class="n">${dividend}</span> ÷ <span class="n">${divisor}</span> = <span class="ans">${result.wholeValue}.${decStr}</span></p>
+        </div>`;
+    }
+  } else {
+    // recurring — highlight repeating block with overline
+    const repeatStart = result.repeatStart;
+    const startColIdx = activeColumnIndexFor(result.wholeDigits.length + repeatStart);
+    for (let i = startColIdx; i < columns.length; i++){
+      if (columns[i].type === 'digit') columns[i].overline = true;
+    }
+    const nonRepeating = result.decimals.slice(0, repeatStart).join('');
+    const repeating = result.decimals.slice(repeatStart).join('');
+    finishHost.innerHTML = `
+      <div class="finishBox">
+        <div class="headline">The remainder just repeated — the digits repeat forever!</div>
+        <p><span class="n">${dividend}</span> ÷ <span class="n">${divisor}</span> = <span class="ans">${result.wholeValue}.${nonRepeating}<span style="text-decoration:overline">${repeating}</span></span> (recurring)</p>
+      </div>`;
+  }
+  render();
+}
+})();
+</script>
+
+<script>
+(function(){
+/* ---------- chimney-sum subtraction engine ---------- */
+
+function columnLabelsFor(n){
+  const all = ['Ten Millions','Millions','Hundred Thousands','Ten Thousands','Thousands','Hundreds','Tens','Units'];
+  const capped = Math.min(n, all.length);
+  return all.slice(all.length - capped);
+}
+
+function generateRandomSub(n){
+  const min = Math.pow(10, n - 1);
+  const max = Math.pow(10, n) - 1;
+  let top, bottom;
+  do {
+    top = min + Math.floor(Math.random() * (max - min + 1));
+    bottom = min + Math.floor(Math.random() * (max - min + 1));
+  } while (bottom >= top);
+  return {
+    top: String(top).split('').map(Number),
+    bottom: String(bottom).split('').map(Number)
+  };
+}
+
+/* ---------- setup UI ---------- */
+let csMode = 'random';
+document.querySelectorAll('#cs-modePills .pill').forEach(b => {
+  b.addEventListener('click', () => {
+    csMode = b.dataset.mode;
+    document.querySelectorAll('#cs-modePills .pill').forEach(x => x.classList.toggle('active', x === b));
+  });
+});
+
+/* ---------- state ---------- */
+let colCount = 3;
+let topOriginal = [];    // fixed original top digits, left-to-right
+let bottomDigits = [];   // fixed bottom digits, left-to-right
+let effectiveTop = [];   // top digits after any exchanges applied
+let givenAway = [];      // per column: has it given a ten to its right neighbour?
+let receivedTen = [];    // per column: has it received a ten from its left neighbour?
+let solvedAnswer = [];   // per column: the confirmed answer digit, or null
+let composeMode = false; // true while pupils are typing their own numbers into the empty template
+let numbersValid = false;
+let colState = 'chooseStart'; // 'enterNumbers' -> 'chooseStart' -> 'solving' -> 'finished'
+let activeCol = null;    // index (0 = leftmost / most significant) of the column being solved
+let wrongWayWarning = false; // true once the pupil has subtracted top-from-bottom instead of bottom-from-top
+let hasMadeError = false; // true once the pupil has got something wrong in this sum — reveals the sum for the rest of it
+let attemptedThisColumn = false; // true once the pupil has pressed Check at least once on the current column — gates the "exchange needed" hint
+
+document.getElementById('cs-startBtn').addEventListener('click', () => {
+  const digitInput = document.getElementById('cs-digitCountInput');
+  let requested = parseInt(digitInput.value, 10);
+  if (isNaN(requested)) requested = 3;
+  requested = Math.max(2, Math.min(8, requested));
+  digitInput.value = requested;
+  colCount = requested;
+  wrongWayWarning = false;
+  hasMadeError = false;
+  attemptedThisColumn = false;
+  solvedAnswer = new Array(colCount).fill(null);
+  givenAway = new Array(colCount).fill(false);
+  receivedTen = new Array(colCount).fill(false);
+
+  if (csMode === 'random'){
+    const gen = generateRandomSub(colCount);
+    topOriginal = gen.top;
+    bottomDigits = gen.bottom;
+    effectiveTop = gen.top.slice();
+    composeMode = false;
+    numbersValid = true;
+    colState = 'chooseStart';
+  } else {
+    topOriginal = new Array(colCount).fill(null);
+    bottomDigits = new Array(colCount).fill(null);
+    effectiveTop = new Array(colCount).fill(null);
+    composeMode = true;
+    numbersValid = false;
+    colState = 'enterNumbers';
+  }
+  activeCol = null;
+
+  document.getElementById('cs-setup').style.display = 'none';
+  document.getElementById('cs-presentation').style.display = 'block';
+  render();
+});
+
+document.getElementById('cs-resetBtn').addEventListener('click', () => {
+  wrongWayWarning = false;
+  hasMadeError = false;
+  attemptedThisColumn = false;
+  document.getElementById('cs-presentation').style.display = 'none';
+  document.getElementById('cs-setup').style.display = 'block';
+});
+
+document.getElementById('cs-numbersCheckBtn').addEventListener('click', finalizeNumbers);
+document.getElementById('cs-checkBtn').addEventListener('click', doCheck);
+
+/* ---------- grid building ---------- */
+function topCellHTML(i){
+  const col = i + 2;
+  if (composeMode){
+    return `<input type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" class="subComposeInput" id="cs-composeTop${i}" style="grid-row:2;grid-column:${col};">`;
+  }
+  const given = givenAway[i];
+  const received = receivedTen[i];
+  const val = effectiveTop[i];
+  const modified = given || received;
+  const twoDigit = val >= 10;
+  const isActive = colState === 'solving' && i === activeCol;
+  const selectable = colState === 'chooseStart';
+
+  let badge = '';
+  if (given || received){
+    badge = `<div class="subBadgeRow">`;
+    if (given) badge += `<s>${topOriginal[i]}</s>`;
+    if (received) badge += `<span class="plusTen">+10</span>`;
+    badge += `</div>`;
+  }
+
+  let arrow = '';
+  if (colState === 'solving' && i < colCount - 1){
+    const enabled = i < activeCol && effectiveTop[i] > 0 && !givenAway[i];
+    arrow = `<button type="button" class="exArrowBtn" data-exidx="${i}" ${enabled ? '' : 'disabled'} title="Exchange a ten into the next column">&rarr;</button>`;
+  }
+
+  const classes = ['subDigitCell', 'top'];
+  if (modified) classes.push('modified');
+  if (twoDigit) classes.push('twoDigit');
+  if (isActive) classes.push('isActive');
+  if (selectable) classes.push('colClickable');
+
+  return `<div class="${classes.join(' ')}" data-colidx="${i}" style="grid-row:2;grid-column:${col};">${badge}${val}${arrow}</div>`;
+}
+
+function bottomCellHTML(i){
+  const col = i + 2;
+  if (composeMode){
+    return `<input type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" class="subComposeInput" id="cs-composeBottom${i}" style="grid-row:3;grid-column:${col};">`;
+  }
+  const isActive = colState === 'solving' && i === activeCol;
+  const selectable = colState === 'chooseStart';
+  return `<div class="subDigitCell bottom ${isActive ? 'isActive' : ''} ${selectable ? 'colClickable' : ''}" data-colidx="${i}" style="grid-row:3;grid-column:${col};">${bottomDigits[i]}</div>`;
+}
+
+function answerCellHTML(i){
+  const col = i + 2;
+  if (composeMode || !numbersValid){
+    return `<div class="subAnswerCell placeholder" style="grid-row:5;grid-column:${col};">0</div>`;
+  }
+  if (colState === 'solving' && i === activeCol){
+    const correctVal = effectiveTop[i] - bottomDigits[i];
+    const maxLen = correctVal >= 10 ? 2 : 1;
+    const wideClass = maxLen === 2 ? ' wide' : '';
+    return `<div style="grid-row:5;grid-column:${col};"><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="${maxLen}" autocomplete="off" class="subAnswerInput${wideClass}" id="cs-answerInput"></div>`;
+  }
+  if (solvedAnswer[i] !== null && solvedAnswer[i] !== undefined){
+    const wide = String(solvedAnswer[i]).length > 1;
+    return `<div class="subAnswerCell ${wide ? 'twoDigit' : ''}" style="grid-row:5;grid-column:${col};">${solvedAnswer[i]}</div>`;
+  }
+  return `<div class="subAnswerCell placeholder" style="grid-row:5;grid-column:${col};">0</div>`;
+}
+
+function buildGridHTML(){
+  const labels = columnLabelsFor(colCount);
+  const selectable = colState === 'chooseStart';
+  let html = '';
+
+  html += `<div style="grid-row:1;grid-column:1;"></div>`;
+  labels.forEach((lab, i) => { html += `<div class="subLabel ${selectable ? 'colClickable' : ''}" data-colidx="${i}" style="grid-row:1;grid-column:${i + 2};">${lab}</div>`; });
+
+  html += `<div style="grid-row:2;grid-column:1;"></div>`;
+  for (let i = 0; i < colCount; i++) html += topCellHTML(i);
+
+  html += `<div class="subOpCell" style="grid-row:3;grid-column:1;">&minus;</div>`;
+  for (let i = 0; i < colCount; i++) html += bottomCellHTML(i);
+
+  html += `<div class="subRule" style="grid-row:4;grid-column:2 / ${colCount + 2};"></div>`;
+
+  html += `<div style="grid-row:5;grid-column:1;"></div>`;
+  for (let i = 0; i < colCount; i++) html += answerCellHTML(i);
+
+  return html;
+}
+
+function attachGridHandlers(){
+  const grid = document.getElementById('cs-subGrid');
+  grid.querySelectorAll('.exArrowBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = Number(btn.dataset.exidx);
+      doExchange(i);
+    });
+  });
+  if (colState === 'chooseStart'){
+    grid.querySelectorAll('[data-colidx]').forEach(el => {
+      el.addEventListener('click', () => handleColumnStart(Number(el.dataset.colidx)));
+    });
+  }
+  if (composeMode){
+    const order = [];
+    for (let i = 0; i < colCount; i++) order.push(`cs-composeTop${i}`);
+    for (let i = 0; i < colCount; i++) order.push(`cs-composeBottom${i}`);
+
+    order.forEach((id, idx) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        el.value = el.value.replace(/[^0-9]/g, '').slice(-1);
+        if (el.value !== '' && idx < order.length - 1){
+          const next = document.getElementById(order[idx + 1]);
+          if (next) next.focus();
+        }
+      });
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter'){ finalizeNumbers(); return; }
+        if (e.key === 'Backspace' && el.value === '' && idx > 0){
+          const prev = document.getElementById(order[idx - 1]);
+          if (prev){ prev.value = ''; prev.focus(); }
+        }
+      });
+    });
+
+    const first = document.getElementById('cs-composeTop0');
+    if (first) setTimeout(() => first.focus(), 30);
+  }
+}
+
+function doExchange(i){
+  if (givenAway[i] || effectiveTop[i] <= 0) return;
+  givenAway[i] = true;
+  effectiveTop[i] -= 1;
+  receivedTen[i + 1] = true;
+  effectiveTop[i + 1] += 10;
+  render();
+}
+
+/* ---------- number entry (custom mode) ---------- */
+function finalizeNumbers(){
+  const feedback = document.getElementById('cs-numbersFeedback');
+  const N = colCount;
+  const topVals = [], bottomVals = [];
+  for (let i = 0; i < N; i++){
+    const te = document.getElementById(`cs-composeTop${i}`);
+    const be = document.getElementById(`cs-composeBottom${i}`);
+    const tv = parseInt(te.value, 10);
+    const bv = parseInt(be.value, 10);
+    if (isNaN(tv) || tv < 0 || tv > 9 || isNaN(bv) || bv < 0 || bv > 9){
+      feedback.textContent = 'Fill in every box with a single digit (0–9).';
+      feedback.className = 'checkFeedback bad';
+      return;
+    }
+    topVals.push(tv); bottomVals.push(bv);
+  }
+  if (topVals[0] === 0){
+    feedback.textContent = `Make sure the top number is a genuine ${N}-digit number (no leading zero).`;
+    feedback.className = 'checkFeedback bad';
+    return;
+  }
+  const topNum = parseInt(topVals.join(''), 10);
+  const bottomNum = parseInt(bottomVals.join(''), 10);
+  if (topNum < bottomNum){
+    feedback.textContent = 'The bigger number needs to go on top for this method — swap the numbers around and try again.';
+    feedback.className = 'checkFeedback bad';
+    return;
+  }
+
+  feedback.textContent = '';
+  feedback.className = 'checkFeedback';
+  topOriginal = topVals.slice();
+  bottomDigits = bottomVals.slice();
+  effectiveTop = topVals.slice();
+  givenAway = new Array(N).fill(false);
+  receivedTen = new Array(N).fill(false);
+  solvedAnswer = new Array(N).fill(null);
+  composeMode = false;
+  numbersValid = true;
+  colState = 'chooseStart';
+  render();
+}
+
+/* ---------- choosing the starting column (click it in the grid) ---------- */
+function handleColumnStart(idx){
+  if (colState !== 'chooseStart') return;
+  const cells = document.querySelectorAll(`#cs-subGrid [data-colidx="${idx}"]`);
+  const quotHint = document.getElementById('cs-quotHint');
+  if (idx === colCount - 1){
+    cells.forEach(el => el.classList.add('colCorrectFlash'));
+    if (quotHint) quotHint.textContent = '';
+    colState = 'solving';
+    activeCol = colCount - 1;
+    attemptedThisColumn = false;
+    setTimeout(render, 450);
+  } else {
+    hasMadeError = true;
+    updateQuestionLabel();
+    cells.forEach(el => el.classList.add('colWrongFlash'));
+    if (quotHint) quotHint.textContent = 'Not quite — click the column with the smallest place value.';
+    setTimeout(() => { cells.forEach(el => el.classList.remove('colWrongFlash')); }, 700);
+  }
+}
+
+/* ---------- solving ---------- */
+function doCheck(){
+  if (colState !== 'solving') return;
+  const input = document.getElementById('cs-answerInput');
+  const checkFeedback = document.getElementById('cs-checkFeedback');
+  if (!input) return;
+  const val = parseInt(input.value, 10);
+
+  if (isNaN(val)){
+    checkFeedback.textContent = 'Type a number in the box first.';
+    checkFeedback.className = 'checkFeedback bad';
+    return;
+  }
+
+  attemptedThisColumn = true;
+
+  const have = effectiveTop[activeCol];
+  const need = bottomDigits[activeCol];
+  if (have < need){
+    if (val === need - have){
+      wrongWayWarning = true;
+      hasMadeError = true;
+      updateWrongWayBanner();
+      updateQuestionLabel();
+      updateStagePrompt();
+      updateQuotHint();
+      checkFeedback.textContent = "That's the bottom digit take away the top digit. You always subtract the bottom digit from the top digit — since the top digit is smaller here, exchange a ten first.";
+      checkFeedback.className = 'checkFeedback bad';
+      input.value = '';
+      input.focus();
+      return;
+    }
+    hasMadeError = true;
+    updateQuestionLabel();
+    updateStagePrompt();
+    updateQuotHint();
+    checkFeedback.textContent = 'You need to exchange a ten before you can subtract this column.';
+    checkFeedback.className = 'checkFeedback bad';
+    return;
+  }
+
+  const correct = have - need;
+  if (val === correct){
+    checkFeedback.textContent = 'Correct!';
+    checkFeedback.className = 'checkFeedback good';
+    solvedAnswer[activeCol] = val;
+    activeCol -= 1;
+    attemptedThisColumn = false;
+    if (activeCol < 0){
+      colState = 'finished';
+    }
+    setTimeout(render, 350);
+  } else {
+    hasMadeError = true;
+    updateQuestionLabel();
+    updateStagePrompt();
+    checkFeedback.textContent = 'Not quite — try again.';
+    checkFeedback.className = 'checkFeedback bad';
+    input.value = '';
+    input.focus();
+  }
+}
+
+function updateWrongWayBanner(){
+  const banner = document.getElementById('cs-wrongWayBanner');
+  if (!banner) return;
+  if (wrongWayWarning && (colState === 'solving' || colState === 'finished')){
+    banner.style.display = 'block';
+    banner.textContent = 'Reminder: always subtract the bottom digit from the top digit (top − bottom), never the other way round. If the top digit is smaller, exchange a ten first.';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function updateQuestionLabel(){
+  const questionLabel = document.getElementById('cs-questionLabel');
+  if (!questionLabel || composeMode) return;
+  const topNum = parseInt(topOriginal.join(''), 10);
+  const bottomNum = parseInt(bottomDigits.join(''), 10);
+  if (hasMadeError || colState === 'finished'){
+    questionLabel.textContent = `${topNum} − ${bottomNum}`;
+  } else {
+    questionLabel.textContent = '';
+  }
+}
+
+function updateStagePrompt(){
+  const stagePrompt = document.getElementById('cs-stagePrompt');
+  if (!stagePrompt || colState !== 'solving') return;
+  const labels = columnLabelsFor(colCount);
+  const label = labels[activeCol];
+  const need = bottomDigits[activeCol];
+  const have = effectiveTop[activeCol];
+  if (hasMadeError){
+    stagePrompt.innerHTML = `<span class="n">${label}</span> column: ${have} &minus; ${need}`;
+  } else {
+    stagePrompt.innerHTML = `<span class="n">${label}</span> column`;
+  }
+}
+
+function updateQuotHint(){
+  const quotHint = document.getElementById('cs-quotHint');
+  if (!quotHint || colState !== 'solving') return;
+  const labels = columnLabelsFor(colCount);
+  const need = bottomDigits[activeCol];
+  const have = effectiveTop[activeCol];
+  if (have < need && activeCol > 0 && attemptedThisColumn){
+    quotHint.textContent = `Not enough to subtract yet — press the small arrow above the ${labels[activeCol - 1]} column to exchange a ten.`;
+  } else {
+    quotHint.textContent = '';
+  }
+}
+
+function renderFinish(){
+  const topNum = parseInt(topOriginal.join(''), 10);
+  const bottomNum = parseInt(bottomDigits.join(''), 10);
+  const answerNum = topNum - bottomNum;
+  return `<div class="finishBox">
+    <div class="headline">Solved!</div>
+    <p><span class="n">${topNum}</span> &minus; <span class="n">${bottomNum}</span> = <span class="ans">${answerNum}</span></p>
+  </div>`;
+}
+
+/* ---------- main render ---------- */
+function render(){
+  const grid = document.getElementById('cs-subGrid');
+  const numbersFeedback = document.getElementById('cs-numbersFeedback');
+  const numbersActionRow = document.getElementById('cs-numbersActionRow');
+  const stagePrompt = document.getElementById('cs-stagePrompt');
+  const quotHint = document.getElementById('cs-quotHint');
+  const checkRow = document.getElementById('cs-checkRow');
+  const checkFeedback = document.getElementById('cs-checkFeedback');
+  const finishHost = document.getElementById('cs-finishHost');
+
+  const narrowScreen = window.innerWidth < 480;
+  const colPx = narrowScreen ? 50 : 66;
+  const leadPx = narrowScreen ? 30 : 40;
+  grid.style.gridTemplateColumns = `${leadPx}px ` + Array(colCount).fill(`${colPx}px`).join(' ');
+  grid.innerHTML = buildGridHTML();
+  attachGridHandlers();
+  updateWrongWayBanner();
+
+  if (composeMode){
+    document.getElementById('cs-questionLabel').textContent = 'Build your own subtraction below';
+    numbersFeedback.textContent = numbersFeedback.textContent || '';
+    numbersActionRow.style.display = 'flex';
+    stagePrompt.textContent = '';
+    quotHint.textContent = 'Fill in every box with a single digit, then press "Check numbers".';
+    checkRow.style.display = 'none';
+    checkFeedback.textContent = '';
+    finishHost.innerHTML = '';
+    return;
+  }
+
+  numbersActionRow.style.display = 'none';
+  numbersFeedback.textContent = '';
+  updateQuestionLabel();
+
+  if (colState === 'chooseStart'){
+    stagePrompt.textContent = 'Click the column you should start with.';
+    quotHint.textContent = '';
+    checkRow.style.display = 'none';
+    checkFeedback.textContent = '';
+    finishHost.innerHTML = '';
+    return;
+  }
+
+  if (colState === 'solving'){
+    updateStagePrompt();
+    updateQuotHint();
+    checkRow.style.display = 'flex';
+    checkFeedback.textContent = '';
+    checkFeedback.className = 'checkFeedback';
+    finishHost.innerHTML = '';
+    const answerInput = document.getElementById('cs-answerInput');
+    if (answerInput){
+      answerInput.addEventListener('input', () => {
+        const maxLen = answerInput.maxLength && answerInput.maxLength > 0 ? answerInput.maxLength : 1;
+        answerInput.value = answerInput.value.replace(/[^0-9]/g, '').slice(0, maxLen);
+      });
+      answerInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doCheck(); });
+      setTimeout(() => answerInput.focus(), 30);
+    }
+    return;
+  }
+
+  if (colState === 'finished'){
+    stagePrompt.textContent = '';
+    quotHint.textContent = '';
+    checkRow.style.display = 'none';
+    checkFeedback.textContent = '';
+    finishHost.innerHTML = renderFinish();
+  }
+}
+})();
+</script>
+
+<script>
+(function(){
+/* ---------- chimney-sum addition engine ---------- */
+
+function columnLabelsFor(n){
+  const all = ['Ten Millions','Millions','Hundred Thousands','Ten Thousands','Thousands','Hundreds','Tens','Units'];
+  const capped = Math.min(n, all.length);
+  return all.slice(all.length - capped);
+}
+
+function generateRandomAdd(n){
+  const min = Math.pow(10, n - 1);
+  const max = Math.pow(10, n) - 1;
+  const top = min + Math.floor(Math.random() * (max - min + 1));
+  const bottom = min + Math.floor(Math.random() * (max - min + 1));
+  return {
+    top: String(top).split('').map(Number),
+    bottom: String(bottom).split('').map(Number)
+  };
+}
+
+/* ---------- setup UI ---------- */
+let caMode = 'random';
+document.querySelectorAll('#ca-modePills .pill').forEach(b => {
+  b.addEventListener('click', () => {
+    caMode = b.dataset.mode;
+    document.querySelectorAll('#ca-modePills .pill').forEach(x => x.classList.toggle('active', x === b));
+  });
+});
+
+/* ---------- state ---------- */
+let colCount = 3;
+let topDigits = [];      // fixed top digits, left-to-right (index 0 = most significant)
+let bottomDigits = [];   // fixed bottom digits, left-to-right
+let carryDigits = [];    // per column: the confirmed carry digit sitting above it (null if none)
+let carryConfirmed = []; // per column: true once that carry space has been checked and locked in
+let solvedAnswer = [];   // per column: the confirmed answer digit, or null
+let finalCarryDigit = null;    // the leading overflow digit if the sum needs one more digit than colCount, else null
+let finalCarryConfirmed = false; // true once the overflow space has been checked and locked in
+let composeMode = false; // true while pupils are typing their own numbers into the empty template
+let numbersValid = false;
+let colState = 'chooseStart'; // 'enterNumbers' -> 'solving' -> 'finished'
+let activeCol = null;     // index (0 = leftmost / most significant) of the column being solved
+let hasMadeError = false; // true once the pupil has got something wrong in this sum — reveals the sum for the rest of it
+
+document.getElementById('ca-startBtn').addEventListener('click', () => {
+  const digitInput = document.getElementById('ca-digitCountInput');
+  let requested = parseInt(digitInput.value, 10);
+  if (isNaN(requested)) requested = 3;
+  requested = Math.max(2, Math.min(8, requested));
+  digitInput.value = requested;
+  colCount = requested;
+  hasMadeError = false;
+  solvedAnswer = new Array(colCount).fill(null);
+  carryDigits = new Array(colCount).fill(null);
+  carryConfirmed = new Array(colCount).fill(false);
+  finalCarryDigit = null;
+  finalCarryConfirmed = false;
+
+  if (caMode === 'random'){
+    const gen = generateRandomAdd(colCount);
+    topDigits = gen.top;
+    bottomDigits = gen.bottom;
+    composeMode = false;
+    numbersValid = true;
+    colState = 'solving';
+    activeCol = colCount - 1;
+  } else {
+    topDigits = new Array(colCount).fill(null);
+    bottomDigits = new Array(colCount).fill(null);
+    composeMode = true;
+    numbersValid = false;
+    colState = 'enterNumbers';
+    activeCol = null;
+  }
+
+  document.getElementById('ca-setup').style.display = 'none';
+  document.getElementById('ca-presentation').style.display = 'block';
+  render();
+});
+
+document.getElementById('ca-resetBtn').addEventListener('click', () => {
+  hasMadeError = false;
+  document.getElementById('ca-presentation').style.display = 'none';
+  document.getElementById('ca-setup').style.display = 'block';
+});
+
+document.getElementById('ca-numbersCheckBtn').addEventListener('click', finalizeNumbers);
+document.getElementById('ca-checkBtn').addEventListener('click', doCheck);
+
+/* ---------- grid building ---------- */
+function carryCellHTML(i){
+  const col = i + 3;
+  if (composeMode || !numbersValid || i === colCount - 1){
+    return `<div style="grid-row:1;grid-column:${col};"></div>`;
+  }
+  if (carryConfirmed[i]){
+    const val = carryDigits[i];
+    return `<div class="carryCell" style="grid-row:1;grid-column:${col};">${val ? val : ''}</div>`;
+  }
+  if (colState === 'solving'){
+    return `<div style="grid-row:1;grid-column:${col};"><input type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" class="carryInput" id="ca-carryInput${i}"></div>`;
+  }
+  return `<div style="grid-row:1;grid-column:${col};"></div>`;
+}
+
+function topCellHTML(i){
+  const col = i + 3;
+  if (composeMode){
+    return `<input type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" class="subComposeInput" id="ca-composeTop${i}" style="grid-row:2;grid-column:${col};">`;
+  }
+  const isActive = colState === 'solving' && i === activeCol;
+  const classes = ['subDigitCell', 'top'];
+  if (isActive) classes.push('isActive');
+  return `<div class="${classes.join(' ')}" style="grid-row:2;grid-column:${col};">${topDigits[i]}</div>`;
+}
+
+function bottomCellHTML(i){
+  const col = i + 3;
+  if (composeMode){
+    return `<input type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" class="subComposeInput" id="ca-composeBottom${i}" style="grid-row:3;grid-column:${col};">`;
+  }
+  const isActive = colState === 'solving' && i === activeCol;
+  const classes = ['subDigitCell', 'bottom'];
+  if (isActive) classes.push('isActive');
+  return `<div class="${classes.join(' ')}" style="grid-row:3;grid-column:${col};">${bottomDigits[i]}</div>`;
+}
+
+function answerCellHTML(i){
+  const col = i + 3;
+  if (composeMode || !numbersValid){
+    return `<div class="subAnswerCell placeholder" style="grid-row:5;grid-column:${col};">0</div>`;
+  }
+  if (colState === 'solving' && i === activeCol){
+    return `<div style="grid-row:5;grid-column:${col};"><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" class="subAnswerInput" id="ca-answerInput"></div>`;
+  }
+  if (solvedAnswer[i] !== null && solvedAnswer[i] !== undefined){
+    return `<div class="subAnswerCell" style="grid-row:5;grid-column:${col};">${solvedAnswer[i]}</div>`;
+  }
+  return `<div class="subAnswerCell placeholder" style="grid-row:5;grid-column:${col};">0</div>`;
+}
+
+function overflowCellHTML(){
+  if (composeMode || !numbersValid){
+    return `<div style="grid-row:5;grid-column:1;"></div>`;
+  }
+  if (finalCarryConfirmed){
+    return `<div class="subAnswerCell" style="grid-row:5;grid-column:1;">${finalCarryDigit ? finalCarryDigit : ''}</div>`;
+  }
+  if (colState === 'solving'){
+    return `<div style="grid-row:5;grid-column:1;"><input type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="off" class="subAnswerInput" id="ca-finalCarryInput"></div>`;
+  }
+  return `<div style="grid-row:5;grid-column:1;"></div>`;
+}
+
+function buildGridHTML(){
+  let html = '';
+
+  html += `<div style="grid-row:1;grid-column:1;"></div>`;
+  html += `<div style="grid-row:1;grid-column:2;"></div>`;
+  for (let i = 0; i < colCount; i++) html += carryCellHTML(i);
+
+  html += `<div style="grid-row:2;grid-column:1;"></div>`;
+  html += `<div style="grid-row:2;grid-column:2;"></div>`;
+  for (let i = 0; i < colCount; i++) html += topCellHTML(i);
+
+  html += `<div style="grid-row:3;grid-column:1;"></div>`;
+  html += `<div class="subOpCell" style="grid-row:3;grid-column:2;">+</div>`;
+  for (let i = 0; i < colCount; i++) html += bottomCellHTML(i);
+
+  html += `<div class="subRule" style="grid-row:4;grid-column:3 / ${colCount + 3};"></div>`;
+
+  html += overflowCellHTML();
+  html += `<div style="grid-row:5;grid-column:2;"></div>`;
+  for (let i = 0; i < colCount; i++) html += answerCellHTML(i);
+
+  return html;
+}
+
+function attachGridHandlers(){
+  if (!composeMode){
+    if (colState === 'solving'){
+      const grid = document.getElementById('ca-subGrid');
+      grid.querySelectorAll('.carryInput, .subAnswerInput').forEach(el => {
+        el.addEventListener('input', () => {
+          el.value = el.value.replace(/[^0-9]/g, '').slice(0, 1);
+        });
+        el.addEventListener('keydown', (e) => { if (e.key === 'Enter') doCheck(); });
+      });
+    }
+    return;
+  }
+  const order = [];
+  for (let i = 0; i < colCount; i++) order.push(`ca-composeTop${i}`);
+  for (let i = 0; i < colCount; i++) order.push(`ca-composeBottom${i}`);
+
+  order.forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      el.value = el.value.replace(/[^0-9]/g, '').slice(-1);
+      if (el.value !== '' && idx < order.length - 1){
+        const next = document.getElementById(order[idx + 1]);
+        if (next) next.focus();
+      }
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter'){ finalizeNumbers(); return; }
+      if (e.key === 'Backspace' && el.value === '' && idx > 0){
+        const prev = document.getElementById(order[idx - 1]);
+        if (prev){ prev.value = ''; prev.focus(); }
+      }
+    });
+  });
+
+  const first = document.getElementById('ca-composeTop0');
+  if (first) setTimeout(() => first.focus(), 30);
+}
+
+/* ---------- number entry (custom mode) ---------- */
+function finalizeNumbers(){
+  const feedback = document.getElementById('ca-numbersFeedback');
+  const N = colCount;
+  const topVals = [], bottomVals = [];
+  for (let i = 0; i < N; i++){
+    const te = document.getElementById(`ca-composeTop${i}`);
+    const be = document.getElementById(`ca-composeBottom${i}`);
+    const tv = parseInt(te.value, 10);
+    const bv = parseInt(be.value, 10);
+    if (isNaN(tv) || tv < 0 || tv > 9 || isNaN(bv) || bv < 0 || bv > 9){
+      feedback.textContent = 'Fill in every box with a single digit (0–9).';
+      feedback.className = 'checkFeedback bad';
+      return;
+    }
+    topVals.push(tv); bottomVals.push(bv);
+  }
+  if (topVals[0] === 0 || bottomVals[0] === 0){
+    feedback.textContent = `Make sure both numbers are genuine ${N}-digit numbers (no leading zero).`;
+    feedback.className = 'checkFeedback bad';
+    return;
+  }
+
+  feedback.textContent = '';
+  feedback.className = 'checkFeedback';
+  topDigits = topVals.slice();
+  bottomDigits = bottomVals.slice();
+  solvedAnswer = new Array(N).fill(null);
+  carryDigits = new Array(N).fill(null);
+  carryConfirmed = new Array(N).fill(false);
+  finalCarryDigit = null;
+  finalCarryConfirmed = false;
+  composeMode = false;
+  numbersValid = true;
+  colState = 'solving';
+  activeCol = N - 1;
+  hasMadeError = false;
+  render();
+}
+
+/* ---------- solving ---------- */
+function doCheck(){
+  if (colState !== 'solving') return;
+  const checkFeedback = document.getElementById('ca-checkFeedback');
+
+  const i = activeCol;
+  const answerInput = document.getElementById('ca-answerInput');
+  if (!answerInput) return;
+  const val = parseInt(answerInput.value, 10);
+  if (isNaN(val)){
+    checkFeedback.textContent = 'Type a number in the box first.';
+    checkFeedback.className = 'checkFeedback bad';
+    return;
+  }
+
+  const carryIn = carryDigits[i] || 0;
+  const sum = topDigits[i] + bottomDigits[i] + carryIn;
+  const correctAnswer = sum % 10;
+  const carryOut = Math.floor(sum / 10);
+
+  // the carry/overflow space this column's carry-out belongs in
+  const isOverflow = i === 0;
+  const carryInput = isOverflow
+    ? document.getElementById('ca-finalCarryInput')
+    : document.getElementById(`ca-carryInput${i - 1}`);
+  const rawCarry = carryInput ? carryInput.value.trim() : '';
+  const carryVal = rawCarry === '' ? 0 : parseInt(rawCarry, 10);
+
+  const answerOk = val === correctAnswer;
+  const carryOk = carryVal === carryOut;
+
+  if (answerOk && carryOk){
+    checkFeedback.textContent = 'Correct!';
+    checkFeedback.className = 'checkFeedback good';
+    solvedAnswer[i] = val;
+    if (isOverflow){
+      finalCarryDigit = carryOut === 1 ? 1 : null;
+      finalCarryConfirmed = true;
+      colState = 'finished';
+    } else {
+      carryDigits[i - 1] = carryOut === 1 ? 1 : null;
+      carryConfirmed[i - 1] = true;
+      activeCol = i - 1;
+    }
+    setTimeout(render, 350);
+    return;
+  }
+
+  hasMadeError = true;
+  updateQuestionLabel();
+  if (!answerOk && sum >= 10 && val === sum){
+    checkFeedback.textContent = "That's the full total for this column. Write just the last digit here, and carry the other digit into the box above the next column.";
+  } else if (!answerOk && carryOk){
+    checkFeedback.textContent = 'Not quite — check the answer digit and try again.';
+  } else if (answerOk && !carryOk){
+    checkFeedback.textContent = carryOut === 1
+      ? "The answer digit is right, but this column totals 10 or more — don't forget to carry the ten."
+      : 'The answer digit is right, but check the carry space — this column doesn\'t need one.';
+  } else {
+    checkFeedback.textContent = 'Not quite — try again.';
+  }
+  checkFeedback.className = 'checkFeedback bad';
+  if (!answerOk) answerInput.value = '';
+  if (!carryOk && carryInput) carryInput.value = '';
+  if (!answerOk) answerInput.focus();
+  else if (carryInput) carryInput.focus();
+}
+
+function updateQuestionLabel(){
+  const questionLabel = document.getElementById('ca-questionLabel');
+  if (!questionLabel || composeMode) return;
+  const topNum = parseInt(topDigits.join(''), 10);
+  const bottomNum = parseInt(bottomDigits.join(''), 10);
+  if (hasMadeError || colState === 'finished'){
+    questionLabel.textContent = `${topNum} + ${bottomNum}`;
+  } else {
+    questionLabel.textContent = '';
+  }
+}
+
+function renderFinish(){
+  const topNum = parseInt(topDigits.join(''), 10);
+  const bottomNum = parseInt(bottomDigits.join(''), 10);
+  const answerNum = topNum + bottomNum;
+  return `<div class="finishBox">
+    <div class="headline">Solved!</div>
+    <p><span class="n">${topNum}</span> + <span class="n">${bottomNum}</span> = <span class="ans">${answerNum}</span></p>
+  </div>`;
+}
+
+/* ---------- main render ---------- */
+function render(){
+  const grid = document.getElementById('ca-subGrid');
+  const numbersFeedback = document.getElementById('ca-numbersFeedback');
+  const numbersActionRow = document.getElementById('ca-numbersActionRow');
+  const stagePrompt = document.getElementById('ca-stagePrompt');
+  const quotHint = document.getElementById('ca-quotHint');
+  const checkRow = document.getElementById('ca-checkRow');
+  const checkFeedback = document.getElementById('ca-checkFeedback');
+  const finishHost = document.getElementById('ca-finishHost');
+
+  const narrowScreen = window.innerWidth < 480;
+  const colPx = narrowScreen ? 50 : 66;
+  const leadPx = narrowScreen ? 30 : 40;
+  grid.style.gridTemplateColumns = `${colPx}px ${leadPx}px ` + Array(colCount).fill(`${colPx}px`).join(' ');
+  grid.innerHTML = buildGridHTML();
+  attachGridHandlers();
+
+  if (composeMode){
+    document.getElementById('ca-questionLabel').textContent = 'Build your own addition below';
+    numbersFeedback.textContent = numbersFeedback.textContent || '';
+    numbersActionRow.style.display = 'flex';
+    stagePrompt.textContent = '';
+    quotHint.textContent = 'Fill in every box with a single digit, then press "Check numbers".';
+    checkRow.style.display = 'none';
+    checkFeedback.textContent = '';
+    finishHost.innerHTML = '';
+    return;
+  }
+
+  numbersActionRow.style.display = 'none';
+  numbersFeedback.textContent = '';
+  updateQuestionLabel();
+
+  if (colState === 'solving'){
+    const labels = columnLabelsFor(colCount);
+    const label = labels[activeCol];
+    stagePrompt.innerHTML = hasMadeError
+      ? `<span class="n">${label}</span> column: ${topDigits[activeCol]} + ${bottomDigits[activeCol]}${carryDigits[activeCol] ? ' + ' + carryDigits[activeCol] : ''}`
+      : `<span class="n">${label}</span> column`;
+    quotHint.textContent = activeCol === 0
+      ? 'Type your answer below the line. If it carries, write that digit in the box on the far left too — then check them together.'
+      : 'Type your answer below the line. If this column totals 10 or more, write the carried ten in the small box above the next column too — then check them together.';
+    checkRow.style.display = 'flex';
+    checkFeedback.textContent = '';
+    checkFeedback.className = 'checkFeedback';
+    finishHost.innerHTML = '';
+    const answerInput = document.getElementById('ca-answerInput');
+    if (answerInput) setTimeout(() => answerInput.focus(), 30);
+    return;
+  }
+
+  if (colState === 'finished'){
+    stagePrompt.textContent = '';
+    quotHint.textContent = '';
+    checkRow.style.display = 'none';
+    checkFeedback.textContent = '';
+    finishHost.innerHTML = renderFinish();
+  }
+}
+})();
+</script>
+
+<script>
+(function(){
+/* ---------- L-shape perimeter engine ---------- */
+
+function randInt(min, max){ return min + Math.floor(Math.random() * (max - min + 1)); }
+
+/* Builds the 6-vertex L-shape polygon for a given corner orientation, then
+   works out each edge's length, whether it's given or must be derived, and
+   which side of the edge its label/input should sit on. An edge is "given"
+   if it's an interior (notch) edge, or a boundary edge that spans the full
+   width/height of the bounding box; the two boundary edges that only span
+   part of it are the ones the pupil has to work out. */
+function buildShape(orientation, W, H, w, h){
+  let verts;
+  switch (orientation){
+    case 'BR': verts = [{x:0,y:0},{x:W,y:0},{x:W,y:H-h},{x:W-w,y:H-h},{x:W-w,y:H},{x:0,y:H}]; break;
+    case 'BL': verts = [{x:0,y:0},{x:0,y:H-h},{x:w,y:H-h},{x:w,y:H},{x:W,y:H},{x:W,y:0}]; break;
+    case 'TR': verts = [{x:0,y:0},{x:0,y:H},{x:W,y:H},{x:W,y:h},{x:W-w,y:h},{x:W-w,y:0}]; break;
+    case 'TL': verts = [{x:w,y:0},{x:W,y:0},{x:W,y:H},{x:0,y:H},{x:0,y:h},{x:w,y:h}]; break;
+  }
+  const n = verts.length;
+  const edgeLengths = [], givenFlags = [], offsets = [], boundaryFlags = [];
+  for (let i = 0; i < n; i++){
+    const p1 = verts[i], p2 = verts[(i + 1) % n];
+    const horizontal = p1.y === p2.y;
+    const length = horizontal ? Math.abs(p2.x - p1.x) : Math.abs(p2.y - p1.y);
+    edgeLengths.push(length);
+
+    let given, offset, boundary;
+    if (horizontal){
+      boundary = (p1.y === 0 || p1.y === H);
+      given = boundary ? (length === W) : true;
+      offset = boundary ? (p1.y === 0 ? 'up' : 'down') : ((orientation === 'BR' || orientation === 'BL') ? 'down' : 'up');
+    } else {
+      boundary = (p1.x === 0 || p1.x === W);
+      given = boundary ? (length === H) : true;
+      offset = boundary ? (p1.x === 0 ? 'left' : 'right') : ((orientation === 'BR' || orientation === 'TR') ? 'right' : 'left');
+    }
+    givenFlags.push(given);
+    offsets.push(offset);
+    boundaryFlags.push(boundary);
+  }
+  const derivedIdx = [];
+  givenFlags.forEach((g, i) => { if (!g) derivedIdx.push(i); });
+
+  /* The two interior (notch) edges always meet at the shape's reflex
+     corner. Labelling both at their exact midpoint crowds them together
+     whenever a notch dimension is small, so bias each one's label toward
+     its OTHER (non-shared) endpoint instead, and push them further out
+     than a normal boundary label so they clear each other even when both
+     notch dimensions are small at once. */
+  const labelT = new Array(n).fill(0.5);
+  const interior = new Array(n).fill(false);
+  const interiorIdx = [];
+  boundaryFlags.forEach((b, i) => { if (!b) interiorIdx.push(i); });
+  if (interiorIdx.length === 2){
+    labelT[interiorIdx[0]] = 0.18;
+    labelT[interiorIdx[1]] = 0.82;
+    interior[interiorIdx[0]] = true;
+    interior[interiorIdx[1]] = true;
+  }
+
+  return { vertices: verts, edgeLengths, givenFlags, offsets, derivedIdx, labelT, interior };
+}
+
+/* ---------- setup UI ---------- */
+let lsMode = 'random';
+document.querySelectorAll('#ls-modePills .pill').forEach(b => {
+  b.addEventListener('click', () => {
+    lsMode = b.dataset.mode;
+    document.querySelectorAll('#ls-modePills .pill').forEach(x => x.classList.toggle('active', x === b));
+    document.getElementById('ls-customOptions').style.display = lsMode === 'custom' ? 'block' : 'none';
+  });
+});
+let lsOrientChoice = 'BR';
+document.querySelectorAll('#ls-orientationPills .pill').forEach(b => {
+  b.addEventListener('click', () => {
+    lsOrientChoice = b.dataset.orient;
+    document.querySelectorAll('#ls-orientationPills .pill').forEach(x => x.classList.toggle('active', x === b));
+  });
+});
+
+/* ---------- state ---------- */
+let W, H, w, h;
+let shape = null;          // { vertices, edgeLengths, givenFlags, offsets, derivedIdx }
+let solvedSides = [];      // per edge index: confirmed value once solved, else null
+let stage = 'findMissing'; // 'findMissing' -> 'perimeter' -> 'finished'
+let missingQueue = [];     // the derived edge indices, in the order we'll solve them
+let missingStepIdx = 0;    // which one in missingQueue we're currently on
+let subStep = 'whole';     // 'whole' -> 'missing', per side in missingQueue
+let hintShown = false;
+
+document.getElementById('ls-startBtn').addEventListener('click', () => {
+  let orientation;
+  if (lsMode === 'random'){
+    orientation = ['BR', 'BL', 'TR', 'TL'][Math.floor(Math.random() * 4)];
+    W = randInt(10, 26);
+    H = randInt(10, 26);
+    w = randInt(2, W - 3);
+    h = randInt(2, H - 3);
+  } else {
+    orientation = lsOrientChoice;
+    const wIn = parseInt(document.getElementById('ls-widthInput').value, 10);
+    const hIn = parseInt(document.getElementById('ls-heightInput').value, 10);
+    const nwIn = parseInt(document.getElementById('ls-notchWInput').value, 10);
+    const nhIn = parseInt(document.getElementById('ls-notchHInput').value, 10);
+    if ([wIn, hIn, nwIn, nhIn].some(v => isNaN(v) || v < 1)){
+      alert('Fill in every box with a whole number of 1 or more.');
+      return;
+    }
+    if (nwIn >= wIn || nhIn >= hIn){
+      alert('The notch has to be smaller than the overall width and height.');
+      return;
+    }
+    W = wIn; H = hIn; w = nwIn; h = nhIn;
+  }
+
+  shape = buildShape(orientation, W, H, w, h);
+  solvedSides = new Array(shape.edgeLengths.length).fill(null);
+  shape.givenFlags.forEach((g, i) => { if (g) solvedSides[i] = shape.edgeLengths[i]; });
+  missingQueue = shape.derivedIdx.slice();
+  missingStepIdx = 0;
+  subStep = 'whole';
+  hintShown = false;
+  stage = 'findMissing';
+
+  document.getElementById('ls-setup').style.display = 'none';
+  document.getElementById('ls-presentation').style.display = 'block';
+  render();
+});
+
+document.getElementById('ls-resetBtn').addEventListener('click', () => {
+  document.getElementById('ls-presentation').style.display = 'none';
+  document.getElementById('ls-setup').style.display = 'block';
+});
+
+document.getElementById('ls-checkBtn').addEventListener('click', () => {
+  if (stage === 'findMissing'){
+    if (subStep === 'whole') doCheckWhole();
+    else doCheckMissingLen();
+  } else if (stage === 'perimeter'){
+    doCheckPerimeter();
+  }
+});
+
+/* ---------- geometry -> pixels ---------- */
+const CANVAS = 420, PAD = 78;
+function scaleFor(){
+  return Math.min((CANVAS - 2 * PAD) / W, (CANVAS - 2 * PAD) / H);
+}
+function toPx(pt){
+  const scale = scaleFor();
+  const shapeW = W * scale, shapeH = H * scale;
+  const offX = (CANVAS - shapeW) / 2;
+  const offY = (CANVAS - shapeH) / 2;
+  return { x: offX + pt.x * scale, y: offY + pt.y * scale };
+}
+
+/* For a derived edge, the "whole" is the full width (W) or height (H) it's
+   part of, and the "part" is the notch dimension already accounted for —
+   the missing length is always whole minus part. */
+function breakdownFor(edgeIdx){
+  const p1 = shape.vertices[edgeIdx], p2 = shape.vertices[(edgeIdx + 1) % shape.vertices.length];
+  const horizontal = p1.y === p2.y;
+  const whole = horizontal ? W : H;
+  const missing = shape.edgeLengths[edgeIdx];
+  const part = whole - missing;
+  return { horizontal, whole, missing, part };
+}
+
+/* Which edge holds the "whole" (full width/height) number a given missing
+   edge is worked out from — the other boundary edge on the same axis. */
+function wholeEdgeIndexFor(edgeIdx){
+  const p1 = shape.vertices[edgeIdx], p2 = shape.vertices[(edgeIdx + 1) % shape.vertices.length];
+  const horizontal = p1.y === p2.y;
+  for (let j = 0; j < shape.vertices.length; j++){
+    if (j === edgeIdx || shape.interior[j] || !shape.givenFlags[j]) continue;
+    const q1 = shape.vertices[j], q2 = shape.vertices[(j + 1) % shape.vertices.length];
+    if ((q1.y === q2.y) === horizontal) return j;
+  }
+  return -1;
+}
+
+/* Which edge holds the "part" (notch) number a given missing edge is
+   worked out from — the interior edge on the same axis. */
+function partEdgeIndexFor(edgeIdx){
+  const p1 = shape.vertices[edgeIdx], p2 = shape.vertices[(edgeIdx + 1) % shape.vertices.length];
+  const horizontal = p1.y === p2.y;
+  for (let j = 0; j < shape.vertices.length; j++){
+    if (!shape.interior[j]) continue;
+    const q1 = shape.vertices[j], q2 = shape.vertices[(j + 1) % shape.vertices.length];
+    if ((q1.y === q2.y) === horizontal) return j;
+  }
+  return -1;
+}
+
+/* ---------- rendering ---------- */
+function buildSVG(){
+  const pts = shape.vertices.map(toPx);
+  const pathD = 'M ' + pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L ') + ' Z';
+
+  let svg = `<svg viewBox="0 0 ${CANVAS} ${CANVAS}" xmlns="http://www.w3.org/2000/svg">`;
+  svg += `<path d="${pathD}" fill="#fffdf9" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>`;
+
+  const activeIdx = stage === 'findMissing' ? missingQueue[missingStepIdx] : null;
+  let focusHorizontal = null;
+  let highlightIdx = [];
+  if (activeIdx !== null){
+    const av1 = shape.vertices[activeIdx], av2 = shape.vertices[(activeIdx + 1) % shape.vertices.length];
+    focusHorizontal = av1.y === av2.y;
+    // Highlight the source number(s) the pupil needs for the current sub-step:
+    // just the "whole" side while finding it, then both it and the notch
+    // "part" once they're subtracting to find the missing side.
+    highlightIdx = subStep === 'whole'
+      ? [wholeEdgeIndexFor(activeIdx)]
+      : [wholeEdgeIndexFor(activeIdx), partEdgeIndexFor(activeIdx)];
+  }
+
+  shape.edgeLengths.forEach((len, i) => {
+    const v1 = shape.vertices[i], v2 = shape.vertices[(i + 1) % shape.vertices.length];
+    const edgeHorizontal = v1.y === v2.y;
+    // While solving one missing side, hide every label on the other axis
+    // so pupils aren't distracted by numbers that aren't relevant yet.
+    if (focusHorizontal !== null && edgeHorizontal !== focusHorizontal) return;
+
+    const p1 = toPx(shape.vertices[i]);
+    const p2 = toPx(shape.vertices[(i + 1) % shape.vertices.length]);
+    const t = shape.labelT[i];
+    const mid = { x: p1.x + (p2.x - p1.x) * t, y: p1.y + (p2.y - p1.y) * t };
+    const dir = shape.offsets[i];
+    const pad = shape.interior[i] ? 20 : 12;
+
+    let x = mid.x, y = mid.y, anchor = 'middle';
+    if (dir === 'up'){ y = mid.y - pad - 2; }
+    else if (dir === 'down'){ y = mid.y + pad + 14; }
+    else if (dir === 'left'){ x = mid.x - pad; anchor = 'end'; y = mid.y + 6; }
+    else if (dir === 'right'){ x = mid.x + pad; anchor = 'start'; y = mid.y + 6; }
+
+    let text, fillColor;
+    if (solvedSides[i] !== null){
+      text = solvedSides[i];
+      fillColor = shape.givenFlags[i] ? 'var(--ink)' : 'var(--good)';
+    } else {
+      text = '?';
+      fillColor = (i === activeIdx) ? 'var(--mark-deep)' : 'var(--ink-soft)';
+    }
+
+    if (highlightIdx.includes(i)){
+      const boxW = Math.max(30, String(text).length * 12 + 12);
+      let boxX = x;
+      if (anchor === 'middle') boxX = x - boxW / 2;
+      else if (anchor === 'end') boxX = x - boxW;
+      svg += `<rect x="${boxX.toFixed(1)}" y="${(y - 17).toFixed(1)}" width="${boxW}" height="23" rx="5" fill="var(--mark)"/>`;
+    }
+    svg += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" fill="${fillColor}" class="shapeLabel">${text}</text>`;
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+/* ---------- solving ---------- */
+function doCheckWhole(){
+  const checkFeedback = document.getElementById('ls-checkFeedback');
+  const input = document.getElementById('ls-answerInput');
+  if (!input) return;
+  const val = parseInt(input.value, 10);
+  if (isNaN(val)){
+    checkFeedback.textContent = 'Type a number first.';
+    checkFeedback.className = 'checkFeedback bad';
+    return;
+  }
+  const bd = breakdownFor(missingQueue[missingStepIdx]);
+  if (val === bd.whole){
+    checkFeedback.textContent = 'Correct!';
+    checkFeedback.className = 'checkFeedback good';
+    subStep = 'missing';
+    hintShown = false;
+    setTimeout(render, 350);
+  } else {
+    checkFeedback.textContent = bd.horizontal
+      ? 'Not quite — look at the full length across the top or bottom of the shape.'
+      : 'Not quite — look at the full length down the left or right of the shape.';
+    checkFeedback.className = 'checkFeedback bad';
+    input.value = '';
+    input.focus();
+  }
+}
+
+function doCheckMissingLen(){
+  const checkFeedback = document.getElementById('ls-checkFeedback');
+  const input = document.getElementById('ls-answerInput');
+  if (!input) return;
+  const val = parseInt(input.value, 10);
+  if (isNaN(val)){
+    checkFeedback.textContent = 'Type a number first.';
+    checkFeedback.className = 'checkFeedback bad';
+    return;
+  }
+  const edgeIdx = missingQueue[missingStepIdx];
+  const bd = breakdownFor(edgeIdx);
+  if (val === bd.missing){
+    checkFeedback.textContent = 'Correct!';
+    checkFeedback.className = 'checkFeedback good';
+    solvedSides[edgeIdx] = bd.missing;
+    missingStepIdx += 1;
+    if (missingStepIdx >= missingQueue.length){
+      stage = 'perimeter';
+    } else {
+      subStep = 'whole';
+      hintShown = false;
+    }
+    setTimeout(render, 400);
+  } else {
+    checkFeedback.textContent = 'Not quite — try again.';
+    checkFeedback.className = 'checkFeedback bad';
+    input.value = '';
+    input.focus();
+  }
+}
+
+/* Toggles the hint text in place, without rebuilding the answer input —
+   so a pupil's in-progress typing isn't lost when they check the hint. */
+function toggleHint(){
+  hintShown = !hintShown;
+  const hintBtn = document.getElementById('ls-hintBtn');
+  const hintText = document.getElementById('ls-hintText');
+  if (!hintBtn || !hintText) return;
+  const bd = breakdownFor(missingQueue[missingStepIdx]);
+  hintBtn.textContent = hintShown ? 'Hide hint' : 'Show hint';
+  hintText.textContent = hintShown ? `${bd.whole} − ${bd.part} = ?` : '';
+}
+
+function doCheckPerimeter(){
+  const checkFeedback = document.getElementById('ls-checkFeedback');
+  const input = document.getElementById('ls-perimeterInput');
+  if (!input) return;
+  const val = parseInt(input.value, 10);
+  if (isNaN(val)){
+    checkFeedback.textContent = 'Type the perimeter first.';
+    checkFeedback.className = 'checkFeedback bad';
+    return;
+  }
+  const total = shape.edgeLengths.reduce((a, b) => a + b, 0);
+  if (val === total){
+    checkFeedback.textContent = 'Correct!';
+    checkFeedback.className = 'checkFeedback good';
+    input.className = 'blankInput correct';
+    input.disabled = true;
+    stage = 'finished';
+    setTimeout(render, 350);
+  } else {
+    checkFeedback.textContent = 'Not quite — add all six sides again.';
+    checkFeedback.className = 'checkFeedback bad';
+    input.value = '';
+    input.className = 'blankInput wrong';
+    input.focus();
+  }
+}
+
+function renderFinish(){
+  const total = shape.edgeLengths.reduce((a, b) => a + b, 0);
+  const sumStr = shape.edgeLengths.join(' + ');
+  return `<div class="finishBox">
+    <div class="headline">Solved!</div>
+    <p>${sumStr} = <span class="ans">${total}</span></p>
+    <p>Perimeter = <span class="ans">${total}</span></p>
+  </div>`;
+}
+
+/* ---------- main render ---------- */
+function render(){
+  const svgHost = document.getElementById('ls-svgHost');
+  const questionLabel = document.getElementById('ls-questionLabel');
+  const answerHost = document.getElementById('ls-answerHost');
+  const perimeterHost = document.getElementById('ls-perimeterHost');
+  const stagePrompt = document.getElementById('ls-stagePrompt');
+  const checkRow = document.getElementById('ls-checkRow');
+  const checkFeedback = document.getElementById('ls-checkFeedback');
+  const finishHost = document.getElementById('ls-finishHost');
+
+  svgHost.innerHTML = buildSVG();
+
+  if (stage === 'findMissing'){
+    questionLabel.textContent = `Missing side ${missingStepIdx + 1} of ${missingQueue.length}`;
+    const bd = breakdownFor(missingQueue[missingStepIdx]);
+
+    if (subStep === 'whole'){
+      stagePrompt.textContent = bd.horizontal ? 'How wide is the shape? Use the highlighted number.' : 'How tall is the shape? Use the highlighted number.';
+      answerHost.innerHTML = `
+        <div class="answerRow">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" class="shapeInput" id="ls-answerInput">
+        </div>
+      `;
+    } else {
+      stagePrompt.textContent = 'So how long is the missing side? Use the two highlighted numbers.';
+      answerHost.innerHTML = `
+        <div class="answerRow" style="align-items:center;">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" class="shapeInput" id="ls-answerInput">
+          <button class="btn secondary small" id="ls-hintBtn">${hintShown ? 'Hide hint' : 'Show hint'}</button>
+        </div>
+        <div class="quotHint" id="ls-hintText">${hintShown ? `${bd.whole} &minus; ${bd.part} = ?` : ''}</div>
+      `;
+      const hintBtn = document.getElementById('ls-hintBtn');
+      if (hintBtn) hintBtn.addEventListener('click', toggleHint);
+    }
+
+    const answerInput = document.getElementById('ls-answerInput');
+    if (answerInput){
+      answerInput.addEventListener('input', () => {
+        answerInput.value = answerInput.value.replace(/[^0-9]/g, '').slice(0, 3);
+      });
+      answerInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') (subStep === 'whole' ? doCheckWhole() : doCheckMissingLen());
+      });
+      setTimeout(() => answerInput.focus(), 30);
+    }
+
+    perimeterHost.innerHTML = '';
+    checkRow.style.display = 'flex';
+    checkFeedback.textContent = '';
+    checkFeedback.className = 'checkFeedback';
+    finishHost.innerHTML = '';
+    return;
+  }
+
+  questionLabel.textContent = '';
+
+  if (stage === 'perimeter'){
+    stagePrompt.textContent = 'Now add all six sides to find the perimeter.';
+    answerHost.innerHTML = '';
+    perimeterHost.innerHTML = `
+      <div class="sentenceBox">
+        ${shape.edgeLengths.join(' + ')} = <input id="ls-perimeterInput" class="blankInput" type="text" inputmode="numeric" autocomplete="off" placeholder="?">
+      </div>
+    `;
+    const perimeterInput = document.getElementById('ls-perimeterInput');
+    if (perimeterInput){
+      perimeterInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doCheckPerimeter(); });
+      setTimeout(() => perimeterInput.focus(), 30);
+    }
+    checkRow.style.display = 'flex';
+    checkFeedback.textContent = '';
+    checkFeedback.className = 'checkFeedback';
+    finishHost.innerHTML = '';
+    return;
+  }
+
+  if (stage === 'finished'){
+    stagePrompt.textContent = '';
+    answerHost.innerHTML = '';
+    perimeterHost.innerHTML = '';
+    checkRow.style.display = 'none';
+    checkFeedback.textContent = '';
+    finishHost.innerHTML = renderFinish();
+  }
+}
+})();
+</script>
+
+<script>
+(function(){
+let tcDirection = '12to24';
+let tcTime = null;       // raw generated time: { hour12, period, minute } or { hour24, minute }
+let tcComputed = null;   // derived target: { hour24, needsChange } or { hour12, period, needsChange }
+let stage = 'ask';       // 'ask' -> 'convert' -> 'finished'
+let hintShown = false;
+
+function randInt(min, max){ return min + Math.floor(Math.random() * (max - min + 1)); }
+function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+function fmt12(hour, minute, period){ return `${hour}:${pad2(minute)} ${period}`; }
+function fmt24(hour, minute){ return `${pad2(hour)}:${pad2(minute)}`; }
+
+/* Weighted so pupils see the 12/00 edge cases often enough to learn them,
+   not just the plain add-12/subtract-12 case. */
+function genTime(direction){
+  if (direction === '12to24'){
+    const hour12 = Math.random() < 0.25 ? 12 : randInt(1, 11);
+    const period = Math.random() < 0.5 ? 'am' : 'pm';
+    const minute = randInt(0, 59);
+    return { hour12, period, minute };
+  }
+  const r = Math.random();
+  const hour24 = r < 0.15 ? 0 : (r < 0.3 ? 12 : randInt(1, 23));
+  const minute = randInt(0, 59);
+  return { hour24, minute };
+}
+
+function computeTime(direction, t){
+  if (direction === '12to24'){
+    const { hour12, period } = t;
+    const hour24 = period === 'am' ? (hour12 === 12 ? 0 : hour12) : (hour12 === 12 ? 12 : hour12 + 12);
+    const needsChange = (period === 'pm' && hour12 !== 12) || (period === 'am' && hour12 === 12);
+    return { hour24, needsChange };
+  }
+  const { hour24 } = t;
+  let hour12 = hour24 % 12; if (hour12 === 0) hour12 = 12;
+  const period = hour24 < 12 ? 'am' : 'pm';
+  const needsChange = hour24 === 0 || hour24 >= 13;
+  return { hour12, period, needsChange };
+}
+
+function sourceStr(){
+  return tcDirection === '12to24' ? fmt12(tcTime.hour12, tcTime.minute, tcTime.period) : fmt24(tcTime.hour24, tcTime.minute);
+}
+function targetStr(){
+  return tcDirection === '12to24' ? fmt24(tcComputed.hour24, tcTime.minute) : fmt12(tcComputed.hour12, tcTime.minute, tcComputed.period);
+}
+
+function ruleHintText(){
+  return tcDirection === '12to24'
+    ? 'PM times need 12 adding to the hour — except 12 pm, which stays as 12. The other exception is 12 am, which becomes 00.'
+    : 'Hours 13–23 need 12 subtracting — except hour 12, which stays as 12 (noon). The other exception is hour 00, which becomes 12 (midnight).';
+}
+
+function stepHintText(){
+  if (tcDirection === '12to24'){
+    const { hour12, period } = tcTime;
+    if (period === 'pm' && hour12 !== 12) return `${hour12} + 12 = ${tcComputed.hour24}, so the hour becomes ${pad2(tcComputed.hour24)}.`;
+    if (period === 'am' && hour12 === 12) return `12 am is midnight, so the hour becomes 00.`;
+    return `The hour stays as ${hour12} — just write it with two digits and no am/pm.`;
+  }
+  const { hour24 } = tcTime;
+  if (hour24 >= 13) return `${hour24} − 12 = ${tcComputed.hour12}, so the hour becomes ${tcComputed.hour12}.`;
+  if (hour24 === 0) return `00 is midnight, so the hour becomes 12 am.`;
+  return `The hour stays as ${tcComputed.hour12} — just add am or pm.`;
+}
+
+let tcDirectionChoice = tcDirection;
+document.querySelectorAll('#tc-directionPills .pill').forEach(b => {
+  b.addEventListener('click', () => {
+    tcDirectionChoice = b.dataset.direction;
+    document.querySelectorAll('#tc-directionPills .pill').forEach(x => x.classList.toggle('active', x === b));
+  });
+});
+
+document.getElementById('tc-startBtn').addEventListener('click', () => {
+  tcDirection = tcDirectionChoice;
+  tcTime = genTime(tcDirection);
+  tcComputed = computeTime(tcDirection, tcTime);
+  stage = 'ask';
+  hintShown = false;
+  document.getElementById('tc-setup').style.display = 'none';
+  document.getElementById('tc-presentation').style.display = 'block';
+  render();
+});
+
+document.getElementById('tc-resetBtn').addEventListener('click', () => {
+  document.getElementById('tc-presentation').style.display = 'none';
+  document.getElementById('tc-setup').style.display = 'block';
+});
+
+document.getElementById('tc-checkBtn').addEventListener('click', () => {
+  if (stage === 'convert') doCheckConvert();
+});
+
+function doCheckAsk(userSaysChanges){
+  const checkFeedback = document.getElementById('tc-checkFeedback');
+  if (userSaysChanges === tcComputed.needsChange){
+    checkFeedback.textContent = 'Correct!';
+    checkFeedback.className = 'checkFeedback good';
+    stage = 'convert';
+    hintShown = false;
+    setTimeout(render, 350);
+  } else {
+    checkFeedback.textContent = 'Not quite — try again.';
+    checkFeedback.className = 'checkFeedback bad';
+  }
+}
+
+function doCheckConvert(){
+  const checkFeedback = document.getElementById('tc-checkFeedback');
+  const input = document.getElementById('tc-answerInput');
+  if (!input) return;
+  const raw = input.value.trim();
+  if (raw === ''){
+    checkFeedback.textContent = 'Type the new time first.';
+    checkFeedback.className = 'checkFeedback bad';
+    return;
+  }
+
+  let ok = false;
+  if (tcDirection === '12to24'){
+    const m = raw.match(/^(\d{1,2}):?(\d{2})$/);
+    if (m) ok = parseInt(m[1], 10) === tcComputed.hour24 && parseInt(m[2], 10) === tcTime.minute;
+  } else {
+    const m = raw.toLowerCase().replace(/\s+/g, ' ').match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/);
+    if (m) ok = parseInt(m[1], 10) === tcComputed.hour12 && parseInt(m[2], 10) === tcTime.minute && m[3] === tcComputed.period;
+  }
+
+  if (ok){
+    checkFeedback.textContent = 'Correct!';
+    checkFeedback.className = 'checkFeedback good';
+    input.className = 'blankInput correct';
+    input.disabled = true;
+    stage = 'finished';
+    setTimeout(render, 350);
+  } else {
+    checkFeedback.textContent = 'Not quite — try again.';
+    checkFeedback.className = 'checkFeedback bad';
+    input.className = 'blankInput wrong';
+    input.value = '';
+    input.focus();
+  }
+}
+
+/* Toggles the hint text in place, without rebuilding the answer input —
+   so a pupil's in-progress typing isn't lost when they check the hint. */
+function toggleHint(){
+  hintShown = !hintShown;
+  const hintBtn = document.getElementById('tc-hintBtn');
+  const hintText = document.getElementById('tc-hintText');
+  if (!hintBtn || !hintText) return;
+  hintBtn.textContent = hintShown ? 'Hide hint' : 'Show hint';
+  hintText.textContent = hintShown ? (stage === 'ask' ? ruleHintText() : stepHintText()) : '';
+}
+
+function render(){
+  const questionLabel = document.getElementById('tc-questionLabel');
+  const timeDisplay = document.getElementById('tc-timeDisplay');
+  const stagePrompt = document.getElementById('tc-stagePrompt');
+  const answerHost = document.getElementById('tc-answerHost');
+  const checkRow = document.getElementById('tc-checkRow');
+  const checkFeedback = document.getElementById('tc-checkFeedback');
+  const finishHost = document.getElementById('tc-finishHost');
+
+  timeDisplay.innerHTML = `<span class="num">${sourceStr()}</span>`;
+
+  if (stage === 'ask'){
+    questionLabel.textContent = tcDirection === '12to24' ? 'Convert to 24-hour time' : 'Convert to 12-hour time';
+    stagePrompt.textContent = 'Does the hour need to change to convert this time?';
+    answerHost.innerHTML = `
+      <div class="answerRow" style="flex-wrap:wrap;">
+        <button class="pill" id="tc-yesBtn">Yes, it changes</button>
+        <button class="pill" id="tc-noBtn">No, it stays the same</button>
+        <button class="btn secondary small" id="tc-hintBtn">${hintShown ? 'Hide hint' : 'Show hint'}</button>
+      </div>
+      <div class="quotHint" id="tc-hintText">${hintShown ? ruleHintText() : ''}</div>
+    `;
+    document.getElementById('tc-yesBtn').addEventListener('click', () => doCheckAsk(true));
+    document.getElementById('tc-noBtn').addEventListener('click', () => doCheckAsk(false));
+    document.getElementById('tc-hintBtn').addEventListener('click', toggleHint);
+
+    checkRow.style.display = 'none';
+    checkFeedback.textContent = '';
+    checkFeedback.className = 'checkFeedback';
+    finishHost.innerHTML = '';
+    return;
+  }
+
+  if (stage === 'convert'){
+    questionLabel.textContent = tcComputed.needsChange ? 'The hour changes' : 'The hour stays the same';
+    stagePrompt.textContent = tcDirection === '12to24'
+      ? 'Now write the time in 24-hour form (e.g. 09:05).'
+      : 'Now write the time in 12-hour form (e.g. 9:05 am).';
+    answerHost.innerHTML = `
+      <div class="answerRow">
+        <input type="text" autocomplete="off" class="blankInput" id="tc-answerInput" placeholder="${tcDirection === '12to24' ? 'HH:MM' : 'H:MM am/pm'}">
+        <button class="btn secondary small" id="tc-hintBtn">${hintShown ? 'Hide hint' : 'Show hint'}</button>
+      </div>
+      <div class="quotHint" id="tc-hintText">${hintShown ? stepHintText() : ''}</div>
+    `;
+    document.getElementById('tc-hintBtn').addEventListener('click', toggleHint);
+
+    const input = document.getElementById('tc-answerInput');
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doCheckConvert(); });
+    setTimeout(() => input.focus(), 30);
+
+    checkRow.style.display = 'flex';
+    checkFeedback.textContent = '';
+    checkFeedback.className = 'checkFeedback';
+    finishHost.innerHTML = '';
+    return;
+  }
+
+  if (stage === 'finished'){
+    questionLabel.textContent = '';
+    stagePrompt.textContent = '';
+    answerHost.innerHTML = '';
+    checkRow.style.display = 'none';
+    checkFeedback.textContent = '';
+    finishHost.innerHTML = `<div class="finishBox">
+      <div class="headline">Solved!</div>
+      <p>${sourceStr()} = <span class="ans">${targetStr()}</span></p>
+    </div>`;
+  }
+}
+})();
+</script>
+
+<script>
+(function(){
+/* ---------- helpers ---------- */
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function gcd(a,b){ return b===0 ? a : gcd(b, a % b); }
+
+/* ---------- setup UI ---------- */
+let count = 2;
+let customMode = false;
+
+document.querySelectorAll('#hcf-countPills .pill').forEach(b => {
+  b.addEventListener('click', () => {
+    count = Number(b.dataset.count);
+    document.querySelectorAll('#hcf-countPills .pill').forEach(x => x.classList.toggle('active', x === b));
+    document.getElementById('hcf-thirdField').style.display = count === 3 ? 'inline-block' : 'none';
+  });
+});
+document.querySelectorAll('#hcf-modePills .pill').forEach(b => {
+  b.addEventListener('click', () => {
+    customMode = b.dataset.mode === 'custom';
+    document.querySelectorAll('#hcf-modePills .pill').forEach(x => x.classList.toggle('active', x === b));
+    document.getElementById('hcf-customNums').style.display = customMode ? 'block' : 'none';
+  });
+});
+
+function generateRandomNumbers(cnt){
+  for (let attempt=0; attempt<500; attempt++){
+    const hcf = randInt(2,9);
+    const mults = new Set();
+    while (mults.size < cnt) mults.add(randInt(2,9));
+    const arr = [...mults];
+    const nums = arr.map(m => hcf*m);
+    if (nums.every(n => n<=120) && new Set(nums).size===cnt) return nums;
+  }
+  return cnt===3 ? [24,36,60] : [24,36];
+}
+
+/* ---------- state ---------- */
+let tables = [];            // { n, maxD, d, rows:[[a,b], ...] }
+let activeIdx = 0;
+let substage = 'ask';       // 'ask' | 'pair'
+let chosenYesNo = null;
+let checkedPair = false;
+let isCorrectPair = false;
+let stage = 'building';     // 'building' | 'final'
+let finalChecked = false;
+let finalCorrect = false;
+
+document.getElementById('hcf-startBtn').addEventListener('click', () => {
+  let numbers;
+  if (customMode){
+    const ids = ['hcf-num1','hcf-num2','hcf-num3'].slice(0, count);
+    const vals = ids.map(id => parseInt(document.getElementById(id).value, 10));
+    if (vals.some(v => isNaN(v) || v < 2 || v > 300)){
+      alert('Enter whole numbers of 2 or more (up to 300) for each.');
+      return;
+    }
+    numbers = vals;
+  } else {
+    numbers = generateRandomNumbers(count);
+  }
+
+  tables = numbers.map(n => ({ n, maxD: Math.floor(Math.sqrt(n)), d: 1, rows: [] }));
+  activeIdx = 0;
+  substage = 'ask';
+  chosenYesNo = null;
+  checkedPair = false;
+  isCorrectPair = false;
+  stage = 'building';
+  finalChecked = false;
+  finalCorrect = false;
+
+  document.getElementById('hcf-setup').style.display = 'none';
+  document.getElementById('hcf-presentation').style.display = 'block';
+  render();
+});
+
+document.getElementById('hcf-resetBtn').addEventListener('click', () => {
+  document.getElementById('hcf-presentation').style.display = 'none';
+  document.getElementById('hcf-setup').style.display = 'block';
+});
+
+function currentTable(){ return tables[activeIdx]; }
+
+function factorsOf(t){
+  const set = new Set();
+  t.rows.forEach(r => { set.add(r[0]); set.add(r[1]); });
+  return [...set].sort((a,b) => a-b);
+}
+
+/* ---------- interaction ---------- */
+function selectYesNo(opt, correctOpt){
+  chosenYesNo = opt;
+  render();
+  if (opt === correctOpt){
+    if (opt === 'Yes'){
+      setTimeout(() => { substage = 'pair'; chosenYesNo = null; render(); }, 500);
+    } else {
+      setTimeout(() => { advanceD(); }, 500);
+    }
+  } else {
+    setTimeout(() => { chosenYesNo = null; render(); }, 900);
+  }
+}
+
+function checkPair(){
+  const t = currentTable();
+  const partner = t.n / t.d;
+  const input = document.getElementById('hcf-pairInput');
+  if (!input) return;
+  const v = parseInt(input.value, 10);
+  checkedPair = true;
+  isCorrectPair = (v === partner);
+  if (isCorrectPair){
+    t.rows.push([t.d, partner]);
+    render();
+    setTimeout(() => { advanceD(); }, 500);
+  } else {
+    render();
+    setTimeout(() => { const el = document.getElementById('hcf-pairInput'); if (el) el.focus(); }, 30);
+  }
+}
+
+function advanceD(){
+  const t = currentTable();
+  t.d += 1;
+  chosenYesNo = null;
+  checkedPair = false;
+  isCorrectPair = false;
+  substage = 'ask';
+  if (t.d > t.maxD){
+    if (activeIdx < tables.length - 1){
+      activeIdx += 1;
+    } else {
+      stage = 'final';
+    }
+  }
+  render();
+}
+
+function checkFinal(actualHCF){
+  const input = document.getElementById('hcf-finalInput');
+  if (!input) return;
+  const v = parseInt(input.value, 10);
+  finalChecked = true;
+  finalCorrect = (v === actualHCF);
+  render();
+  if (!finalCorrect){
+    setTimeout(() => { const el = document.getElementById('hcf-finalInput'); if (el) el.focus(); }, 30);
+  }
+}
+
+/* ---------- render ---------- */
+function render(){
+  const stageLabel = document.getElementById('hcf-stageLabel');
+  const promptText = document.getElementById('hcf-promptText');
+  const tablesHost = document.getElementById('hcf-tablesHost');
+  const choiceRow = document.getElementById('hcf-choiceRow');
+  const feedbackText = document.getElementById('hcf-feedbackText');
+  const pairHost = document.getElementById('hcf-pairHost');
+  const finalHost = document.getElementById('hcf-finalHost');
+
+  tablesHost.innerHTML = '';
+  tables.forEach((t, idx) => {
+    const block = document.createElement('div');
+    const isActive = stage === 'building' && idx === activeIdx;
+    block.className = 'hcfTable' + (isActive ? ' active' : '');
+    const rowsHtml = t.rows.map(r => `<div class="hcfPairRow"><div class="hcfCell">${r[0]}</div><div class="hcfCell">${r[1]}</div></div>`).join('');
+    let doneHtml = '';
+    if (t.d > t.maxD){
+      doneHtml = `<div class="hcfFactorList">Factors: ${factorsOf(t).map(f => `<span class="tag">${f}</span>`).join('')}</div>`;
+    }
+    block.innerHTML = `<div class="hcfHead">${t.n}</div>${rowsHtml}${doneHtml}`;
+    tablesHost.appendChild(block);
+  });
+
+  if (stage === 'building'){
+    const t = currentTable();
+    stageLabel.textContent = `Finding factors of ${t.n}` + (tables.length > 1 ? ` — number ${activeIdx+1} of ${tables.length}` : '');
+    pairHost.innerHTML = '';
+    finalHost.innerHTML = '';
+
+    if (substage === 'ask'){
+      const isFactor = t.n % t.d === 0;
+      const correctOpt = isFactor ? 'Yes' : 'No';
+      promptText.textContent = `Is ${t.d} a factor of ${t.n}?`;
+      choiceRow.style.display = 'flex';
+      choiceRow.innerHTML = '';
+      ['Yes','No'].forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'choiceBtn';
+        btn.textContent = opt;
+        btn.disabled = chosenYesNo !== null;
+        if (chosenYesNo !== null){
+          if (opt === correctOpt) btn.classList.add('correct');
+          if (opt === chosenYesNo && opt !== correctOpt) btn.classList.add('wrong');
+        }
+        btn.addEventListener('click', () => selectYesNo(opt, correctOpt));
+        choiceRow.appendChild(btn);
+      });
+      if (chosenYesNo === null){
+        feedbackText.textContent = '';
+      } else if (chosenYesNo === correctOpt){
+        feedbackText.className = 'feedback good';
+        feedbackText.textContent = 'Correct!';
+      } else {
+        feedbackText.className = 'feedback bad';
+        feedbackText.textContent = 'Not quite — try again.';
+      }
+    } else {
+      choiceRow.style.display = 'none';
+      feedbackText.textContent = '';
+      const partner = t.n / t.d;
+      promptText.textContent = `${t.d} is a factor. What's its pair?`;
+      pairHost.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;margin:6px 0 14px;flex-wrap:wrap;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:17px;">${t.d} ×</span>
+          <input type="number" inputmode="numeric" class="hcfPairInput" id="hcf-pairInput" value="${checkedPair && isCorrectPair ? partner : ''}" ${checkedPair && isCorrectPair ? 'disabled' : ''}>
+          <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:17px;">= ${t.n}</span>
+          <button class="btn" id="hcf-pairCheckBtn">Check</button>
+        </div>
+        <div class="checkFeedback ${checkedPair ? (isCorrectPair ? 'good' : 'bad') : ''}">${checkedPair ? (isCorrectPair ? 'Correct!' : 'Not quite — try again.') : ''}</div>
+      `;
+      const pairInput = document.getElementById('hcf-pairInput');
+      const pairCheckBtn = document.getElementById('hcf-pairCheckBtn');
+      pairCheckBtn.addEventListener('click', checkPair);
+      pairInput.addEventListener('keydown', e => { if (e.key === 'Enter') checkPair(); });
+      if (!(checkedPair && isCorrectPair)) setTimeout(() => pairInput.focus(), 30);
+    }
+  } else {
+    // final stage — spot the highest common factor
+    choiceRow.style.display = 'none';
+    feedbackText.textContent = '';
+    pairHost.innerHTML = '';
+    stageLabel.textContent = 'Highest common factor';
+    const isBoth = tables.length === 2;
+    promptText.textContent = `What's the highest number that appears in ${isBoth ? 'both' : 'all'} lists?`;
+
+    const actualHCF = tables.reduce((g, t) => gcd(g, t.n), tables[0].n);
+    const listStr = tables.length === 2
+      ? `${tables[0].n} and ${tables[1].n}`
+      : `${tables[0].n}, ${tables[1].n} and ${tables[2].n}`;
+
+    finalHost.innerHTML = `
+      <div class="sentenceBox">So the highest common factor of <span class="num">${listStr}</span> is
+        <input id="hcf-finalInput" class="blankInput ${finalChecked ? (finalCorrect ? 'correct' : 'wrong') : ''}" type="number" inputmode="numeric" placeholder="?" value="${finalChecked && finalCorrect ? actualHCF : ''}" ${finalChecked && finalCorrect ? 'disabled' : ''}>
+      </div>
+      <div class="checkRow">
+        <button class="btn" id="hcf-finalCheckBtn">Check answer</button>
+      </div>
+      <div class="checkFeedback ${finalChecked ? (finalCorrect ? 'good' : 'bad') : ''}">${finalChecked ? (finalCorrect ? 'Correct — well done!' : 'Not quite — compare the lists again.') : ''}</div>
+    `;
+    const finalInput = document.getElementById('hcf-finalInput');
+    const finalCheckBtn = document.getElementById('hcf-finalCheckBtn');
+    finalCheckBtn.addEventListener('click', () => checkFinal(actualHCF));
+    finalInput.addEventListener('keydown', e => { if (e.key === 'Enter') checkFinal(actualHCF); });
+    if (!(finalChecked && finalCorrect)) setTimeout(() => finalInput.focus(), 30);
+  }
+}
+})();
+</script>
+
+</body>
+</html>
