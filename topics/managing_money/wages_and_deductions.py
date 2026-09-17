@@ -67,6 +67,10 @@ def generate_wages_and_deductions_l1():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "wages_and_deductions",
+            "scaffold_widget_params": {"kind": "gross", "basic": basic, "overtime": overtime, "bonus": bonus},
+        },
     )
 
 
@@ -106,6 +110,10 @@ def generate_wages_and_deductions_l2():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "wages_and_deductions",
+            "scaffold_widget_params": {"kind": "deductions", "tax": tax, "ni": ni, "pension": pension},
+        },
     )
 
 
@@ -162,6 +170,13 @@ def generate_wages_and_deductions_l3():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "wages_and_deductions",
+            "scaffold_widget_params": {
+                "kind": "full", "basic": basic, "overtime": overtime, "bonus": bonus,
+                "tax": tax, "ni": ni, "pension": pension,
+            },
+        },
     )
 
 

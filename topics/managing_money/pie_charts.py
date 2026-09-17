@@ -79,6 +79,10 @@ def generate_pie_charts_l1():
                 "wedge_labels": [f"{a}°" for a in angles],
                 "show_legend": False,
             },
+            "scaffold_widget": "pie_angle_calculator",
+            "scaffold_widget_params": {
+                "categories": list(categories), "kind": "angle_to_pct", "target_idx": idx, "angles": list(angles),
+            },
         },
     )
 
@@ -140,6 +144,10 @@ def generate_pie_charts_l2():
                 "angles": angles,
                 "wedge_labels": wedge_labels,
                 "show_legend": False,
+            },
+            "scaffold_widget": "pie_angle_calculator",
+            "scaffold_widget_params": {
+                "categories": list(categories), "kind": "missing_sector", "target_idx": missing_idx, "pcts": list(pcts),
             },
         },
     )

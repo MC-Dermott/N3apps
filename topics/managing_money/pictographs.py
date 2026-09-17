@@ -62,6 +62,7 @@ def _make_question(n_categories):
         )
         worked = [f"{categories[idx]}: {n_symbols_str} symbols × {unit_value} = {answer} {sc['unit']}"]
         scaffold_steps = []
+        widget_relevant, widget_op = [categories[idx]], "read"
     elif focus == "compare":
         i, j = random.sample(range(len(categories)), 2)
         bigger, smaller = (i, j) if values[i] >= values[j] else (j, i)
@@ -78,6 +79,7 @@ def _make_question(n_categories):
             {"prompt": f"Read the value for {categories[bigger]}", "answer": values[bigger]},
             {"prompt": f"Read the value for {categories[smaller]}", "answer": values[smaller]},
         ]
+        widget_relevant, widget_op = [categories[bigger], categories[smaller]], "diff"
     else:
         answer = sum(values)
         question_text = (
@@ -91,6 +93,7 @@ def _make_question(n_categories):
             {"prompt": f"Read the value for {cat}", "answer": val}
             for cat, val in zip(categories, values)
         ]
+        widget_relevant, widget_op = list(categories), "sum"
 
     return Question(
         question_text=question_text,
@@ -108,6 +111,11 @@ def _make_question(n_categories):
                 "unit_value": unit_value,
                 "icon_label": sc["unit"],
                 "title": sc["title"],
+            },
+            "scaffold_widget": "symbol_counter",
+            "scaffold_widget_params": {
+                "categories": list(categories), "values": list(values), "unit_value": unit_value,
+                "relevant": widget_relevant, "op": widget_op,
             },
         },
     )

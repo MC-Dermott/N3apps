@@ -46,6 +46,7 @@ def _make_question(focus_choices):
         )
         worked = [f"At {sc['x_values'][idx]}, the graph reads {answer}"]
         scaffold_steps = []
+        widget_relevant, widget_op = [idx], "single"
     elif focus == "difference":
         i, j = random.sample(range(len(sc["x_values"])), 2)
         bigger, smaller = (i, j) if y_values[i] >= y_values[j] else (j, i)
@@ -63,6 +64,7 @@ def _make_question(focus_choices):
             {"prompt": f"Read the value at {sc['x_values'][bigger]}", "answer": y_values[bigger]},
             {"prompt": f"Read the value at {sc['x_values'][smaller]}", "answer": y_values[smaller]},
         ]
+        widget_relevant, widget_op = [bigger, smaller], "diff"
     else:  # max or min
         want_max = random.choice([True, False])
         answer = max(y_values) if want_max else min(y_values)
@@ -73,6 +75,8 @@ def _make_question(focus_choices):
         )
         worked = [f"The {which} value on the graph is {answer}"]
         scaffold_steps = []
+        target_idx = y_values.index(max(y_values)) if want_max else y_values.index(min(y_values))
+        widget_relevant, widget_op = [target_idx], "single"
 
     return Question(
         question_text=question_text,
@@ -90,6 +94,11 @@ def _make_question(focus_choices):
                 "x_label": sc["x_label"],
                 "y_label": sc["y_label"],
                 "title": sc["title"],
+            },
+            "scaffold_widget": "line_graph_reader",
+            "scaffold_widget_params": {
+                "x_values": list(sc["x_values"]), "y_values": list(y_values),
+                "relevant": widget_relevant, "op": widget_op,
             },
         },
     )

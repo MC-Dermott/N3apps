@@ -72,6 +72,10 @@ def generate_bills_and_receipts_l1():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "receipt_adder",
+            "scaffold_widget_params": {"items": list(zip(items, prices))},
+        },
     )
 
 
@@ -101,6 +105,10 @@ def _standing_charge_question():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "receipt_adder",
+            "scaffold_widget_params": {"items": [("Standing Charge", standing), ("Cost of Units Used", usage)]},
+        },
     )
 
 
@@ -125,6 +133,10 @@ def _discount_subtraction_question():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "receipt_adder",
+            "scaffold_widget_params": {"items": [("Original price", original), ("Discount", -discount)]},
+        },
     )
 
 
@@ -149,6 +161,10 @@ def _postage_question():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "receipt_adder",
+            "scaffold_widget_params": {"items": [("Item cost", cost), ("Postage", postage)]},
+        },
     )
 
 
@@ -195,6 +211,10 @@ def generate_bills_and_receipts_l3():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "receipt_adder",
+            "scaffold_widget_params": {"items": [("Cost before VAT", cost), ("VAT", vat)]},
+        },
     )
 
 

@@ -120,6 +120,10 @@ def _generate(n_categories_range, n_items_range):
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "tally_marker",
+            "scaffold_widget_params": {"categories": list(categories), "data": list(data)},
+        },
     )
 
 

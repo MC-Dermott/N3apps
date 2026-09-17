@@ -99,6 +99,10 @@ def generate_percentages_non_calculator_l1():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "percentage_method_picker",
+            "scaffold_widget_params": {"pct_label": pct_str, "amount": amount},
+        },
     )
 
 
@@ -149,6 +153,10 @@ def generate_percentages_non_calculator_l2():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "percentage_method_picker",
+            "scaffold_widget_params": {"pct_label": str(pct), "amount": n},
+        },
     )
 
 

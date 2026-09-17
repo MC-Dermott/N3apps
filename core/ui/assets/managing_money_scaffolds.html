@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Managing Money Scaffolds</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+  /* ---- shared design tokens (copied from maths_scaffolds.html) ---- */
+  :root{
+    --paper: #faf7f0;
+    --ink: #22282f;
+    --ink-soft: #5b6470;
+    --line: #d8d2c4;
+    --down: #2f6f6b;
+    --down-tint: #e3efee;
+    --up: #c25b2e;
+    --up-tint: #fbeae0;
+    --mark: #d9a62c;
+    --mark-deep: #a97a13;
+    --guess: #8a8fa3;
+    --good: #2f6f4a;
+    --good-tint: #eaf3ec;
+    --bad: #b3402b;
+    --bad-tint: #fbeae6;
+    --exchange: #a9455f;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--ink);
+    background:
+      linear-gradient(var(--paper), var(--paper)),
+      repeating-linear-gradient(0deg, rgba(90,80,60,0.05) 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, rgba(90,80,60,0.05) 0 1px, transparent 1px 28px);
+    padding: 28px 18px 44px;
+  }
+  .wrap{ max-width: 820px; margin: 0 auto; }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: clamp(24px, 5vw, 36px);
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .sub{ color: var(--ink-soft); font-size: 15px; margin: 0 0 24px; max-width: 62ch; line-height:1.5; }
+
+  .panel{
+    background: #fffdf9;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  }
+
+  label{ display:block; font-size: 13px; font-weight:600; color: var(--ink-soft); margin-bottom: 7px; }
+  .field{ margin-bottom: 18px; }
+
+  .pills{ display:flex; flex-wrap:wrap; gap: 8px; }
+  .pill{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 13.5px; font-weight:500;
+    padding: 8px 13px; border-radius: 999px;
+    border: 1.5px solid var(--line); background: #fff; color: var(--ink-soft);
+    cursor: pointer; transition: border-color .12s, color .12s, background .12s;
+  }
+  .pill:hover{ border-color: var(--mark-deep); color: var(--ink); }
+  .pill.active{ background: var(--ink); border-color: var(--ink); color: #fff; }
+
+  .btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 15px; font-weight:600;
+    padding: 12px 20px; border-radius: 8px; border: none;
+    cursor: pointer; color: #fff; background: var(--ink);
+    transition: transform .08s, opacity .12s;
+  }
+  .btn:hover{ opacity:.9; }
+  .btn:active{ transform: scale(0.98); }
+  .btn.secondary{ background:#fff; color:var(--ink); border:1.5px solid var(--line); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn.small{ font-size:13px; padding:8px 14px; }
+
+  .startRow{ margin-top: 20px; }
+
+  .numInput{
+    width: 140px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 18px; font-weight:600;
+    padding: 9px 11px;
+    border: 1.5px solid var(--line); border-radius: 7px;
+    background: #fff; color: var(--ink); outline: none;
+  }
+  .numInput:focus{ border-color: var(--mark-deep); }
+  .numInput::-webkit-outer-spin-button, .numInput::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  textarea.numInput{ width:100%; height:90px; font-size:14px; resize:vertical; }
+
+  .numRow{ display:flex; gap: 14px; flex-wrap:wrap; }
+  .numRow .field{ flex:1; min-width:140px; }
+
+  .appContainer{ display:none; }
+
+  .stageLabel{
+    font-size: 12.5px; font-weight:600; letter-spacing: .02em;
+    color: var(--mark-deep); margin-bottom: 6px;
+  }
+  .prompt, .stagePrompt{
+    font-family:'Fraunces', serif;
+    font-size: clamp(18px, 3.2vw, 22px);
+    font-weight:600; margin: 6px 0 16px; line-height:1.4;
+  }
+
+  .choiceRow{ display:flex; gap: 10px; margin: 4px 0 20px; flex-wrap:wrap; }
+  .choiceBtn{
+    flex:1 1 140px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 15px; font-weight:600;
+    padding: 14px 10px; border-radius: 9px;
+    border: 2px solid var(--line); background: #fff; cursor: pointer;
+    text-align:center; transition: border-color .12s, background .12s;
+  }
+  .choiceBtn:hover:not(:disabled){ border-color: var(--mark-deep); }
+  .choiceBtn:disabled{ cursor:default; }
+  .choiceBtn.correct{ border-color: var(--good); background: var(--good-tint); color: var(--good); }
+  .choiceBtn.wrong{ border-color: var(--bad); background: var(--bad-tint); color: var(--bad); }
+
+  .sentenceBox{
+    font-family:'Fraunces', serif;
+    font-size: clamp(18px, 3.4vw, 24px);
+    font-weight: 600; line-height:1.7; margin: 6px 0 18px;
+  }
+  .sentenceBox .num{ font-family:'IBM Plex Mono', monospace; font-weight:600; }
+
+  .blankInput{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 20px; font-weight:600;
+    width: 120px; text-align:center; padding: 6px 8px;
+    border: none; border-bottom: 2.5px solid var(--ink);
+    background: transparent; color: var(--ink); outline: none; margin: 0 2px;
+  }
+  .blankInput:focus{ border-bottom-color: var(--mark-deep); }
+  .blankInput.correct{ border-bottom-color: var(--good); color: var(--good); background: var(--good-tint); }
+  .blankInput.wrong{ border-bottom-color: var(--bad); color: var(--bad); background: var(--bad-tint); }
+
+  .answerRow{ display:flex; gap:10px; align-items:center; margin-bottom: 8px; flex-wrap:wrap; }
+
+  .checkRow{ display:flex; align-items:center; gap: 14px; margin-bottom: 6px; }
+  .checkFeedback{ font-size: 13.5px; font-weight:600; margin: 2px 0 14px; min-height: 18px; }
+  .checkFeedback.good{ color: var(--good); }
+  .checkFeedback.bad{ color: var(--bad); }
+
+  .finishBox{
+    background: var(--good-tint); border: 1.5px solid var(--good);
+    border-radius: 8px; padding: 14px 16px; margin: 10px 0 4px;
+  }
+  .finishBox .headline{ font-family:'Fraunces', serif; font-weight:700; font-size:18px; color: var(--good); margin-bottom:6px; }
+  .finishBox p{ margin: 2px 0; font-size: 14px; color: var(--ink); line-height:1.5; }
+  .finishBox .ans{ font-family:'IBM Plex Mono', monospace; font-weight:700; }
+
+  .controls{ display:flex; gap: 10px; margin-top: 22px; flex-wrap:wrap; }
+  .foot{ text-align:center; font-size: 12px; color: var(--ink-soft); margin-top: 18px; }
+  .topRow{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom: 6px; }
+  .questionLabel{ font-size: 12.5px; font-weight:600; letter-spacing:.02em; color: var(--mark-deep); }
+
+  /* ---- ledger (wage slip / receipt) ---- */
+  .ledgerRows{ margin: 16px 0; border-top: 1.5px solid var(--line); }
+  .ledgerRow{
+    display:flex; align-items:center; gap:10px; padding: 9px 2px;
+    border-bottom: 1px solid var(--line); font-family:'IBM Plex Mono', monospace; font-size:15.5px;
+    opacity: .45; transition: opacity .15s, background-color .15s;
+  }
+  .ledgerRow.revealed{ opacity: 1; }
+  .ledgerRow.active{ background:#fdf6e3; border-radius:6px; opacity: 1; }
+  .ledgerOp{ width:16px; font-weight:700; color: var(--exchange); text-align:center; }
+  .ledgerLabel{ flex:1; font-family:'IBM Plex Sans', sans-serif; font-weight:500; color: var(--ink); }
+  .ledgerAmount{ font-weight:700; min-width:80px; text-align:right; }
+  .ledgerAmount.pending{ color: var(--ink-soft); }
+  .runningTotalBox{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-family:'IBM Plex Mono', monospace; font-size:19px; font-weight:700;
+    border-top: 3px solid var(--ink); padding-top:10px; margin-bottom: 18px;
+  }
+  .runningTotalBox .rtLabel{ font-family:'IBM Plex Sans', sans-serif; font-weight:600; font-size:13.5px; color: var(--ink-soft); }
+
+  /* ---- bar model splitter ---- */
+  .barModelHost{ margin: 20px 0 8px; }
+  .barModelTotal{ font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:15px; margin-bottom:6px; color: var(--ink-soft); }
+  .barModelBar{ display:flex; border:2px solid var(--ink); border-radius:6px; overflow:hidden; }
+  .barSeg{
+    flex:1; padding: 14px 4px; text-align:center; border-right: 1.5px dashed var(--line);
+    font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:600; color: var(--ink-soft);
+    background:#fff; min-width: 18px;
+  }
+  .barSeg:last-child{ border-right:none; }
+  .barSeg.filled{ background: var(--good-tint); color: var(--good); }
+
+  /* ---- percentage calculator flow ---- */
+  .flowRow{ display:flex; align-items:center; gap:10px; margin: 16px 0 20px; flex-wrap:wrap; }
+  .flowBox{
+    flex: 1 1 110px; text-align:center; background:#fff; border: 1.5px solid var(--line);
+    border-radius: 9px; padding: 14px 8px; font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:16px;
+  }
+  .flowBox.solved{ border-color: var(--good); background: var(--good-tint); color: var(--good); }
+  .flowArrow{ font-size:20px; color: var(--ink-soft); }
+
+  /* ---- increase/decrease number line ---- */
+  .nlHost{ margin: 18px 0 8px; }
+  .nlBarOuter{ display:flex; border:2px solid var(--ink); border-radius:8px; overflow:hidden; height:52px; }
+  .nlOriginalSeg{ background:#fff; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:14px; border-right: 2px solid var(--ink); }
+  .nlDeltaSeg{ display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:13px; color:#fff; }
+  .nlDeltaSeg.increase{ background: var(--good); }
+  .nlDeltaSeg.decrease{ background: var(--bad); text-decoration: line-through; opacity:.85; }
+  .nlLabels{ display:flex; justify-content:space-between; font-size:12px; color: var(--ink-soft); margin-top:6px; }
+
+  /* ---- symbol counter (pictographs) ---- */
+  .symbolCatBlock{ margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+  .symbolCatBlock:last-child{ border-bottom:none; }
+  .symbolCatName{ font-weight:600; font-size:14.5px; margin-bottom:6px; }
+  .symbolIcons{ font-size:22px; letter-spacing:3px; margin-bottom:8px; min-height:28px; }
+  .symbolIcons .dim{ opacity:.25; }
+  .symbolReadout{ font-family:'IBM Plex Mono', monospace; font-size:14px; color: var(--ink-soft); }
+  .symbolReadout .val{ color: var(--good); font-weight:700; }
+
+  /* ---- bar reader (bar graphs) ---- */
+  .chartHost{ margin: 18px 0 10px; }
+  .chartBars{ display:flex; align-items:flex-end; gap: 14px; height: 200px; border-bottom: 3px solid var(--ink); padding: 0 4px; }
+  .chartGroup{ flex:1; display:flex; align-items:flex-end; justify-content:center; gap:4px; height:100%; }
+  .chartBarWrap{ position:relative; flex:1; max-width:46px; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; }
+  .chartBar{
+    width: 100%; border-radius: 4px 4px 0 0; cursor:pointer;
+    background: var(--line); transition: background-color .15s;
+    display:flex; align-items:flex-start; justify-content:center;
+  }
+  .chartBar.series1{ background:#cbd0d8; }
+  .chartBar.series2{ background:#e9dcc4; }
+  .chartBar.relevant{ outline: 2.5px dashed var(--mark-deep); outline-offset:2px; }
+  .chartBar.revealed.series1{ background: var(--down); }
+  .chartBar.revealed.series2{ background: var(--up); }
+  .chartBarValue{ position:absolute; top:-24px; font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:13px; color: var(--ink); white-space:nowrap; }
+  .chartCatLabels{ display:flex; gap:14px; padding: 6px 4px 0; }
+  .chartCatLabel{ flex:1; text-align:center; font-size:12px; color: var(--ink-soft); font-weight:600; }
+  .chartLegend{ display:flex; gap:16px; font-size:12.5px; color: var(--ink-soft); margin-top:10px; }
+  .chartLegend span{ display:inline-flex; align-items:center; gap:6px; }
+  .legendDot{ width:11px; height:11px; border-radius:3px; display:inline-block; }
+  .exprHint{ font-family:'IBM Plex Mono', monospace; font-size:14px; color: var(--ink-soft); margin: -4px 0 14px; }
+
+  /* ---- line graph reader ---- */
+  .lineSvgHost svg{ width:100%; height:auto; display:block; }
+  .lgPoint{ cursor:pointer; }
+  .lgPoint circle{ transition: fill .15s, r .15s; }
+  .lgPoint.relevant circle{ stroke: var(--mark-deep); stroke-width:2.5; stroke-dasharray:3 2; }
+  .lgPoint.revealed circle{ fill: var(--good); }
+
+  /* ---- pie angle calculator ---- */
+  .pieRow{ display:flex; gap:26px; align-items:center; flex-wrap:wrap; margin: 16px 0; }
+  .pieSvgHost svg{ width:220px; height:220px; flex-shrink:0; }
+  .pieLegend{ flex:1; min-width:160px; font-size:13.5px; }
+  .pieLegendRow{ display:flex; align-items:center; gap:8px; padding:4px 0; }
+  .pieLegendRow .dot{ width:12px; height:12px; border-radius:3px; flex-shrink:0; }
+  .pieLegendRow.target{ font-weight:700; color: var(--mark-deep); }
+
+  /* ---- tally marker ---- */
+  .tallyTable{ width:100%; border-collapse:collapse; margin: 16px 0; font-size:14px; }
+  .tallyTable th{ text-align:left; font-size:12.5px; color: var(--ink-soft); font-weight:600; padding: 4px 8px 8px; border-bottom:2px solid var(--ink); }
+  .tallyTable td{ padding: 8px 8px; border-bottom:1px solid var(--line); }
+  .tallyMarksCell{ font-family:'IBM Plex Mono', monospace; letter-spacing:1px; color: var(--exchange); font-size:15px; }
+  .tallyFreqCell{ font-family:'IBM Plex Mono', monospace; font-weight:700; text-align:center; }
+  .tallyDataStrip{ font-family:'IBM Plex Mono', monospace; font-size:13.5px; color: var(--ink-soft); line-height:1.9; margin-bottom:14px; }
+  .tallyDataStrip .used{ opacity:.35; text-decoration: line-through; }
+  .tallyDataStrip .current{ background: var(--mark); color:#fff; border-radius:4px; padding: 1px 5px; font-weight:700; }
+
+  @media (max-width:480px){
+    .panel{ padding: 16px; }
+    .chartBars{ height:150px; }
+    .pieRow{ flex-direction:column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ======================= 1. WAGE SLIP CALCULATOR ======================= -->
+<div class="appContainer" id="wg-app">
+<div class="wrap">
+  <h1>Wage Slip Calculator</h1>
+  <p class="sub">Add up the parts of a wage slip one row at a time to find Gross Pay, Total Deductions, or the full Net Pay.</p>
+
+  <div class="panel" id="wg-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="wg-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div id="wg-customOptions" style="display:none">
+      <div class="field">
+        <label>What are we finding?</label>
+        <div class="pills" id="wg-kindPills">
+          <button class="pill active" data-kind="gross">Gross Pay</button>
+          <button class="pill" data-kind="deductions">Total Deductions</button>
+          <button class="pill" data-kind="full">Full wage slip (Net Pay)</button>
+        </div>
+      </div>
+      <div class="numRow" id="wg-grossFields">
+        <div class="field"><label>Basic Pay (£)</label><input class="numInput" id="wg-basicInput" type="number" step="0.01" value="340"></div>
+        <div class="field"><label>Overtime (£)</label><input class="numInput" id="wg-overtimeInput" type="number" step="0.01" value="62"></div>
+        <div class="field"><label>Bonus (£)</label><input class="numInput" id="wg-bonusInput" type="number" step="0.01" value="15"></div>
+      </div>
+      <div class="numRow" id="wg-deductionsFields">
+        <div class="field"><label>Income Tax (£)</label><input class="numInput" id="wg-taxInput" type="number" step="0.01" value="48"></div>
+        <div class="field"><label>NI (£)</label><input class="numInput" id="wg-niInput" type="number" step="0.01" value="26"></div>
+        <div class="field"><label>Pension (£)</label><input class="numInput" id="wg-pensionInput" type="number" step="0.01" value="12"></div>
+      </div>
+    </div>
+    <div class="startRow"><button class="btn" id="wg-startBtn">Start</button></div>
+  </div>
+
+  <div class="panel" id="wg-presentation" style="display:none">
+    <div class="stageLabel" id="wg-stageLabel"></div>
+    <p class="stagePrompt" id="wg-stagePrompt"></p>
+
+    <div id="wg-ledgerHost"></div>
+    <div id="wg-subtractHost"></div>
+    <div id="wg-finishHost"></div>
+
+    <div class="controls"><button class="btn secondary" id="wg-resetBtn">New question</button></div>
+  </div>
+  <p class="foot">Reveal and add each row in turn — watch the running total build up at the bottom.</p>
+</div>
+</div>
+
+<!-- ======================= 2. RECEIPT ADDER ======================= -->
+<div class="appContainer" id="rc-app">
+<div class="wrap">
+  <h1>Receipt Adder</h1>
+  <p class="sub">Add (or subtract) each amount on a receipt or bill one at a time, watching the running total build as you go.</p>
+
+  <div class="panel" id="rc-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="rc-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div id="rc-customOptions" style="display:none">
+      <div class="field">
+        <label>One item per line: "Label, amount" — use a minus sign for a discount, e.g. Discount, -12.50</label>
+        <textarea class="numInput" id="rc-itemsTextarea">Bread, 1.29
+Milk, 1.10
+Biscuits, 0.89</textarea>
+      </div>
+    </div>
+    <div class="startRow"><button class="btn" id="rc-startBtn">Start</button></div>
+  </div>
+
+  <div class="panel" id="rc-presentation" style="display:none">
+    <div class="stageLabel" id="rc-stageLabel">Add up the receipt</div>
+    <div id="rc-ledgerHost"></div>
+    <div id="rc-finishHost"></div>
+    <div class="controls"><button class="btn secondary" id="rc-resetBtn">New question</button></div>
+  </div>
+  <p class="foot">Reveal each amount in turn and watch the running total at the bottom.</p>
+</div>
+</div>
+
+<!-- ======================= 3. BAR MODEL SPLITTER ======================= -->
+<div class="appContainer" id="bm-app">
+<div class="wrap">
+  <h1>Bar Model Splitter</h1>
+  <p class="sub">Split a bar representing the total into equal parts to solve sharing and grouping word problems.</p>
+
+  <div class="panel" id="bm-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="bm-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div id="bm-customOptions" style="display:none">
+      <div class="field">
+        <label>What kind of split?</label>
+        <div class="pills" id="bm-kindPills">
+          <button class="pill active" data-kind="share">Share into equal parts</button>
+          <button class="pill" data-kind="group">Group into equal-size boxes</button>
+        </div>
+      </div>
+      <div class="numRow">
+        <div class="field"><label>Total</label><input class="numInput" id="bm-totalInput" type="number" step="0.01" value="252"></div>
+        <div class="field"><label id="bm-nLabel">Number of parts</label><input class="numInput" id="bm-nInput" type="number" step="1" value="12"></div>
+      </div>
+      <div class="field">
+        <label>Second step? (optional — leave blank for none)</label>
+        <div class="numRow">
+          <input class="numInput" id="bm-multiplierInput" type="number" step="0.01" placeholder="e.g. price per box">
+          <input class="numInput" id="bm-multiplierLabelInput" type="text" placeholder="label, e.g. Cost per box">
+        </div>
+      </div>
+    </div>
+    <div class="startRow"><button class="btn" id="bm-startBtn">Start</button></div>
+  </div>
+
+  <div class="panel" id="bm-presentation" style="display:none">
+    <div class="stageLabel" id="bm-stageLabel"></div>
+    <p class="stagePrompt" id="bm-stagePrompt"></p>
+    <div class="barModelHost" id="bm-barHost"></div>
+    <div class="answerRow"><input type="text" inputmode="decimal" class="numInput" id="bm-answerInput"></div>
+    <div class="checkRow"><button class="btn" id="bm-checkBtn">Check</button></div>
+    <div class="checkFeedback" id="bm-checkFeedback"></div>
+    <div id="bm-stage2Host"></div>
+    <div id="bm-finishHost"></div>
+    <div class="controls"><button class="btn secondary" id="bm-resetBtn">New question</button></div>
+  </div>
+  <p class="foot">Work out the value of one part of the bar, then check — the bar fills in once you're right.</p>
+</div>
+</div>
+
+<!-- ======================= 4. PERCENTAGE METHOD PICKER ======================= -->
+<div class="appContainer" id="pm-app">
+<div class="wrap">
+  <h1>Percentage Method Picker</h1>
+  <p class="sub">Pick the correct mental method for a common percentage, then work through the arithmetic step by step.</p>
+
+  <div class="panel" id="pm-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="pm-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div id="pm-customOptions" style="display:none">
+      <div class="field">
+        <label>Percentage</label>
+        <div class="pills" id="pm-pctPills">
+          <button class="pill active" data-pct="50">50%</button>
+          <button class="pill" data-pct="25">25%</button>
+          <button class="pill" data-pct="10">10%</button>
+          <button class="pill" data-pct="20">20%</button>
+          <button class="pill" data-pct="75">75%</button>
+          <button class="pill" data-pct="33⅓">33⅓%</button>
+          <button class="pill" data-pct="66⅔">66⅔%</button>
+        </div>
+      </div>
+      <div class="field"><label>Amount</label><input class="numInput" id="pm-amountInput" type="number" step="1" value="48"></div>
+    </div>
+    <div class="startRow"><button class="btn" id="pm-startBtn">Start</button></div>
+  </div>
+
+  <div class="panel" id="pm-presentation" style="display:none">
+    <div class="stageLabel" id="pm-stageLabel">Step 1: choose the method</div>
+    <p class="prompt" id="pm-promptText"></p>
+    <div class="choiceRow" id="pm-choiceRow"></div>
+    <div class="checkFeedback" id="pm-choiceFeedback"></div>
+    <div id="pm-stepsHost"></div>
+    <div id="pm-finishHost"></div>
+    <div class="controls"><button class="btn secondary" id="pm-resetBtn">New question</button></div>
+  </div>
+  <p class="foot">Pick the method that matches the percentage, then work through each arithmetic step.</p>
+</div>
+</div>
+
+<!-- ======================= 5. PERCENTAGE CALCULATOR STEPS ======================= -->
+<div class="appContainer" id="pc-app">
+<div class="wrap">
+  <h1>Percentage Calculator Steps</h1>
+  <p class="sub">Any percentage of an amount: divide by 100, then multiply by the amount.</p>
+
+  <div class="panel" id="pc-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="pc-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div id="pc-customOptions" style="display:none">
+      <div class="numRow">
+        <div class="field"><label>Percentage (%)</label><input class="numInput" id="pc-pctInput" type="number" step="1" value="35"></div>
+        <div class="field"><label>Amount (£)</label><input class="numInput" id="pc-amountInput" type="number" step="0.01" value="640"></div>
+      </div>
+    </div>
+    <div class="startRow"><button class="btn" id="pc-startBtn">Start</button></div>
+  </div>
+
+  <div class="panel" id="pc-presentation" style="display:none">
+    <div class="stageLabel" id="pc-stageLabel"></div>
+    <p class="prompt" id="pc-promptText"></p>
+    <div class="flowRow" id="pc-flowRow"></div>
+    <p class="stagePrompt" id="pc-stepPrompt"></p>
+    <div class="answerRow"><input type="text" inputmode="decimal" class="numInput" id="pc-answerInput"></div>
+    <div class="checkRow"><button class="btn" id="pc-checkBtn">Check</button></div>
+    <div class="checkFeedback" id="pc-checkFeedback"></div>
+    <div id="pc-finishHost"></div>
+    <div class="controls"><button class="btn secondary" id="pc-resetBtn">New question</button></div>
+  </div>
+  <p class="foot">Step 1: ÷ 100. Step 2: × the amount. The flow diagram fills in as you go.</p>
+</div>
+</div>
+
+<!-- ======================= 6. INCREASE/DECREASE NUMBER LINE ======================= -->
+<div class="appContainer" id="id-app">
+<div class="wrap">
+  <h1>Increase/Decrease Number Line</h1>
+  <p class="sub">Find the percentage change, then add it on (increase) or take it away (decrease) to reach the new amount.</p>
+
+  <div class="panel" id="id-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="id-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div id="id-customOptions" style="display:none">
+      <div class="field">
+        <label>Increase or decrease?</label>
+        <div class="pills" id="id-directionPills">
+          <button class="pill active" data-dir="increase">Increase</button>
+          <button class="pill" data-dir="decrease">Decrease</button>
+        </div>
+      </div>
+      <div class="numRow">
+        <div class="field"><label>Original amount</label><input class="numInput" id="id-originalInput" type="number" step="0.01" value="130"></div>
+        <div class="field"><label>Percentage (%)</label><input class="numInput" id="id-pctInput" type="number" step="1" value="50"></div>
+      </div>
+    </div>
+    <div class="startRow"><button class="btn" id="id-startBtn">Start</button></div>
+  </div>
+
+  <div class="panel" id="id-presentation" style="display:none">
+    <div class="stageLabel" id="id-stageLabel"></div>
+    <p class="stagePrompt" id="id-stagePrompt"></p>
+    <div class="nlHost" id="id-nlHost"></div>
+    <div class="answerRow"><input type="text" inputmode="decimal" class="numInput" id="id-answerInput"></div>
+    <div class="checkRow"><button class="btn" id="id-checkBtn">Check</button></div>
+    <div class="checkFeedback" id="id-checkFeedback"></div>
+    <div id="id-finishHost"></div>
+    <div class="controls"><button class="btn secondary" id="id-resetBtn">New question</button></div>
+  </div>
+  <p class="foot">First find the percentage of the original amount, then add or take it away.</p>
+</div>
+</div>
+
+<!-- ======================= 7. SYMBOL COUNTER (Pictographs) ======================= -->
+<div class="appContainer" id="sy-app">
+<div class="wrap">
+  <h1>Symbol Counter</h1>
+  <p class="sub">Count the symbols for a category, then multiply by the key value to find how many they represent.</p>
+
+  <div class="panel" id="sy-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="sy-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div id="sy-customOptions" style="display:none">
+      <div class="field">
+        <label>One category per line: "Category, value"</label>
+        <textarea class="numInput" id="sy-itemsTextarea">Monday, 15
+Tuesday, 20
+Wednesday, 10</textarea>
+      </div>
+      <div class="field"><label>Symbol unit value</label><input class="numInput" id="sy-unitInput" type="number" step="1" value="5"></div>
+    </div>
+    <div class="startRow"><button class="btn" id="sy-startBtn">Start</button></div>
+  </div>
+
+  <div class="panel" id="sy-presentation" style="display:none">
+    <div class="stageLabel" id="sy-stageLabel"></div>
+    <p class="stagePrompt" id="sy-stagePrompt"></p>
+    <div id="sy-blocksHost"></div>
+    <div id="sy-combineHost"></div>
+    <div id="sy-finishHost"></div>
+    <div class="controls"><button class="btn secondary" id="sy-resetBtn">New question</button></div>
+  </div>
+  <p class="foot">Count the symbols, then multiply by the unit value shown in the key.</p>
+</div>
+</div>
+
+<!-- ======================= 8. BAR READER (Bar Graphs) ======================= -->
+<div class="appContainer" id="ba-app">
+<div class="wrap">
+  <h1>Bar Reader</h1>
+  <p class="sub">Click the bars you need, then work out the total, range, difference or comparison.</p>
+
+  <div class="panel" id="ba-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="ba-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div id="ba-customOptions" style="display:none">
+      <div class="field">
+        <label>One category per line: "Category, value"</label>
+        <textarea class="numInput" id="ba-itemsTextarea">Mon, 4
+Tue, 7
+Wed, 2
+Thu, 9
+Fri, 5</textarea>
+      </div>
+    </div>
+    <div class="startRow"><button class="btn" id="ba-startBtn">Start</button></div>
+  </div>
+
+  <div class="panel" id="ba-presentation" style="display:none">
+    <div class="stageLabel" id="ba-stageLabel"></div>
+    <p class="stagePrompt" id="ba-stagePrompt"></p>
+    <div class="chartHost" id="ba-chartHost"></div>
+    <div class="chartLegend" id="ba-legendHost"></div>
+    <div class="exprHint" id="ba-exprHint"></div>
+    <div class="answerRow" id="ba-answerRow" style="display:none"><input type="text" inputmode="decimal" class="numInput" id="ba-answerInput"></div>
+    <div class="checkRow" id="ba-checkRow" style="display:none"><button class="btn" id="ba-checkBtn">Check</button></div>
+    <div class="checkFeedback" id="ba-checkFeedback"></div>
+    <div id="ba-finishHost"></div>
+    <div class="controls"><button class="btn secondary" id="ba-resetBtn">New question</button></div>
+  </div>
+  <p class="foot">Click each highlighted bar to reveal its value, then work out the answer.</p>
+</div>
+</div>
+
+<!-- ======================= 9. LINE GRAPH READER ======================= -->
+<div class="appContainer" id="lg-app">
+<div class="wrap">
+  <h1>Line Graph Reader</h1>
+  <p class="sub">Click the highlighted points to reveal their values, then read off, compare or subtract.</p>
+
+  <div class="panel" id="lg-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="lg-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div id="lg-customOptions" style="display:none">
+      <div class="field">
+        <label>One point per line: "Label, value"</label>
+        <textarea class="numInput" id="lg-itemsTextarea">00:00, 4
+04:00, 2
+08:00, 9
+12:00, 18
+16:00, 15
+20:00, 8</textarea>
+      </div>
+    </div>
+    <div class="startRow"><button class="btn" id="lg-startBtn">Start</button></div>
+  </div>
+
+  <div class="panel" id="lg-presentation" style="display:none">
+    <div class="stageLabel" id="lg-stageLabel"></div>
+    <p class="stagePrompt" id="lg-stagePrompt"></p>
+    <div class="lineSvgHost" id="lg-svgHost"></div>
+    <div class="exprHint" id="lg-exprHint"></div>
+    <div class="answerRow" id="lg-answerRow" style="display:none"><input type="text" inputmode="decimal" class="numInput" id="lg-answerInput"></div>
+    <div class="checkRow" id="lg-checkRow" style="display:none"><button class="btn" id="lg-checkBtn">Check</button></div>
+    <div class="checkFeedback" id="lg-checkFeedback"></div>
+    <div id="lg-finishHost"></div>
+    <div class="controls"><button class="btn secondary" id="lg-resetBtn">New question</button></div>
+  </div>
+  <p class="foot">Click a point to reveal its value on the y-axis.</p>
+</div>
+</div>
+
+<!-- ======================= 10. PIE ANGLE CALCULATOR ======================= -->
+<div class="appContainer" id="pa-app">
+<div class="wrap">
+  <h1>Pie Angle Calculator</h1>
+  <p class="sub">Work out a sector's percentage from its angle, or find a missing sector by subtracting from 100%.</p>
+
+  <div class="panel" id="pa-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="pa-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div id="pa-customOptions" style="display:none">
+      <div class="field">
+        <label>One sector per line: "Category, angle" (must sum to 360)</label>
+        <textarea class="numInput" id="pa-itemsTextarea">Bus, 144
+Car, 90
+Walking, 90
+Bike, 36</textarea>
+      </div>
+    </div>
+    <div class="startRow"><button class="btn" id="pa-startBtn">Start</button></div>
+  </div>
+
+  <div class="panel" id="pa-presentation" style="display:none">
+    <div class="stageLabel" id="pa-stageLabel"></div>
+    <p class="stagePrompt" id="pa-stagePrompt"></p>
+    <div class="pieRow">
+      <div class="pieSvgHost" id="pa-svgHost"></div>
+      <div class="pieLegend" id="pa-legendHost"></div>
+    </div>
+    <div id="pa-stepsHost"></div>
+    <div id="pa-finishHost"></div>
+    <div class="controls"><button class="btn secondary" id="pa-resetBtn">New question</button></div>
+  </div>
+  <p class="foot">The highlighted sector is the one to work out.</p>
+</div>
+</div>
+
+<!-- ======================= 11. TALLY MARKER ======================= -->
+<div class="appContainer" id="ty-app">
+<div class="wrap">
+  <h1>Tally Marker</h1>
+  <p class="sub">Work through the raw data one item at a time, adding a tally mark to the matching category as you go.</p>
+
+  <div class="panel" id="ty-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="ty-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div id="ty-customOptions" style="display:none">
+      <div class="field">
+        <label>Categories (comma separated)</label>
+        <input class="numInput" id="ty-categoriesInput" type="text" style="width:100%" value="Apple, Banana, Grape, Orange">
+      </div>
+      <div class="field">
+        <label>Raw data (comma separated)</label>
+        <textarea class="numInput" id="ty-dataTextarea">Apple, Banana, Apple, Grape, Apple, Orange, Banana, Apple, Grape, Orange</textarea>
+      </div>
+    </div>
+    <div class="startRow"><button class="btn" id="ty-startBtn">Start</button></div>
+  </div>
+
+  <div class="panel" id="ty-presentation" style="display:none">
+    <div class="stageLabel" id="ty-stageLabel">Work through the data</div>
+    <div class="tallyDataStrip" id="ty-dataStrip"></div>
+    <table class="tallyTable" id="ty-table"></table>
+    <div class="answerRow"><button class="btn" id="ty-nextBtn">Add next item</button></div>
+    <div id="ty-finishHost"></div>
+    <div class="controls"><button class="btn secondary" id="ty-resetBtn">New question</button></div>
+  </div>
+  <p class="foot">Click "Add next item" to work through the raw data and build the frequency table live.</p>
+</div>
+</div>
+
+<script>
+const ALL_APPS = ['wg-app','rc-app','bm-app','pm-app','pc-app','id-app','sy-app','ba-app','lg-app','pa-app','ty-app'];
+function showApp(id){
+  ALL_APPS.forEach(a => { const e = document.getElementById(a); if (e) e.style.display = 'none'; });
+  const target = document.getElementById(id);
+  if (target) target.style.display = 'block';
+  window.scrollTo(0,0);
+}
+</script>
+
+<script>
+/* ---------------------------------------------------------------------
+   Shared helpers used across several tools below.
+--------------------------------------------------------------------- */
+function el(id){ return document.getElementById(id); }
+function randInt(min, max){ return min + Math.floor(Math.random() * (max - min + 1)); }
+function roundMoney(v){ return Math.round((v + Number.EPSILON) * 100) / 100; }
+function fmtMoney(v){ return '£' + roundMoney(v).toFixed(2); }
+function fmtNum(v){
+  const r = Math.round(v * 100) / 100;
+  return (Math.abs(r - Math.round(r)) < 1e-9) ? String(Math.round(r)) : String(r);
+}
+function attachPills(containerId, dataAttr, onSelect){
+  document.querySelectorAll('#' + containerId + ' .pill').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#' + containerId + ' .pill').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      onSelect(b.dataset[dataAttr]);
+    });
+  });
+}
+function parseNum(s){
+  const v = parseFloat(String(s).replace(/[£,\s]/g, ''));
+  return isNaN(v) ? null : v;
+}
+/* Generic single-input arithmetic check: wires up an input + button + feedback
+   element, comparing against `expected` within `tol`, calling onCorrect() once. */
+function makeStepChecker(inputId, btnId, feedbackId, expected, tol, onCorrect){
+  const input = el(inputId), btn = el(btnId), feedback = el(feedbackId);
+  if (!input || !btn || !feedback) return;
+  let done = false;
+  function check(){
+    if (done) return;
+    const val = parseNum(input.value);
+    if (val === null){ feedback.textContent = 'Type a number first.'; feedback.className = 'checkFeedback bad'; return; }
+    if (Math.abs(val - expected) <= tol){
+      feedback.textContent = 'Correct!'; feedback.className = 'checkFeedback good';
+      input.disabled = true; btn.disabled = true; done = true;
+      if (onCorrect) onCorrect();
+    } else {
+      feedback.textContent = 'Not quite — try again.'; feedback.className = 'checkFeedback bad';
+      input.value = ''; input.focus();
+    }
+  }
+  btn.onclick = check;
+  input.onkeydown = (e) => { if (e.key === 'Enter') check(); };
+  setTimeout(() => input.focus(), 30);
+}
+/* Generic reveal-and-accumulate ledger: rows = [{label, amount}] (amount's sign
+   decides +/-). Renders into rowsHostId / totalId / btnId and calls onDone(total). */
+function runLedger(rowsHostId, totalId, btnId, rows, isMoney, onDone){
+  const rowsHost = el(rowsHostId), totalEl = el(totalId), btn = el(btnId);
+  let idx = 0, running = 0;
+  const fmt = isMoney ? fmtMoney : fmtNum;
+  function render(){
+    rowsHost.innerHTML = rows.map((r, i) => {
+      const revealed = i < idx;
+      const opSign = r.amount < 0 ? '−' : (i === 0 ? '' : '+');
+      const amtStr = revealed ? fmt(Math.abs(r.amount)) : '?';
+      return `<div class="ledgerRow ${revealed ? 'revealed' : ''} ${i === idx ? 'active' : ''}">
+        <span class="ledgerOp">${opSign}</span>
+        <span class="ledgerLabel">${r.label}</span>
+        <span class="ledgerAmount ${revealed ? '' : 'pending'}">${amtStr}</span>
+      </div>`;
+    }).join('');
+    totalEl.textContent = fmt(running);
+    if (idx >= rows.length){ btn.style.display = 'none'; }
+    else { btn.style.display = 'inline-block'; btn.textContent = 'Reveal & add: ' + rows[idx].label; }
+  }
+  btn.onclick = () => {
+    if (idx >= rows.length) return;
+    running = roundMoney(running + rows[idx].amount);
+    idx += 1;
+    render();
+    if (idx >= rows.length) onDone(running);
+  };
+  render();
+}
+function ledgerTotalRowHtml(totalId, label){
+  return `<div class="runningTotalBox"><span class="rtLabel">${label}</span><span id="${totalId}">£0.00</span></div>`;
+}
+</script>
+
+<script>
+/* =======================================================================
+   1. WAGE SLIP CALCULATOR
+   ======================================================================= */
+(function(){
+let wgMode = 'random';
+let wgKind = 'gross';
+attachPills('wg-modePills', 'mode', (m) => {
+  wgMode = m;
+  el('wg-customOptions').style.display = (m === 'custom') ? 'block' : 'none';
+});
+attachPills('wg-kindPills', 'kind', (k) => { wgKind = k; syncKindFields(); });
+function syncKindFields(){
+  el('wg-grossFields').style.display = (wgKind === 'gross' || wgKind === 'full') ? 'flex' : 'none';
+  el('wg-deductionsFields').style.display = (wgKind === 'deductions' || wgKind === 'full') ? 'flex' : 'none';
+}
+syncKindFields();
+
+let vals = {};
+function randomiseValues(){
+  wgKind = ['gross', 'deductions', 'full'][randInt(0, 2)];
+  vals = {
+    basic: randInt(180, 650), overtime: randInt(0, 160), bonus: randInt(0, 120),
+    tax: randInt(20, 160), ni: randInt(5, 60), pension: randInt(0, 90),
+  };
+}
+
+function grossRows(){ return [{label: 'Basic Pay', amount: vals.basic}, {label: 'Overtime', amount: vals.overtime}, {label: 'Bonus', amount: vals.bonus}]; }
+function deductionRows(){ return [{label: 'Income Tax', amount: vals.tax}, {label: 'National Insurance', amount: vals.ni}, {label: 'Pension', amount: vals.pension}]; }
+
+function start(){
+  el('wg-setup').style.display = 'none';
+  el('wg-presentation').style.display = 'block';
+  runFlow();
+}
+
+function runFlow(){
+  const finishHost = el('wg-finishHost');
+  finishHost.innerHTML = '';
+  el('wg-subtractHost').innerHTML = '';
+  if (wgKind === 'gross' || wgKind === 'full'){
+    el('wg-stageLabel').textContent = wgKind === 'full' ? 'Stage 1 of 3: Gross Pay' : 'Find the Gross Pay';
+    el('wg-stagePrompt').textContent = 'Add up the parts of the pay, one row at a time.';
+    el('wg-ledgerHost').innerHTML = `<div id="wg-ledgerRows" class="ledgerRows"></div>${ledgerTotalRowHtml('wg-runningTotal', 'Gross Pay so far')}<div class="answerRow"><button class="btn" id="wg-addBtn"></button></div>`;
+    runLedger('wg-ledgerRows', 'wg-runningTotal', 'wg-addBtn', grossRows(), true, (gross) => {
+      vals.gross = gross;
+      if (wgKind === 'gross'){ showFinish('Gross Pay', gross); }
+      else { runDeductionsStage(); }
+    });
+  } else {
+    runDeductionsStage();
+  }
+}
+
+function runDeductionsStage(){
+  el('wg-stageLabel').textContent = wgKind === 'full' ? 'Stage 2 of 3: Total Deductions' : 'Find the Total Deductions';
+  el('wg-stagePrompt').textContent = 'Add up the deductions, one row at a time.';
+  el('wg-ledgerHost').innerHTML = `<div id="wg-ledgerRows" class="ledgerRows"></div>${ledgerTotalRowHtml('wg-runningTotal', 'Deductions so far')}<div class="answerRow"><button class="btn" id="wg-addBtn"></button></div>`;
+  runLedger('wg-ledgerRows', 'wg-runningTotal', 'wg-addBtn', deductionRows(), true, (deductions) => {
+    vals.deductions = deductions;
+    if (wgKind === 'deductions'){ showFinish('Total Deductions', deductions); }
+    else { runNetStage(); }
+  });
+}
+
+function runNetStage(){
+  el('wg-stageLabel').textContent = 'Stage 3 of 3: Net Pay';
+  el('wg-stagePrompt').textContent = 'Now subtract the Total Deductions from the Gross Pay.';
+  el('wg-ledgerHost').innerHTML = '';
+  el('wg-subtractHost').innerHTML = `
+    <div class="sentenceBox">${fmtMoney(vals.gross)} − ${fmtMoney(vals.deductions)} = <input id="wg-netInput" class="blankInput" type="text" inputmode="decimal" placeholder="?"></div>
+    <div class="checkRow"><button class="btn" id="wg-netCheckBtn">Check</button></div>
+    <div class="checkFeedback" id="wg-netFeedback"></div>
+  `;
+  makeStepChecker('wg-netInput', 'wg-netCheckBtn', 'wg-netFeedback', roundMoney(vals.gross - vals.deductions), 0.015, () => {
+    showFinish('Net Pay', roundMoney(vals.gross - vals.deductions));
+  });
+}
+
+function showFinish(label, value){
+  el('wg-stageLabel').textContent = '';
+  el('wg-stagePrompt').textContent = '';
+  el('wg-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Solved!</div><p>${label} = <span class="ans">${fmtMoney(value)}</span></p></div>`;
+}
+
+el('wg-startBtn').addEventListener('click', () => {
+  if (wgMode === 'random'){ randomiseValues(); }
+  else {
+    vals = {
+      basic: parseNum(el('wg-basicInput').value) || 0,
+      overtime: parseNum(el('wg-overtimeInput').value) || 0,
+      bonus: parseNum(el('wg-bonusInput').value) || 0,
+      tax: parseNum(el('wg-taxInput').value) || 0,
+      ni: parseNum(el('wg-niInput').value) || 0,
+      pension: parseNum(el('wg-pensionInput').value) || 0,
+    };
+  }
+  start();
+});
+el('wg-resetBtn').addEventListener('click', () => {
+  el('wg-presentation').style.display = 'none';
+  el('wg-setup').style.display = 'block';
+});
+
+window.wgStart = function(params){
+  wgMode = 'custom';
+  wgKind = params.kind || 'gross';
+  vals = {
+    basic: params.basic || 0, overtime: params.overtime || 0, bonus: params.bonus || 0,
+    tax: params.tax || 0, ni: params.ni || 0, pension: params.pension || 0,
+  };
+  document.querySelectorAll('#wg-modePills .pill').forEach(b => b.classList.toggle('active', b.dataset.mode === 'custom'));
+  document.querySelectorAll('#wg-kindPills .pill').forEach(b => b.classList.toggle('active', b.dataset.kind === wgKind));
+  el('wg-customOptions').style.display = 'block';
+  syncKindFields();
+  start();
+};
+})();
+</script>
+
+<script>
+/* =======================================================================
+   2. RECEIPT ADDER
+   ======================================================================= */
+(function(){
+let rcMode = 'random';
+let rcItems = [];
+
+attachPills('rc-modePills', 'mode', (m) => {
+  rcMode = m;
+  el('rc-customOptions').style.display = (m === 'custom') ? 'block' : 'none';
+});
+
+function parseItemsTextarea(text){
+  return text.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
+    const parts = line.split(',');
+    const label = (parts[0] || 'Item').trim();
+    const amount = parseNum(parts[1]) || 0;
+    return { label, amount };
+  });
+}
+
+function randomiseItems(){
+  const shopItems = ['Bread', 'Milk', 'Yoghurt', 'Crisps', 'Jam', 'Soup', 'Bacon', 'Coffee'];
+  const n = randInt(4, 6);
+  const chosen = [];
+  const pool = shopItems.slice();
+  for (let i = 0; i < n; i++){
+    const idx = randInt(0, pool.length - 1);
+    chosen.push(pool.splice(idx, 1)[0]);
+  }
+  rcItems = chosen.map(label => ({ label, amount: roundMoney(0.29 + Math.random() * 6.2) }));
+}
+
+function start(){
+  el('rc-setup').style.display = 'none';
+  el('rc-presentation').style.display = 'block';
+  el('rc-finishHost').innerHTML = '';
+  el('rc-ledgerHost').innerHTML = `<div id="rc-ledgerRows" class="ledgerRows"></div>${ledgerTotalRowHtml('rc-runningTotal', 'Total so far')}<div class="answerRow"><button class="btn" id="rc-addBtn"></button></div>`;
+  runLedger('rc-ledgerRows', 'rc-runningTotal', 'rc-addBtn', rcItems, true, (total) => {
+    el('rc-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Solved!</div><p>Total = <span class="ans">${fmtMoney(total)}</span></p></div>`;
+  });
+}
+
+el('rc-startBtn').addEventListener('click', () => {
+  if (rcMode === 'random'){ randomiseItems(); }
+  else { rcItems = parseItemsTextarea(el('rc-itemsTextarea').value); }
+  if (!rcItems.length) return;
+  start();
+});
+el('rc-resetBtn').addEventListener('click', () => {
+  el('rc-presentation').style.display = 'none';
+  el('rc-setup').style.display = 'block';
+});
+
+window.rcStart = function(params){
+  rcMode = 'custom';
+  rcItems = (params.items || []).map(([label, amount]) => ({ label, amount }));
+  document.querySelectorAll('#rc-modePills .pill').forEach(b => b.classList.toggle('active', b.dataset.mode === 'custom'));
+  el('rc-customOptions').style.display = 'block';
+  start();
+};
+})();
+</script>
+
+<script>
+/* =======================================================================
+   3. BAR MODEL SPLITTER
+   ======================================================================= */
+(function(){
+let bmMode = 'random';
+let bmKind = 'share';
+let bm = {};
+
+attachPills('bm-modePills', 'mode', (m) => {
+  bmMode = m;
+  el('bm-customOptions').style.display = (m === 'custom') ? 'block' : 'none';
+});
+attachPills('bm-kindPills', 'kind', (k) => {
+  bmKind = k;
+  el('bm-nLabel').textContent = (k === 'share') ? 'Number of parts' : 'Size of each group';
+});
+
+function randomiseValues(){
+  bmKind = ['share', 'group'][randInt(0, 1)];
+  if (bmKind === 'share'){
+    const n = [2, 3, 4, 5, 12][randInt(0, 4)];
+    const part = randInt(4, 60);
+    bm = { total: n * part, n, multiplier: null, multiplierLabel: null };
+  } else {
+    const groupSize = [6, 8, 10, 12][randInt(0, 3)];
+    const groups = randInt(6, 20);
+    bm = { total: groupSize * groups, n: groupSize, multiplier: roundMoney(2 + Math.random() * 12), multiplierLabel: 'Cost per box (£)' };
+  }
+}
+
+function segmentCount(){
+  return bmKind === 'share' ? bm.n : Math.ceil(bm.total / bm.n);
+}
+function partValue(){
+  return bmKind === 'share' ? roundMoney(bm.total / bm.n) : bm.n;
+}
+
+function renderBar(filled){
+  const count = Math.min(segmentCount(), 40);
+  const val = partValue();
+  let html = `<div class="barModelTotal">Total = ${fmtNum(bm.total)}</div><div class="barModelBar">`;
+  for (let i = 0; i < count; i++){
+    html += `<div class="barSeg ${filled ? 'filled' : ''}">${filled ? fmtNum(val) : '?'}</div>`;
+  }
+  html += '</div>';
+  el('bm-barHost').innerHTML = html;
+}
+
+function start(){
+  el('bm-setup').style.display = 'none';
+  el('bm-presentation').style.display = 'block';
+  el('bm-finishHost').innerHTML = '';
+  el('bm-stage2Host').innerHTML = '';
+  el('bm-answerInput').disabled = false;
+  el('bm-answerInput').value = '';
+  el('bm-checkFeedback').textContent = '';
+  el('bm-checkBtn').disabled = false;
+  renderBar(false);
+  if (bmKind === 'share'){
+    el('bm-stageLabel').textContent = 'Split the bar into equal shares';
+    el('bm-stagePrompt').textContent = `Split ${fmtNum(bm.total)} into ${bm.n} equal parts. What is one share?`;
+  } else {
+    el('bm-stageLabel').textContent = 'Group the bar into equal-size boxes';
+    el('bm-stagePrompt').textContent = `How many groups of ${bm.n} fit into ${fmtNum(bm.total)}? (Round up if there's a remainder.)`;
+  }
+  makeStepChecker('bm-answerInput', 'bm-checkBtn', 'bm-checkFeedback', partValue(), 0.015, () => {
+    renderBar(true);
+    if (bm.multiplier){ runStage2(); }
+    else { showFinish(partValue()); }
+  });
+}
+
+function runStage2(){
+  el('bm-stage2Host').innerHTML = `
+    <p class="stagePrompt">Now multiply by ${bm.multiplierLabel || 'the second value'} (${fmtNum(bm.multiplier)}).</p>
+    <div class="sentenceBox">${fmtNum(partValue())} &times; ${fmtNum(bm.multiplier)} = <input id="bm-stage2Input" class="blankInput" type="text" inputmode="decimal" placeholder="?"></div>
+    <div class="checkRow"><button class="btn" id="bm-stage2CheckBtn">Check</button></div>
+    <div class="checkFeedback" id="bm-stage2Feedback"></div>
+  `;
+  const finalAnswer = roundMoney(partValue() * bm.multiplier);
+  makeStepChecker('bm-stage2Input', 'bm-stage2CheckBtn', 'bm-stage2Feedback', finalAnswer, 0.015, () => {
+    showFinish(finalAnswer);
+  });
+}
+
+function showFinish(value){
+  el('bm-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Solved!</div><p>Answer = <span class="ans">${fmtMoney(value)}</span></p></div>`;
+}
+
+el('bm-startBtn').addEventListener('click', () => {
+  if (bmMode === 'random'){ randomiseValues(); }
+  else {
+    bm = {
+      total: parseNum(el('bm-totalInput').value) || 0,
+      n: parseNum(el('bm-nInput').value) || 1,
+      multiplier: parseNum(el('bm-multiplierInput').value),
+      multiplierLabel: el('bm-multiplierLabelInput').value.trim() || null,
+    };
+  }
+  start();
+});
+el('bm-resetBtn').addEventListener('click', () => {
+  el('bm-presentation').style.display = 'none';
+  el('bm-setup').style.display = 'block';
+});
+
+window.bmStart = function(params){
+  bmMode = 'custom';
+  bmKind = params.mode || 'share';
+  bm = { total: params.total, n: params.n, multiplier: params.multiplier || null, multiplierLabel: params.multiplierLabel || null };
+  document.querySelectorAll('#bm-modePills .pill').forEach(b => b.classList.toggle('active', b.dataset.mode === 'custom'));
+  document.querySelectorAll('#bm-kindPills .pill').forEach(b => b.classList.toggle('active', b.dataset.kind === bmKind));
+  el('bm-customOptions').style.display = 'block';
+  start();
+};
+})();
+</script>
+
+<script>
+/* =======================================================================
+   4. PERCENTAGE METHOD PICKER
+   ======================================================================= */
+(function(){
+const METHODS = [
+  { pct: '50', display: '50%', steps: [{ op: '÷', by: 2 }] },
+  { pct: '25', display: '25%', steps: [{ op: '÷', by: 4 }] },
+  { pct: '10', display: '10%', steps: [{ op: '÷', by: 10 }] },
+  { pct: '20', display: '20%', steps: [{ op: '÷', by: 10 }, { op: '×', by: 2 }] },
+  { pct: '75', display: '75%', steps: [{ op: '÷', by: 4 }, { op: '×', by: 3 }] },
+  { pct: '33⅓', display: '33⅓%', steps: [{ op: '÷', by: 3 }] },
+  { pct: '66⅔', display: '66⅔%', steps: [{ op: '÷', by: 3 }, { op: '×', by: 2 }] },
+];
+
+let pmMode = 'random';
+let pmPct = '50';
+let pmAmount = 48;
+
+attachPills('pm-modePills', 'mode', (m) => {
+  pmMode = m;
+  el('pm-customOptions').style.display = (m === 'custom') ? 'block' : 'none';
+});
+attachPills('pm-pctPills', 'pct', (p) => { pmPct = p; });
+
+function methodFor(pctLabel){ return METHODS.find(m => m.pct === pctLabel) || METHODS[0]; }
+
+function start(){
+  el('pm-setup').style.display = 'none';
+  el('pm-presentation').style.display = 'block';
+  el('pm-finishHost').innerHTML = '';
+  el('pm-stepsHost').innerHTML = '';
+  el('pm-stageLabel').textContent = 'Step 1: choose the method';
+  el('pm-promptText').textContent = `Find ${methodFor(pmPct).display} of ${fmtNum(pmAmount)}.`;
+  const shuffled = METHODS.slice();
+  el('pm-choiceRow').innerHTML = shuffled.map((m, i) => {
+    const text = m.steps.map(s => `${s.op} ${s.by}`).join(', then ');
+    return `<button class="choiceBtn" data-idx="${i}">${text}</button>`;
+  }).join('');
+  el('pm-choiceFeedback').textContent = '';
+  const correctText = methodFor(pmPct).steps.map(s => `${s.op} ${s.by}`).join(', then ');
+  document.querySelectorAll('#pm-choiceRow .choiceBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = btn.textContent;
+      if (text === correctText){
+        btn.classList.add('correct');
+        document.querySelectorAll('#pm-choiceRow .choiceBtn').forEach(b => b.disabled = true);
+        el('pm-choiceFeedback').textContent = 'Correct method!';
+        el('pm-choiceFeedback').className = 'checkFeedback good';
+        setTimeout(runSteps, 350);
+      } else {
+        btn.classList.add('wrong');
+        el('pm-choiceFeedback').textContent = 'Not quite — think about what fraction that percentage matches.';
+        el('pm-choiceFeedback').className = 'checkFeedback bad';
+      }
+    });
+  });
+}
+
+function runSteps(){
+  el('pm-stageLabel').textContent = 'Step 2: work through the arithmetic';
+  const steps = methodFor(pmPct).steps;
+  let running = pmAmount;
+  let stepIdx = 0;
+
+  function renderStep(){
+    const s = steps[stepIdx];
+    const expected = s.op === '÷' ? roundMoney(running / s.by) : roundMoney(running * s.by);
+    el('pm-stepsHost').innerHTML = `
+      <div class="sentenceBox">${fmtNum(running)} ${s.op} ${s.by} = <input id="pm-stepInput" class="blankInput" type="text" inputmode="decimal" placeholder="?"></div>
+      <div class="checkRow"><button class="btn" id="pm-stepCheckBtn">Check</button></div>
+      <div class="checkFeedback" id="pm-stepFeedback"></div>
+    `;
+    makeStepChecker('pm-stepInput', 'pm-stepCheckBtn', 'pm-stepFeedback', expected, 0.02, () => {
+      running = expected;
+      stepIdx += 1;
+      if (stepIdx < steps.length){ setTimeout(renderStep, 350); }
+      else { showFinish(running); }
+    });
+  }
+  renderStep();
+}
+
+function showFinish(value){
+  el('pm-stagePrompt') && (el('pm-stagePrompt').textContent = '');
+  el('pm-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Solved!</div><p>${methodFor(pmPct).display} of ${fmtNum(pmAmount)} = <span class="ans">${fmtNum(value)}</span></p></div>`;
+}
+
+function randomiseValues(){
+  pmPct = METHODS[randInt(0, METHODS.length - 1)].pct;
+  const divisorMap = { '50': 2, '25': 4, '10': 10, '20': 10, '75': 4, '33⅓': 3, '66⅔': 3 };
+  const step = divisorMap[pmPct];
+  pmAmount = step * randInt(2, 60);
+}
+
+el('pm-startBtn').addEventListener('click', () => {
+  if (pmMode === 'random'){ randomiseValues(); }
+  else { pmAmount = parseNum(el('pm-amountInput').value) || 1; }
+  start();
+});
+el('pm-resetBtn').addEventListener('click', () => {
+  el('pm-presentation').style.display = 'none';
+  el('pm-setup').style.display = 'block';
+});
+
+window.pmStart = function(params){
+  pmMode = 'custom';
+  pmPct = params.pctLabel;
+  pmAmount = params.amount;
+  document.querySelectorAll('#pm-modePills .pill').forEach(b => b.classList.toggle('active', b.dataset.mode === 'custom'));
+  document.querySelectorAll('#pm-pctPills .pill').forEach(b => b.classList.toggle('active', b.dataset.pct === pmPct));
+  el('pm-customOptions').style.display = 'block';
+  start();
+};
+})();
+</script>
+
+<script>
+/* =======================================================================
+   5. PERCENTAGE CALCULATOR STEPS
+   ======================================================================= */
+(function(){
+let pcMode = 'random';
+let pc = { pct: 35, amount: 640 };
+
+attachPills('pc-modePills', 'mode', (m) => {
+  pcMode = m;
+  el('pc-customOptions').style.display = (m === 'custom') ? 'block' : 'none';
+});
+
+function renderFlow(stage){
+  el('pc-flowRow').innerHTML = `
+    <div class="flowBox">${fmtMoney(pc.amount)}</div>
+    <div class="flowArrow">&rarr;</div>
+    <div class="flowBox ${stage >= 1 ? 'solved' : ''}" id="pc-flow1">${stage >= 1 ? fmtNum(pc.div100) : '÷ 100'}</div>
+    <div class="flowArrow">&rarr;</div>
+    <div class="flowBox ${stage >= 2 ? 'solved' : ''}" id="pc-flow2">${stage >= 2 ? fmtMoney(pc.answer) : '× ' + pc.pct + '%'}</div>
+  `;
+}
+
+function start(){
+  el('pc-setup').style.display = 'none';
+  el('pc-presentation').style.display = 'block';
+  el('pc-finishHost').innerHTML = '';
+  pc.div100 = roundMoney(pc.pct / 100 * 10000) / 10000;
+  pc.answer = roundMoney(pc.pct / 100 * pc.amount);
+  el('pc-stageLabel').textContent = 'Step 1 of 2';
+  el('pc-promptText').textContent = `Calculate ${pc.pct}% of ${fmtMoney(pc.amount)}.`;
+  renderFlow(0);
+  el('pc-stepPrompt').textContent = `Step 1: divide the percentage by 100 (${pc.pct} ÷ 100).`;
+  el('pc-answerInput').value = '';
+  makeStepChecker('pc-answerInput', 'pc-checkBtn', 'pc-checkFeedback', pc.pct / 100, 0.0015, () => {
+    renderFlow(1);
+    step2();
+  });
+}
+
+function step2(){
+  el('pc-stageLabel').textContent = 'Step 2 of 2';
+  el('pc-stepPrompt').textContent = `Step 2: multiply by the amount (${fmtNum(pc.div100)} × ${fmtMoney(pc.amount)}).`;
+  const input = document.createElement('input');
+  el('pc-checkFeedback').textContent = '';
+  const answerInput = el('pc-answerInput');
+  answerInput.value = '';
+  answerInput.disabled = false;
+  el('pc-checkBtn').disabled = false;
+  makeStepChecker('pc-answerInput', 'pc-checkBtn', 'pc-checkFeedback', pc.answer, 0.015, () => {
+    renderFlow(2);
+    el('pc-stepPrompt').textContent = '';
+    el('pc-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Solved!</div><p>${pc.pct}% of ${fmtMoney(pc.amount)} = <span class="ans">${fmtMoney(pc.answer)}</span></p></div>`;
+  });
+}
+
+el('pc-startBtn').addEventListener('click', () => {
+  if (pcMode === 'random'){ pc = { pct: randInt(1, 99), amount: roundMoney(5 + Math.random() * 895) }; }
+  else { pc = { pct: parseNum(el('pc-pctInput').value) || 1, amount: parseNum(el('pc-amountInput').value) || 1 }; }
+  start();
+});
+el('pc-resetBtn').addEventListener('click', () => {
+  el('pc-presentation').style.display = 'none';
+  el('pc-setup').style.display = 'block';
+});
+
+window.pcStart = function(params){
+  pcMode = 'custom';
+  pc = { pct: params.pct, amount: params.amount };
+  document.querySelectorAll('#pc-modePills .pill').forEach(b => b.classList.toggle('active', b.dataset.mode === 'custom'));
+  el('pc-customOptions').style.display = 'block';
+  start();
+};
+})();
+</script>
+
+<script>
+/* =======================================================================
+   6. INCREASE/DECREASE NUMBER LINE
+   ======================================================================= */
+(function(){
+let idMode = 'random';
+let idDir = 'increase';
+let idData = {};
+
+attachPills('id-modePills', 'mode', (m) => {
+  idMode = m;
+  el('id-customOptions').style.display = (m === 'custom') ? 'block' : 'none';
+});
+attachPills('id-directionPills', 'dir', (d) => { idDir = d; });
+
+function renderBar(showDelta){
+  const isInc = idData.isIncrease;
+  const change = Math.abs(idData.newAmount - idData.original);
+  const outerTotal = isInc ? idData.newAmount : idData.original;
+  const origPct = Math.max(8, Math.round(idData.original / outerTotal * 100));
+  const deltaPct = Math.max(0, 100 - origPct);
+  let html = `<div class="nlBarOuter">
+    <div class="nlOriginalSeg" style="flex:${origPct}">${fmtNum(idData.original)}</div>`;
+  if (showDelta){
+    html += `<div class="nlDeltaSeg ${isInc ? 'increase' : 'decrease'}" style="flex:${deltaPct}">${isInc ? '+' : '−'}${fmtNum(change)}</div>`;
+  }
+  html += `</div><div class="nlLabels"><span>0</span><span>${isInc ? 'New: ' + fmtNum(idData.newAmount) : 'Original: ' + fmtNum(idData.original)}</span></div>`;
+  el('id-nlHost').innerHTML = html;
+}
+
+function start(){
+  el('id-setup').style.display = 'none';
+  el('id-presentation').style.display = 'block';
+  el('id-finishHost').innerHTML = '';
+  const change = Math.abs(idData.newAmount - idData.original);
+  el('id-stageLabel').textContent = 'Step 1 of 2';
+  el('id-stagePrompt').textContent = `First, find ${idData.pct}% of ${fmtNum(idData.original)}.`;
+  renderBar(false);
+  el('id-answerInput').value = '';
+  el('id-answerInput').disabled = false;
+  el('id-checkBtn').disabled = false;
+  el('id-checkFeedback').textContent = '';
+  makeStepChecker('id-answerInput', 'id-checkBtn', 'id-checkFeedback', change, Math.max(0.02, change * 0.01), () => {
+    step2(change);
+  });
+}
+
+function step2(change){
+  el('id-stageLabel').textContent = 'Step 2 of 2';
+  const verb = idData.isIncrease ? 'add this on' : 'take this away';
+  const op = idData.isIncrease ? '+' : '−';
+  el('id-stagePrompt').textContent = `Now ${verb}: ${fmtNum(idData.original)} ${op} ${fmtNum(change)} = ?`;
+  renderBar(true);
+  const input = el('id-answerInput');
+  input.value = ''; input.disabled = false;
+  el('id-checkBtn').disabled = false;
+  el('id-checkFeedback').textContent = '';
+  makeStepChecker('id-answerInput', 'id-checkBtn', 'id-checkFeedback', idData.newAmount, Math.max(0.02, idData.newAmount * 0.01), () => {
+    el('id-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Solved!</div><p>New amount = <span class="ans">${fmtNum(idData.newAmount)}</span></p></div>`;
+  });
+}
+
+function randomiseValues(){
+  idDir = ['increase', 'decrease'][randInt(0, 1)];
+  const isInc = idDir === 'increase';
+  const pct = [5, 10, 15, 20, 25, 30, 40, 50][randInt(0, 7)];
+  const original = randInt(20, 400);
+  const change = roundMoney(original * pct / 100);
+  const newAmount = isInc ? roundMoney(original + change) : roundMoney(original - change);
+  idData = { isIncrease: isInc, original, pct, newAmount };
+}
+
+el('id-startBtn').addEventListener('click', () => {
+  if (idMode === 'random'){ randomiseValues(); }
+  else {
+    const original = parseNum(el('id-originalInput').value) || 1;
+    const pct = parseNum(el('id-pctInput').value) || 0;
+    const isInc = idDir === 'increase';
+    const change = roundMoney(original * pct / 100);
+    const newAmount = isInc ? roundMoney(original + change) : roundMoney(original - change);
+    idData = { isIncrease: isInc, original, pct, newAmount };
+  }
+  start();
+});
+el('id-resetBtn').addEventListener('click', () => {
+  el('id-presentation').style.display = 'none';
+  el('id-setup').style.display = 'block';
+});
+
+window.idStart = function(params){
+  idMode = 'custom';
+  idDir = params.isIncrease ? 'increase' : 'decrease';
+  idData = { isIncrease: !!params.isIncrease, original: params.original, pct: params.pct, newAmount: params.newAmount };
+  document.querySelectorAll('#id-modePills .pill').forEach(b => b.classList.toggle('active', b.dataset.mode === 'custom'));
+  document.querySelectorAll('#id-directionPills .pill').forEach(b => b.classList.toggle('active', b.dataset.dir === idDir));
+  el('id-customOptions').style.display = 'block';
+  start();
+};
+})();
+</script>
+
+<script>
+/* =======================================================================
+   7. SYMBOL COUNTER (Pictographs)
+   ======================================================================= */
+(function(){
+let syMode = 'random';
+let syData = {};
+
+attachPills('sy-modePills', 'mode', (m) => {
+  syMode = m;
+  el('sy-customOptions').style.display = (m === 'custom') ? 'block' : 'none';
+});
+
+function parseItemsTextarea(text){
+  return text.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+    const parts = line.split(',');
+    return { category: (parts[0] || '').trim(), value: parseNum(parts[1]) || 0 };
+  });
+}
+
+function randomiseValues(){
+  const rows = parseItemsTextarea(el('sy-itemsTextarea').value.trim() ? el('sy-itemsTextarea').value : 'Monday, 15\nTuesday, 20\nWednesday, 10');
+  const unit = [2, 4, 5, 10][randInt(0, 3)];
+  const categories = rows.map(r => r.category);
+  const values = categories.map(() => unit * randInt(1, 8));
+  const opChoices = ['read', 'compare', 'total'];
+  const op = opChoices[randInt(0, 2)];
+  let relevant;
+  if (op === 'read'){ relevant = [categories[randInt(0, categories.length - 1)]]; }
+  else if (op === 'compare'){ relevant = categories.length >= 2 ? [categories[0], categories[1]] : [categories[0]]; }
+  else { relevant = categories.slice(); }
+  syData = { categories, values, unitValue: unit, relevant, op: op === 'compare' ? 'diff' : (op === 'total' ? 'sum' : 'read') };
+}
+
+function start(){
+  el('sy-setup').style.display = 'none';
+  el('sy-presentation').style.display = 'block';
+  el('sy-finishHost').innerHTML = '';
+  el('sy-combineHost').innerHTML = '';
+
+  const label = syData.op === 'read' ? 'Read the value' : (syData.op === 'diff' ? 'Compare two categories' : 'Find the total');
+  el('sy-stageLabel').textContent = label;
+  el('sy-stagePrompt').textContent = 'Count the symbols for each category, then multiply by the unit value.';
+
+  const revealed = {};
+  const relevantSet = syData.relevant;
+  function renderBlocks(){
+    el('sy-blocksHost').innerHTML = relevantSet.map((cat, i) => {
+      const idx = syData.categories.indexOf(cat);
+      const value = syData.values[idx];
+      const nSym = Math.floor(value / syData.unitValue);
+      const half = (value % syData.unitValue) !== 0;
+      const icons = '■'.repeat(nSym) + (half ? '<span style="opacity:.5">◧</span>' : '');
+      const state = revealed[cat] || 'hidden';
+      let readout;
+      if (state === 'hidden'){ readout = `<button class="btn small" data-cat="${cat}" data-action="count">Count the symbols</button>`; }
+      else if (state === 'counted'){
+        readout = `<span class="symbolReadout">${nSym}${half ? '½' : ''} symbols &times; ${syData.unitValue} = </span> <button class="btn small" data-cat="${cat}" data-action="multiply">Reveal value</button>`;
+      } else {
+        readout = `<span class="symbolReadout">${nSym}${half ? '½' : ''} symbols &times; ${syData.unitValue} = <span class="val">${fmtNum(value)}</span></span>`;
+      }
+      return `<div class="symbolCatBlock">
+        <div class="symbolCatName">${cat}</div>
+        <div class="symbolIcons ${state === 'hidden' ? 'dim' : ''}">${icons}</div>
+        <div>${readout}</div>
+      </div>`;
+    }).join('');
+    document.querySelectorAll('#sy-blocksHost button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cat = btn.dataset.cat;
+        revealed[cat] = btn.dataset.action === 'count' ? 'counted' : 'done';
+        renderBlocks();
+        checkAllRevealed();
+      });
+    });
+  }
+  function checkAllRevealed(){
+    const allDone = relevantSet.every(cat => revealed[cat] === 'done');
+    if (!allDone) return;
+    const vals = relevantSet.map(cat => syData.values[syData.categories.indexOf(cat)]);
+    if (syData.op === 'read'){
+      showFinish(vals[0]);
+    } else {
+      combineStage(vals);
+    }
+  }
+  renderBlocks();
+}
+
+function combineStage(vals){
+  const isDiff = syData.op === 'diff';
+  const expr = isDiff ? `${fmtNum(Math.max(...vals))} − ${fmtNum(Math.min(...vals))}` : vals.map(fmtNum).join(' + ');
+  const expected = isDiff ? Math.abs(vals[0] - vals[1]) : vals.reduce((a, b) => a + b, 0);
+  el('sy-combineHost').innerHTML = `
+    <div class="sentenceBox">${expr} = <input id="sy-combineInput" class="blankInput" type="text" inputmode="decimal" placeholder="?"></div>
+    <div class="checkRow"><button class="btn" id="sy-combineCheckBtn">Check</button></div>
+    <div class="checkFeedback" id="sy-combineFeedback"></div>
+  `;
+  makeStepChecker('sy-combineInput', 'sy-combineCheckBtn', 'sy-combineFeedback', expected, 0.02, () => {
+    showFinish(expected);
+  });
+}
+
+function showFinish(value){
+  el('sy-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Solved!</div><p>Answer = <span class="ans">${fmtNum(value)}</span></p></div>`;
+}
+
+el('sy-startBtn').addEventListener('click', () => {
+  if (syMode === 'random'){ randomiseValues(); }
+  else {
+    const rows = parseItemsTextarea(el('sy-itemsTextarea').value);
+    syData = {
+      categories: rows.map(r => r.category), values: rows.map(r => r.value),
+      unitValue: parseNum(el('sy-unitInput').value) || 1,
+      relevant: rows.map(r => r.category), op: 'sum',
+    };
+  }
+  start();
+});
+el('sy-resetBtn').addEventListener('click', () => {
+  el('sy-presentation').style.display = 'none';
+  el('sy-setup').style.display = 'block';
+});
+
+window.syStart = function(params){
+  syMode = 'custom';
+  syData = {
+    categories: params.categories, values: params.values, unitValue: params.unitValue,
+    relevant: params.relevant, op: params.op,
+  };
+  document.querySelectorAll('#sy-modePills .pill').forEach(b => b.classList.toggle('active', b.dataset.mode === 'custom'));
+  el('sy-customOptions').style.display = 'block';
+  start();
+};
+})();
+</script>
+
+<script>
+/* =======================================================================
+   8. BAR READER (Bar Graphs)
+   ======================================================================= */
+(function(){
+let baMode = 'random';
+let ba = {};
+
+attachPills('ba-modePills', 'mode', (m) => {
+  baMode = m;
+  el('ba-customOptions').style.display = (m === 'custom') ? 'block' : 'none';
+});
+
+function parseItemsTextarea(text){
+  return text.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+    const parts = line.split(',');
+    return { cat: (parts[0] || '').trim(), val: parseNum(parts[1]) || 0 };
+  });
+}
+
+function randomiseValues(){
+  const rows = parseItemsTextarea(el('ba-itemsTextarea').value.trim() ? el('ba-itemsTextarea').value : 'Mon, 4\nTue, 7\nWed, 2');
+  const categories = rows.map(r => r.cat);
+  const group1 = categories.map(() => randInt(2, 30));
+  const focusChoices = ['read', 'total', 'range'];
+  const focus = focusChoices[randInt(0, 2)];
+  let relevant, op;
+  if (focus === 'read'){ const i = randInt(0, categories.length - 1); relevant = [{ series: 1, idx: i }]; op = 'sum'; }
+  else if (focus === 'total'){ relevant = categories.map((c, i) => ({ series: 1, idx: i })); op = 'sum'; }
+  else {
+    const maxI = group1.indexOf(Math.max(...group1)), minI = group1.indexOf(Math.min(...group1));
+    relevant = [{ series: 1, idx: maxI }, { series: 1, idx: minI }]; op = 'diff';
+  }
+  ba = { categories, group1, group1Name: 'Series', group2: null, group2Name: null, relevant, op };
+}
+
+function renderChart(revealedSet){
+  const maxVal = Math.max(...ba.group1, ...(ba.group2 || [0]), 1);
+  const isRelevant = (s, i) => ba.relevant.some(r => r.series === s && r.idx === i);
+  let barsHtml = ba.categories.map((cat, i) => {
+    const h1 = Math.max(4, Math.round(ba.group1[i] / maxVal * 190));
+    const key1 = `1-${i}`;
+    const rev1 = revealedSet.has(key1);
+    let inner = `<div class="chartBarWrap">
+        <div class="chartBar series1 ${isRelevant(1, i) ? 'relevant' : ''} ${rev1 ? 'revealed' : ''}" style="height:${h1}px" data-series="1" data-idx="${i}">
+          ${rev1 ? `<span class="chartBarValue">${fmtNum(ba.group1[i])}</span>` : ''}
+        </div>
+      </div>`;
+    if (ba.group2){
+      const h2 = Math.max(4, Math.round(ba.group2[i] / maxVal * 190));
+      const key2 = `2-${i}`;
+      const rev2 = revealedSet.has(key2);
+      inner += `<div class="chartBarWrap">
+        <div class="chartBar series2 ${isRelevant(2, i) ? 'relevant' : ''} ${rev2 ? 'revealed' : ''}" style="height:${h2}px" data-series="2" data-idx="${i}">
+          ${rev2 ? `<span class="chartBarValue">${fmtNum(ba.group2[i])}</span>` : ''}
+        </div>
+      </div>`;
+    }
+    return `<div class="chartGroup">${inner}</div>`;
+  }).join('');
+  el('ba-chartHost').innerHTML = `<div class="chartBars">${barsHtml}</div>
+    <div class="chartCatLabels">${ba.categories.map(c => `<div class="chartCatLabel">${c}</div>`).join('')}</div>`;
+  el('ba-legendHost').innerHTML = ba.group2
+    ? `<span><span class="legendDot" style="background:#cbd0d8"></span>${ba.group1Name}</span><span><span class="legendDot" style="background:#e9dcc4"></span>${ba.group2Name}</span>`
+    : '';
+  document.querySelectorAll('.chartBar').forEach(bar => {
+    bar.addEventListener('click', () => {
+      const key = bar.dataset.series + '-' + bar.dataset.idx;
+      if (revealedSet.has(key)) return;
+      revealedSet.add(key);
+      renderChart(revealedSet);
+      checkDone(revealedSet);
+    });
+  });
+}
+
+function relevantValues(){
+  return ba.relevant.map(r => (r.series === 1 ? ba.group1 : ba.group2)[r.idx]);
+}
+
+function checkDone(revealedSet){
+  const allRevealed = ba.relevant.every(r => revealedSet.has(r.series + '-' + r.idx));
+  if (!allRevealed) return;
+  const vals = relevantValues();
+  if (vals.length === 1){
+    el('ba-exprHint').textContent = '';
+    showFinish(vals[0]);
+    return;
+  }
+  const expr = ba.op === 'diff' ? `${fmtNum(Math.max(...vals))} − ${fmtNum(Math.min(...vals))}` : vals.map(fmtNum).join(' + ');
+  el('ba-exprHint').textContent = expr + ' = ?';
+  el('ba-answerRow').style.display = 'flex';
+  el('ba-checkRow').style.display = 'flex';
+  const expected = ba.op === 'diff' ? Math.abs(vals[0] - vals[1]) : vals.reduce((a, b) => a + b, 0);
+  makeStepChecker('ba-answerInput', 'ba-checkBtn', 'ba-checkFeedback', expected, 0.02, () => showFinish(expected));
+}
+
+function showFinish(value){
+  el('ba-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Solved!</div><p>Answer = <span class="ans">${fmtNum(value)}</span></p></div>`;
+}
+
+function start(){
+  el('ba-setup').style.display = 'none';
+  el('ba-presentation').style.display = 'block';
+  el('ba-finishHost').innerHTML = '';
+  el('ba-exprHint').textContent = '';
+  el('ba-answerRow').style.display = 'none';
+  el('ba-checkRow').style.display = 'none';
+  el('ba-answerInput').value = '';
+  el('ba-checkFeedback').textContent = '';
+  el('ba-stageLabel').textContent = 'Read the bar graph';
+  el('ba-stagePrompt').textContent = 'Click each highlighted bar to reveal its value.';
+  renderChart(new Set());
+}
+
+el('ba-startBtn').addEventListener('click', () => {
+  if (baMode === 'random'){ randomiseValues(); }
+  else {
+    const rows = parseItemsTextarea(el('ba-itemsTextarea').value);
+    ba = { categories: rows.map(r => r.cat), group1: rows.map(r => r.val), group1Name: 'Series', group2: null, group2Name: null,
+      relevant: rows.map((r, i) => ({ series: 1, idx: i })), op: 'sum' };
+  }
+  start();
+});
+el('ba-resetBtn').addEventListener('click', () => {
+  el('ba-presentation').style.display = 'none';
+  el('ba-setup').style.display = 'block';
+});
+
+window.baStart = function(params){
+  baMode = 'custom';
+  ba = {
+    categories: params.categories, group1: params.group1, group1Name: params.group1Name || 'Series 1',
+    group2: params.group2 || null, group2Name: params.group2Name || null,
+    relevant: params.relevant, op: params.op,
+  };
+  document.querySelectorAll('#ba-modePills .pill').forEach(b => b.classList.toggle('active', b.dataset.mode === 'custom'));
+  el('ba-customOptions').style.display = 'block';
+  start();
+};
+})();
+</script>
+
+<script>
+/* =======================================================================
+   9. LINE GRAPH READER
+   ======================================================================= */
+(function(){
+let lgMode = 'random';
+let lg = {};
+
+attachPills('lg-modePills', 'mode', (m) => {
+  lgMode = m;
+  el('lg-customOptions').style.display = (m === 'custom') ? 'block' : 'none';
+});
+
+function parseItemsTextarea(text){
+  return text.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+    const parts = line.split(',');
+    return { x: (parts[0] || '').trim(), y: parseNum(parts[1]) || 0 };
+  });
+}
+
+function randomiseValues(){
+  const rows = parseItemsTextarea(el('lg-itemsTextarea').value.trim() ? el('lg-itemsTextarea').value : '00:00, 4\n04:00, 2\n08:00, 9');
+  const xValues = rows.map(r => r.x);
+  const yValues = xValues.map(() => randInt(1, 30));
+  const focusChoices = ['read', 'difference', 'maxmin'];
+  const focus = focusChoices[randInt(0, 2)];
+  let relevant, op;
+  if (focus === 'read'){ relevant = [randInt(0, xValues.length - 1)]; op = 'single'; }
+  else if (focus === 'difference'){
+    let i = randInt(0, xValues.length - 1), j = randInt(0, xValues.length - 1);
+    while (j === i) j = randInt(0, xValues.length - 1);
+    relevant = [i, j]; op = 'diff';
+  } else {
+    const wantMax = Math.random() < 0.5;
+    relevant = [wantMax ? yValues.indexOf(Math.max(...yValues)) : yValues.indexOf(Math.min(...yValues))];
+    op = 'single';
+  }
+  lg = { xValues, yValues, relevant, op };
+}
+
+const SVG_W = 640, SVG_H = 260, PAD_L = 46, PAD_R = 20, PAD_T = 20, PAD_B = 34;
+
+function renderSvg(revealedSet){
+  const n = lg.xValues.length;
+  const maxY = Math.max(...lg.yValues, 1);
+  const minY = Math.min(...lg.yValues, 0);
+  const spanY = Math.max(maxY - Math.min(minY, 0), 1);
+  const plotW = SVG_W - PAD_L - PAD_R, plotH = SVG_H - PAD_T - PAD_B;
+  const xAt = (i) => PAD_L + (n === 1 ? plotW / 2 : (plotW * i) / (n - 1));
+  const yAt = (v) => PAD_T + plotH - ((v - Math.min(minY, 0)) / spanY) * plotH;
+  const pts = lg.yValues.map((v, i) => [xAt(i), yAt(v)]);
+  const polyline = pts.map(p => p.join(',')).join(' ');
+  const isRelevant = (i) => lg.relevant.includes(i);
+  let svg = `<svg viewBox="0 0 ${SVG_W} ${SVG_H}" xmlns="http://www.w3.org/2000/svg">`;
+  svg += `<line x1="${PAD_L}" y1="${PAD_T}" x2="${PAD_L}" y2="${SVG_H - PAD_B}" stroke="var(--ink)" stroke-width="2"/>`;
+  svg += `<line x1="${PAD_L}" y1="${SVG_H - PAD_B}" x2="${SVG_W - PAD_R}" y2="${SVG_H - PAD_B}" stroke="var(--ink)" stroke-width="2"/>`;
+  svg += `<polyline points="${polyline}" fill="none" stroke="var(--down)" stroke-width="2.5"/>`;
+  pts.forEach((p, i) => {
+    const rev = revealedSet.has(i);
+    svg += `<g class="lgPoint ${isRelevant(i) ? 'relevant' : ''} ${rev ? 'revealed' : ''}" data-idx="${i}">
+      <circle cx="${p[0]}" cy="${p[1]}" r="7" fill="${rev ? 'var(--good)' : 'var(--mark)'}"/>
+      ${rev ? `<text x="${p[0]}" y="${p[1] - 12}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="13" fill="var(--ink)">${fmtNum(lg.yValues[i])}</text>` : ''}
+      <text x="${p[0]}" y="${SVG_H - PAD_B + 18}" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="var(--ink-soft)">${lg.xValues[i]}</text>
+    </g>`;
+  });
+  svg += '</svg>';
+  el('lg-svgHost').innerHTML = svg;
+  document.querySelectorAll('.lgPoint').forEach(pt => {
+    pt.addEventListener('click', () => {
+      const idx = Number(pt.dataset.idx);
+      if (revealedSet.has(idx)) return;
+      revealedSet.add(idx);
+      renderSvg(revealedSet);
+      checkDone(revealedSet);
+    });
+  });
+}
+
+function checkDone(revealedSet){
+  const allRevealed = lg.relevant.every(i => revealedSet.has(i));
+  if (!allRevealed) return;
+  const vals = lg.relevant.map(i => lg.yValues[i]);
+  if (lg.op === 'single'){ showFinish(vals[0]); return; }
+  el('lg-exprHint').textContent = `${fmtNum(Math.max(...vals))} − ${fmtNum(Math.min(...vals))} = ?`;
+  el('lg-answerRow').style.display = 'flex';
+  el('lg-checkRow').style.display = 'flex';
+  makeStepChecker('lg-answerInput', 'lg-checkBtn', 'lg-checkFeedback', Math.abs(vals[0] - vals[1]), 0.02, () => showFinish(Math.abs(vals[0] - vals[1])));
+}
+
+function showFinish(value){
+  el('lg-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Solved!</div><p>Answer = <span class="ans">${fmtNum(value)}</span></p></div>`;
+}
+
+function start(){
+  el('lg-setup').style.display = 'none';
+  el('lg-presentation').style.display = 'block';
+  el('lg-finishHost').innerHTML = '';
+  el('lg-exprHint').textContent = '';
+  el('lg-answerRow').style.display = 'none';
+  el('lg-checkRow').style.display = 'none';
+  el('lg-answerInput').value = '';
+  el('lg-checkFeedback').textContent = '';
+  el('lg-stageLabel').textContent = 'Read the line graph';
+  el('lg-stagePrompt').textContent = 'Click each highlighted point to reveal its value.';
+  renderSvg(new Set());
+}
+
+el('lg-startBtn').addEventListener('click', () => {
+  if (lgMode === 'random'){ randomiseValues(); }
+  else {
+    const rows = parseItemsTextarea(el('lg-itemsTextarea').value);
+    lg = { xValues: rows.map(r => r.x), yValues: rows.map(r => r.y), relevant: [0], op: 'single' };
+  }
+  start();
+});
+el('lg-resetBtn').addEventListener('click', () => {
+  el('lg-presentation').style.display = 'none';
+  el('lg-setup').style.display = 'block';
+});
+
+window.lgStart = function(params){
+  lgMode = 'custom';
+  lg = { xValues: params.xValues, yValues: params.yValues, relevant: params.relevant, op: params.op };
+  document.querySelectorAll('#lg-modePills .pill').forEach(b => b.classList.toggle('active', b.dataset.mode === 'custom'));
+  el('lg-customOptions').style.display = 'block';
+  start();
+};
+})();
+</script>
+
+<script>
+/* =======================================================================
+   10. PIE ANGLE CALCULATOR
+   ======================================================================= */
+(function(){
+let paMode = 'random';
+let pa = {};
+const PALETTE = ['#cbd0d8', '#e9dcc4', '#d7c7ce', '#c7d8d4', '#e5cfa8', '#c9cde0'];
+
+attachPills('pa-modePills', 'mode', (m) => {
+  paMode = m;
+  el('pa-customOptions').style.display = (m === 'custom') ? 'block' : 'none';
+});
+
+function parseItemsTextarea(text){
+  return text.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+    const parts = line.split(',');
+    return { cat: (parts[0] || '').trim(), angle: parseNum(parts[1]) || 0 };
+  });
+}
+
+function randomiseValues(){
+  const rows = parseItemsTextarea(el('pa-itemsTextarea').value.trim() ? el('pa-itemsTextarea').value : 'Bus, 144\nCar, 90\nWalking, 90\nBike, 36');
+  const categories = rows.map(r => r.cat);
+  const angles = rows.map(r => r.angle);
+  const targetIdx = randInt(0, categories.length - 1);
+  pa = { categories, angles, kind: 'angle_to_pct', targetIdx };
+}
+
+function buildPieSvg(){
+  const total = pa.angles.reduce((a, b) => a + b, 0) || 360;
+  let cum = -90;
+  const cx = 110, cy = 110, r = 100;
+  let svg = `<svg viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">`;
+  pa.angles.forEach((a, i) => {
+    const start = cum, end = cum + (a / total) * 360;
+    cum = end;
+    const x1 = cx + r * Math.cos(start * Math.PI / 180), y1 = cy + r * Math.sin(start * Math.PI / 180);
+    const x2 = cx + r * Math.cos(end * Math.PI / 180), y2 = cy + r * Math.sin(end * Math.PI / 180);
+    const largeArc = (end - start) > 180 ? 1 : 0;
+    const isTarget = i === pa.targetIdx;
+    svg += `<path d="M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${largeArc} 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z"
+      fill="${PALETTE[i % PALETTE.length]}" stroke="${isTarget ? 'var(--mark-deep)' : '#fff'}" stroke-width="${isTarget ? 4 : 1.5}"/>`;
+  });
+  svg += '</svg>';
+  el('pa-svgHost').innerHTML = svg;
+  el('pa-legendHost').innerHTML = pa.categories.map((cat, i) => {
+    const isTarget = i === pa.targetIdx;
+    const label = pa.kind === 'angle_to_pct' ? `${pa.angles[i]}°` : (isTarget ? '?' : `${pa.pcts[i]}%`);
+    return `<div class="pieLegendRow ${isTarget ? 'target' : ''}"><span class="dot" style="background:${PALETTE[i % PALETTE.length]}"></span>${cat}: ${label}</div>`;
+  }).join('');
+}
+
+function start(){
+  el('pa-setup').style.display = 'none';
+  el('pa-presentation').style.display = 'block';
+  el('pa-finishHost').innerHTML = '';
+  buildPieSvg();
+  if (pa.kind === 'angle_to_pct'){
+    el('pa-stageLabel').textContent = 'Step 1 of 2';
+    el('pa-stagePrompt').textContent = `What percentage does ${pa.categories[pa.targetIdx]} represent?`;
+    const angle = pa.angles[pa.targetIdx];
+    el('pa-stepsHost').innerHTML = `
+      <p class="stagePrompt" style="font-size:16px">Step 1: divide the angle by 360 (${angle} ÷ 360).</p>
+      <div class="answerRow"><input class="numInput" id="pa-step1Input" type="text" inputmode="decimal"></div>
+      <div class="checkRow"><button class="btn" id="pa-step1Btn">Check</button></div>
+      <div class="checkFeedback" id="pa-step1Feedback"></div>
+      <div id="pa-step2Host"></div>
+    `;
+    const div360 = angle / 360;
+    makeStepChecker('pa-step1Input', 'pa-step1Btn', 'pa-step1Feedback', div360, 0.002, () => {
+      el('pa-stageLabel').textContent = 'Step 2 of 2';
+      const pct = Math.round(div360 * 100 * 10) / 10;
+      el('pa-step2Host').innerHTML = `
+        <p class="stagePrompt" style="font-size:16px">Step 2: multiply by 100.</p>
+        <div class="answerRow"><input class="numInput" id="pa-step2Input" type="text" inputmode="decimal"></div>
+        <div class="checkRow"><button class="btn" id="pa-step2Btn">Check</button></div>
+        <div class="checkFeedback" id="pa-step2Feedback"></div>
+      `;
+      makeStepChecker('pa-step2Input', 'pa-step2Btn', 'pa-step2Feedback', pct, 0.15, () => showFinish(pct, '%'));
+    });
+  } else {
+    el('pa-stageLabel').textContent = 'Step 1 of 2';
+    el('pa-stagePrompt').textContent = `What percentage does ${pa.categories[pa.targetIdx]} represent?`;
+    const known = pa.pcts.filter((_, i) => i !== pa.targetIdx);
+    const knownSum = known.reduce((a, b) => a + b, 0);
+    el('pa-stepsHost').innerHTML = `
+      <p class="stagePrompt" style="font-size:16px">Step 1: add up the known percentages (${known.join(' + ')}).</p>
+      <div class="answerRow"><input class="numInput" id="pa-step1Input" type="text" inputmode="decimal"></div>
+      <div class="checkRow"><button class="btn" id="pa-step1Btn">Check</button></div>
+      <div class="checkFeedback" id="pa-step1Feedback"></div>
+      <div id="pa-step2Host"></div>
+    `;
+    makeStepChecker('pa-step1Input', 'pa-step1Btn', 'pa-step1Feedback', knownSum, 0.02, () => {
+      el('pa-stageLabel').textContent = 'Step 2 of 2';
+      const missing = 100 - knownSum;
+      el('pa-step2Host').innerHTML = `
+        <p class="stagePrompt" style="font-size:16px">Step 2: subtract from 100% (100 − ${knownSum}).</p>
+        <div class="answerRow"><input class="numInput" id="pa-step2Input" type="text" inputmode="decimal"></div>
+        <div class="checkRow"><button class="btn" id="pa-step2Btn">Check</button></div>
+        <div class="checkFeedback" id="pa-step2Feedback"></div>
+      `;
+      makeStepChecker('pa-step2Input', 'pa-step2Btn', 'pa-step2Feedback', missing, 0.02, () => showFinish(missing, '%'));
+    });
+  }
+}
+
+function showFinish(value, suffix){
+  el('pa-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Solved!</div><p>${pa.categories[pa.targetIdx]} = <span class="ans">${fmtNum(value)}${suffix}</span></p></div>`;
+}
+
+el('pa-startBtn').addEventListener('click', () => {
+  if (paMode === 'random'){ randomiseValues(); }
+  else {
+    const rows = parseItemsTextarea(el('pa-itemsTextarea').value);
+    pa = { categories: rows.map(r => r.cat), angles: rows.map(r => r.angle), kind: 'angle_to_pct', targetIdx: randInt(0, rows.length - 1) };
+  }
+  start();
+});
+el('pa-resetBtn').addEventListener('click', () => {
+  el('pa-presentation').style.display = 'none';
+  el('pa-setup').style.display = 'block';
+});
+
+window.paStart = function(params){
+  paMode = 'custom';
+  pa = { categories: params.categories, kind: params.kind, targetIdx: params.targetIdx };
+  if (params.kind === 'angle_to_pct'){
+    pa.angles = params.angles;
+  } else {
+    pa.pcts = params.pcts;
+    pa.angles = params.pcts.map(p => Math.round(p / 100 * 360));
+  }
+  document.querySelectorAll('#pa-modePills .pill').forEach(b => b.classList.toggle('active', b.dataset.mode === 'custom'));
+  el('pa-customOptions').style.display = 'block';
+  start();
+};
+})();
+</script>
+
+<script>
+/* =======================================================================
+   11. TALLY MARKER
+   ======================================================================= */
+(function(){
+let tyMode = 'random';
+let ty = {};
+
+attachPills('ty-modePills', 'mode', (m) => {
+  tyMode = m;
+  el('ty-customOptions').style.display = (m === 'custom') ? 'block' : 'none';
+});
+
+function randomiseValues(){
+  const categories = ['Apple', 'Banana', 'Grape', 'Orange'];
+  const data = [];
+  for (let i = 0; i < randInt(16, 22); i++){ data.push(categories[randInt(0, categories.length - 1)]); }
+  categories.forEach(c => { if (!data.includes(c)) data[randInt(0, data.length - 1)] = c; });
+  ty = { categories, data };
+}
+
+function tallyString(n){
+  const groups = Math.floor(n / 5), rem = n % 5;
+  let s = '';
+  for (let g = 0; g < groups; g++){ s += '||||̸ '; }
+  s += '|'.repeat(rem);
+  return s.trim() || '&mdash;';
+}
+
+let idx = 0;
+function render(){
+  el('ty-dataStrip').innerHTML = ty.data.map((d, i) => {
+    if (i < idx) return `<span class="used">${d}</span>`;
+    if (i === idx) return `<span class="current">${d}</span>`;
+    return `<span>${d}</span>`;
+  }).join(', ');
+
+  const freq = {};
+  ty.categories.forEach(c => freq[c] = 0);
+  for (let i = 0; i < idx; i++){ freq[ty.data[i]] = (freq[ty.data[i]] || 0) + 1; }
+
+  let table = `<tr><th>Category</th><th>Tally</th><th>Frequency</th></tr>`;
+  ty.categories.forEach(c => {
+    table += `<tr><td>${c}</td><td class="tallyMarksCell">${tallyString(freq[c])}</td><td class="tallyFreqCell">${freq[c]}</td></tr>`;
+  });
+  el('ty-table').innerHTML = table;
+
+  if (idx >= ty.data.length){
+    el('ty-nextBtn').style.display = 'none';
+    const total = ty.data.length;
+    el('ty-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Table complete!</div><p>Total surveyed = <span class="ans">${total}</span></p></div>`;
+  } else {
+    el('ty-nextBtn').style.display = 'inline-block';
+    el('ty-nextBtn').textContent = `Add next item: "${ty.data[idx]}"`;
+  }
+}
+
+el('ty-nextBtn').addEventListener('click', () => {
+  idx += 1;
+  render();
+});
+
+function start(){
+  el('ty-setup').style.display = 'none';
+  el('ty-presentation').style.display = 'block';
+  el('ty-finishHost').innerHTML = '';
+  idx = 0;
+  render();
+}
+
+el('ty-startBtn').addEventListener('click', () => {
+  if (tyMode === 'random'){ randomiseValues(); }
+  else {
+    const categories = el('ty-categoriesInput').value.split(',').map(s => s.trim()).filter(Boolean);
+    const data = el('ty-dataTextarea').value.split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+    ty = { categories, data };
+  }
+  start();
+});
+el('ty-resetBtn').addEventListener('click', () => {
+  el('ty-presentation').style.display = 'none';
+  el('ty-setup').style.display = 'block';
+});
+
+window.tyStart = function(params){
+  tyMode = 'custom';
+  ty = { categories: params.categories, data: params.data };
+  document.querySelectorAll('#ty-modePills .pill').forEach(b => b.classList.toggle('active', b.dataset.mode === 'custom'));
+  el('ty-customOptions').style.display = 'block';
+  start();
+};
+})();
+</script>
+
+</body>
+</html>

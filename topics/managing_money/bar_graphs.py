@@ -61,6 +61,7 @@ def generate_bar_graphs_l1():
         )
         worked = [f"{sc['categories'][idx]} = {answer}"]
         scaffold_steps = []
+        widget_relevant, widget_op = [{"series": 1, "idx": idx}], "sum"
     elif focus == "total":
         answer = sum(values)
         question_text = (
@@ -72,6 +73,8 @@ def generate_bar_graphs_l1():
             {"prompt": f"Read the value for {cat}", "answer": val}
             for cat, val in zip(sc["categories"], values)
         ]
+        widget_relevant = [{"series": 1, "idx": i} for i in range(n)]
+        widget_op = "sum"
     else:
         answer = max(values) - min(values)
         question_text = (
@@ -86,6 +89,11 @@ def generate_bar_graphs_l1():
             {"prompt": "Read the largest bar value", "answer": max(values)},
             {"prompt": "Read the smallest bar value", "answer": min(values)},
         ]
+        widget_relevant = [
+            {"series": 1, "idx": values.index(max(values))},
+            {"series": 1, "idx": values.index(min(values))},
+        ]
+        widget_op = "diff"
 
     return Question(
         question_text=question_text,
@@ -106,6 +114,11 @@ def generate_bar_graphs_l1():
                 "x_label": sc["x_label"],
                 "y_label": sc["y_label"],
                 "title": sc["title"],
+            },
+            "scaffold_widget": "bar_reader",
+            "scaffold_widget_params": {
+                "categories": list(sc["categories"]), "group1": list(values), "group1_name": sc["title"],
+                "relevant": widget_relevant, "op": widget_op,
             },
         },
     )
@@ -140,6 +153,8 @@ def generate_bar_graphs_l2():
             {"prompt": f"Read the {sc['group1']} value for {cat}", "answer": g1[idx]},
             {"prompt": f"Read the {sc['group2']} value for {cat}", "answer": g2[idx]},
         ]
+        widget_relevant = [{"series": 1, "idx": idx}, {"series": 2, "idx": idx}]
+        widget_op = "diff"
     elif focus == "total_one":
         group_name, data = random.choice([(sc["group1"], g1), (sc["group2"], g2)])
         answer = sum(data)
@@ -152,6 +167,9 @@ def generate_bar_graphs_l2():
             {"prompt": f"Read the {group_name} value for {cat}", "answer": val}
             for cat, val in zip(sc["categories"], data)
         ]
+        series_num = 1 if data is g1 else 2
+        widget_relevant = [{"series": series_num, "idx": i} for i in range(n)]
+        widget_op = "sum"
     else:
         answer = sum(g1) + sum(g2)
         question_text = (
@@ -167,6 +185,8 @@ def generate_bar_graphs_l2():
             {"prompt": f"Find the total for {sc['group1']}", "answer": sum(g1)},
             {"prompt": f"Find the total for {sc['group2']}", "answer": sum(g2)},
         ]
+        widget_relevant = [{"series": 1, "idx": i} for i in range(n)] + [{"series": 2, "idx": i} for i in range(n)]
+        widget_op = "sum"
 
     return Question(
         question_text=question_text,
@@ -187,6 +207,12 @@ def generate_bar_graphs_l2():
                 "x_label": sc["x_label"],
                 "y_label": sc["y_label"],
                 "title": sc["title"],
+            },
+            "scaffold_widget": "bar_reader",
+            "scaffold_widget_params": {
+                "categories": list(sc["categories"]), "group1": list(g1), "group1_name": sc["group1"],
+                "group2": list(g2), "group2_name": sc["group2"],
+                "relevant": widget_relevant, "op": widget_op,
             },
         },
     )

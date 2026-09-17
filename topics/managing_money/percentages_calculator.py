@@ -47,6 +47,10 @@ def generate_percentages_calculator_l1():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "percentage_calculator_steps",
+            "scaffold_widget_params": {"pct": pct, "amount": amount},
+        },
     )
 
 
@@ -79,6 +83,10 @@ def generate_percentages_calculator_l2():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "percentage_calculator_steps",
+            "scaffold_widget_params": {"pct": pct, "amount": price},
+        },
     )
 
 

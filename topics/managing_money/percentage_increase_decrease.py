@@ -78,6 +78,12 @@ def generate_percentage_increase_decrease_l1():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "increase_decrease_number_line",
+            "scaffold_widget_params": {
+                "is_increase": is_increase, "original": amount, "pct": pct, "new_amount": new_amount,
+            },
+        },
     )
 
 
@@ -186,6 +192,11 @@ def generate_percentage_increase_decrease_l3():
         worked = [f"{pct}% of £{full_rent} = £{paid:,.2f}"]
         answer = paid
 
+    if kind == "bonus":
+        widget_params = {"is_increase": True, "original": salary, "pct": pct, "new_amount": total}
+    else:
+        widget_params = {"is_increase": False, "original": full_rent, "pct": 100 - pct, "new_amount": paid}
+
     return Question(
         question_text=question_text,
         correct_answer=answer,
@@ -194,6 +205,10 @@ def generate_percentage_increase_decrease_l3():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "increase_decrease_number_line",
+            "scaffold_widget_params": widget_params,
+        },
     )
 
 

@@ -53,6 +53,10 @@ def _equal_sharing_question():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "bar_model_splitter",
+            "scaffold_widget_params": {"total": total, "mode": "share", "n": n_people},
+        },
     )
 
 
@@ -149,6 +153,10 @@ def _monthly_pay_question():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "bar_model_splitter",
+            "scaffold_widget_params": {"total": annual, "mode": "share", "n": 12},
+        },
     )
 
 
@@ -173,6 +181,10 @@ def _envelope_sharing_question():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "bar_model_splitter",
+            "scaffold_widget_params": {"total": total, "mode": "share", "n": n_items},
+        },
     )
 
 
@@ -221,6 +233,13 @@ def _boxes_needed_question():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "bar_model_splitter",
+            "scaffold_widget_params": {
+                "total": needed, "mode": "group", "n": per_box,
+                "multiplier": price_per_box, "multiplier_label": "Cost per box (£)",
+            },
+        },
     )
 
 
@@ -256,6 +275,10 @@ def _savings_weeks_question():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "bar_model_splitter",
+            "scaffold_widget_params": {"total": cost, "mode": "group", "n": weekly2},
+        },
     )
 
 
