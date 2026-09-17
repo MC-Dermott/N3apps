@@ -345,6 +345,11 @@ _N3_LEVELS = {
 }
 
 
+QUAL_REGISTRY = {
+    "National 3": _N3_TOPICS,
+}
+
+
 def get_levels(topic, question_type):
     return _N3_LEVELS.get(topic, {}).get(question_type, {})
 

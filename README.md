@@ -19,7 +19,12 @@ Two further National 3 units — Shape, Space & Measures, and Numeracy — are n
 registry in `core/engine/question_factory.py` is structured so a second unit package
 (`topics/<new_unit>/`) slots in alongside `topics/managing_money/` without changing `n3_app.py`.
 
-No login/auth or progress tracking in this first version — practice mode only.
+Login, signup, student progress tracking and a teacher dashboard are wired up — same
+Supabase-backed structure as N5apps/N5physics (`core/auth/`, `core/db/`, `core/ui/auth_ui.py`,
+`core/ui/dashboard_ui.py`, `core/ui/student_dashboard_ui.py`). N3apps shares its Supabase
+project with N5apps (both maths — see `core/db/tracker.py`'s `SUBJECT` constant), so a
+student uses the same login on both apps and a teacher can manage both from either app's
+dashboard. N5physics has its own separate project (different subject).
 
 ## Running it
 
@@ -28,6 +33,15 @@ python3 -m venv venv
 venv/bin/pip install -r requirements.txt
 venv/bin/streamlit run n3_app.py
 ```
+
+### Auth setup
+
+1. Create a Supabase project for N3apps and run `supabase_schema.sql` against it in the
+   Supabase SQL Editor.
+2. Copy `.streamlit/secrets.toml.example` to `.streamlit/secrets.toml` and fill in
+   `SUPABASE_URL`, `SUPABASE_KEY`, and a `TEACHER_CODE` (the signup code that grants the
+   teacher role — give it to teachers only). `ADMIN_KEY`/`ADMIN_USERNAME` are optional.
+3. `.streamlit/secrets.toml` is gitignored — never commit real credentials.
 
 ## Adding a new topic / question type
 

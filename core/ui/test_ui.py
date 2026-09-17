@@ -8,6 +8,7 @@ from core.engine.question_factory import generate_question
 from core.engine.session_manager import reset_test
 from core.ui.question_ui import render_question
 from core.ui.scaffold_ui import render_solution
+from core.db.tracker import save_test_result
 
 _NUM_QUESTIONS = 5
 _GAME_HTML_PATH = Path(__file__).parent / "assets" / "geometry_dash.html"
@@ -32,7 +33,7 @@ def _is_correct(user_input, expected):
         return str(user_input).strip().lower() == str(expected).strip().lower()
 
 
-def render_test(unit, question_type, level=None):
+def render_test(unit, question_type, level=None, user_id=None):
     test = st.session_state.test
 
     if not test["questions"]:
@@ -52,6 +53,9 @@ def render_test(unit, question_type, level=None):
         return
 
     if test["complete"]:
+        if not test.get("saved") and user_id:
+            save_test_result(user_id, "National 3", unit, question_type, sum(test["results"]), _NUM_QUESTIONS)
+            test["saved"] = True
         if sum(test["results"]) == _NUM_QUESTIONS and "game_unlock_time" not in test:
             test["game_unlock_time"] = time.time()
         _render_summary(test)

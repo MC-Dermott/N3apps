@@ -5,6 +5,11 @@ from core.engine.session_manager import initialise_session, reset_test
 from core.ui.question_ui import render_question
 from core.ui.scaffold_ui import render_notes, render_scaffold, render_simulation, render_solution
 from core.ui.test_ui import render_test
+from core.ui.auth_ui import render_auth, render_change_password
+from core.auth.auth import login_as_admin
+from core.ui.dashboard_ui import render_dashboard
+from core.ui.student_dashboard_ui import render_student_dashboard
+from core.db.tracker import save_practice_attempt
 
 
 def _parse_numeric(s):
@@ -27,8 +32,103 @@ st.set_page_config(page_title="National 3 Maths Practice")
 
 initialise_session()
 
-st.title("National 3 Maths Practice")
-st.caption("Applications of Mathematics — National 3")
+
+def _do_logout():
+    for key in ["user", "submitted", "last_unit", "last_question_type", "last_level",
+                "last_tracked_qid", "show_dashboard", "show_student_dashboard"]:
+        st.session_state.pop(key, None)
+    reset_test()
+
+
+def _render_auth_button():
+    """Top-right login/logout button, shown on every page."""
+    user = st.session_state.get("user")
+    if user:
+        st.caption(f"**{user['username']}**")
+        if st.button("Log out", key="logout_corner"):
+            _do_logout()
+            st.rerun()
+        if st.button("Change password", key="change_pw_corner"):
+            st.session_state.show_change_password = True
+            st.rerun()
+
+
+# --- Auth page ---
+if st.session_state.get("show_auth"):
+    if st.button("← Back"):
+        st.session_state.pop("show_auth", None)
+        st.rerun()
+    render_auth()
+    st.stop()
+
+user = st.session_state.get("user")  # None if not logged in
+
+# --- Admin bypass: visiting the app with ?admin_key=<ADMIN_KEY secret> in the URL
+# logs you straight in as the configured admin account, skipping the login form. ---
+if not user:
+    admin_key = st.query_params.get("admin_key")
+    if admin_key:
+        admin_user = login_as_admin(admin_key)
+        if admin_user:
+            st.session_state.user = admin_user
+            user = admin_user
+
+# --- Login gate: block all access until authenticated ---
+if not user:
+    render_auth()
+    st.stop()
+
+# --- Change password page ---
+if st.session_state.get("show_change_password") and user:
+    if st.button("← Back"):
+        st.session_state.pop("show_change_password", None)
+        st.rerun()
+    render_change_password(user)
+    st.stop()
+
+# --- Student progress dashboard ---
+if st.session_state.get("show_student_dashboard"):
+    st.title("National 3 Maths Practice")
+    col_back, col_corner = st.columns([5, 1])
+    with col_back:
+        if st.button("← Back"):
+            st.session_state.pop("show_student_dashboard", None)
+            st.rerun()
+    with col_corner:
+        _render_auth_button()
+    render_student_dashboard(user)
+    st.stop()
+
+# --- Teacher dashboard ---
+if st.session_state.get("show_dashboard"):
+    st.title("National 3 Maths Practice")
+    col_back, col_corner = st.columns([5, 1])
+    with col_back:
+        if st.button("← Back to practice"):
+            st.session_state.pop("show_dashboard", None)
+            st.rerun()
+    with col_corner:
+        _render_auth_button()
+    render_dashboard()
+    st.stop()
+
+col_title, col_corner = st.columns([5, 1])
+with col_title:
+    st.title("National 3 Maths Practice")
+    st.caption("Applications of Mathematics — National 3")
+with col_corner:
+    _render_auth_button()
+
+if user["role"] == "teacher":
+    if st.button("📊 Teacher Dashboard", use_container_width=True):
+        st.session_state.show_dashboard = True
+        st.rerun()
+    st.write("")
+
+if st.button("📈 My Progress", use_container_width=True):
+    st.session_state.show_student_dashboard = True
+    st.rerun()
+
 st.divider()
 
 # --- Unit and topic selection ---
@@ -68,14 +168,17 @@ if st.session_state.mode != mode:
 
 st.divider()
 
+user_id = user["id"]
+
 if mode == "Test":
-    render_test(unit, question_type, level=selected_level)
+    render_test(unit, question_type, level=selected_level, user_id=user_id)
 else:
     quiz = st.session_state.quiz
 
     if st.button("Generate Question"):
         quiz["current_question"] = generate_question(unit, question_type, level=selected_level)
         st.session_state.submitted = False
+        st.session_state.pop("last_tracked_qid", None)
         st.rerun()
 
     question = quiz.get("current_question")
@@ -94,6 +197,11 @@ else:
 
         if st.session_state.submitted:
             correct = _answers_match(user_answer.strip(), question.correct_answer)
+
+            if st.session_state.get("last_tracked_qid") != question.qid:
+                save_practice_attempt(user_id, "National 3", unit, question_type, correct)
+                st.session_state.last_tracked_qid = question.qid
+
             if correct:
                 st.success("✅ Correct!")
             else:
