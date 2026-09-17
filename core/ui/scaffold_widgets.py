@@ -1,16 +1,28 @@
-"""Embeds selected tools from the separate maths-scaffolds project
-(https://github.com/MC-Dermott/maths-scaffolds, ~/Documents/maths-scaffolds locally) as
-interactive simulations inside a question's scaffold expander.
+"""Interactive scaffold widgets shown inside a question's "🎮 Interactive scaffold" expander
+(see core/ui/scaffold_ui.py's render_simulation), dispatched via the WIDGET_REGISTRY dict at
+the bottom of this file — keyed by the same string a topic module puts in
+`metadata["scaffold_widget"]`, called with `**metadata["scaffold_widget_params"]`.
 
-maths_scaffolds.html is a single self-contained page with several independent tools, switched
-between via a JS `showApp('<id>-app')` call. Each tool has a "Random question" / "My own
-numbers" mode; where a tool exposes plain numeric inputs for "My own numbers" mode, we inject a
-small script (mirroring the pattern test_ui.py already uses for the Geometry Dash embed) that
-jumps straight to that tool, switches it to custom mode, fills in this exact question's own
-numbers, and clicks Start — so the scaffold walks through the same shape/value the question
-shows, not an unrelated demo. Where a tool has no such input (time conversion only exposes a
-mode pill), only the matching mode/direction is pre-selected and the tool generates its own
-practice example.
+Two families of widget live here:
+
+1. Tools ported from the separate maths-scaffolds project
+   (https://github.com/MC-Dermott/maths-scaffolds, ~/Documents/maths-scaffolds locally),
+   embedded from assets/maths_scaffolds.html — a single self-contained page with several
+   independent tools, switched between via a JS `showApp('<id>-app')` call.
+2. Tools built directly for N3apps (not part of that separate project — see
+   assets/managing_money_scaffolds.html, assets/numeracy_scaffolds.html and
+   assets/shape_space_and_measures_scaffolds.html), one file per unit, each following the exact
+   same structural pattern (a `showApp()`-switched set of appContainer divs) and copying the
+   shared CSS design system from maths_scaffolds.html, purely so the embedding mechanism below
+   can stay identical across both families.
+
+Either way: each tool has a "Random question" / "My own numbers" mode; where a tool exposes
+plain numeric inputs for "My own numbers" mode, we inject a small script (mirroring the pattern
+test_ui.py already uses for the Geometry Dash embed) that jumps straight to that tool, switches
+it to custom mode, fills in this exact question's own numbers, and clicks Start — so the
+scaffold walks through the same shape/value the question shows, not an unrelated demo. Where a
+tool has no such input, only the matching mode/direction is pre-selected and the tool generates
+its own practice example — note this explicitly in that render function's docstring.
 """
 
 from pathlib import Path
@@ -18,18 +30,17 @@ from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 
-_HTML_PATH = Path(__file__).parent / "assets" / "maths_scaffolds.html"
-_html_cache = None
+_ASSETS_DIR = Path(__file__).parent / "assets"
+_html_cache = {}
 
 
-def _load_html():
-    global _html_cache
-    if _html_cache is None:
-        _html_cache = _HTML_PATH.read_text(encoding="utf-8")
-    return _html_cache
+def _load_html(filename):
+    if filename not in _html_cache:
+        _html_cache[filename] = (_ASSETS_DIR / filename).read_text(encoding="utf-8")
+    return _html_cache[filename]
 
 
-def _embed(app_id, setup_js, height=760):
+def _embed(app_id, setup_js, height=760, html_file="maths_scaffolds.html"):
     script = f"""
         <script>
         (function() {{
@@ -38,7 +49,7 @@ def _embed(app_id, setup_js, height=760):
         }})();
         </script>
     </body>"""
-    page = _load_html().replace("</body>", script)
+    page = _load_html(html_file).replace("</body>", script)
     components.html(page, height=height, scrolling=True)
 
 
@@ -91,3 +102,17 @@ def render_time_conversion_scaffold(direction):
         + "document.getElementById('tc-startBtn').click();"
     )
     _embed("tc-app", setup_js, height=520)
+
+
+# ---------------------------------------------------------------------------
+# Registry — dispatched by core/ui/scaffold_ui.py's render_simulation(). Keys are whatever a
+# topic module puts in metadata["scaffold_widget"]; values are called with
+# **metadata["scaffold_widget_params"]. New widgets (own file per unit, see module docstring)
+# register here too — just add a new key, no other file needs editing to wire one in.
+# ---------------------------------------------------------------------------
+
+WIDGET_REGISTRY = {
+    "rounding": render_rounding_scaffold,
+    "l_shape_perimeter": render_l_shape_perimeter_scaffold,
+    "time_conversion": render_time_conversion_scaffold,
+}

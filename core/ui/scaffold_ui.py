@@ -1,10 +1,6 @@
 import streamlit as st
 
-from core.ui.scaffold_widgets import (
-    render_rounding_scaffold,
-    render_l_shape_perimeter_scaffold,
-    render_time_conversion_scaffold,
-)
+from core.ui.scaffold_widgets import WIDGET_REGISTRY
 
 
 def _parse_numeric(s):
@@ -70,16 +66,12 @@ def render_simulation(question):
     separate from metadata["diagram"] (the static picture in the main question view, e.g.
     perimeter's own "rect_shape" drawing), since a question can have both at once."""
     widget = question.metadata.get("scaffold_widget")
-    if not widget:
+    render_fn = WIDGET_REGISTRY.get(widget)
+    if not render_fn:
         return
     params = question.metadata.get("scaffold_widget_params", {})
     with st.expander("🎮 Interactive scaffold"):
-        if widget == "rounding":
-            render_rounding_scaffold(**params)
-        elif widget == "l_shape_perimeter":
-            render_l_shape_perimeter_scaffold(**params)
-        elif widget == "time_conversion":
-            render_time_conversion_scaffold(**params)
+        render_fn(**params)
 
 
 def render_solution(question):
