@@ -52,6 +52,13 @@ def generate_fraction_of_amount_l1():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "fraction_bar",
+            "scaffold_widget_params": {
+                "amount": amount, "denom": denom, "num": 1,
+                "unit": "" if money else unit, "two_step": False,
+            },
+        },
     )
 
 
@@ -91,6 +98,13 @@ def generate_fraction_of_amount_l2():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "fraction_bar",
+            "scaffold_widget_params": {
+                "amount": amount, "denom": denom, "num": num,
+                "unit": "" if money else unit, "two_step": False,
+            },
+        },
     )
 
 

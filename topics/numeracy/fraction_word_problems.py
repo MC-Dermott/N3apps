@@ -48,6 +48,10 @@ def _time_question():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "fraction_bar",
+            "scaffold_widget_params": {"amount": 60, "denom": denom, "num": num, "unit": "min", "two_step": False},
+        },
     )
 
 
@@ -67,6 +71,10 @@ def _angle_question():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "fraction_bar",
+            "scaffold_widget_params": {"amount": 90, "denom": denom, "num": num, "unit": "°", "two_step": False},
+        },
     )
 
 
@@ -87,6 +95,10 @@ def _prize_money_question():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "fraction_bar",
+            "scaffold_widget_params": {"amount": amount, "denom": denom, "num": num, "unit": "", "two_step": False},
+        },
     )
 
 
@@ -131,6 +143,10 @@ def _owes_money_question():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "fraction_bar",
+            "scaffold_widget_params": {"amount": total, "denom": denom, "num": num, "unit": "p", "two_step": True},
+        },
     )
 
 
@@ -162,6 +178,12 @@ def _class_absent_question():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "fraction_bar",
+            "scaffold_widget_params": {
+                "amount": class_size, "denom": denom, "num": num, "unit": "pupils", "two_step": True,
+            },
+        },
     )
 
 
@@ -193,6 +215,13 @@ def _tank_used_question():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "fraction_bar",
+            "scaffold_widget_params": {
+                "amount": capacity, "denom": denom, "num": remaining_fraction_num,
+                "unit": "litres", "two_step": True,
+            },
+        },
     )
 
 

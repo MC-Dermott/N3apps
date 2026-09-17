@@ -115,6 +115,12 @@ def generate_reading_scales_l1():
         metadata={
             "diagram": "graduated_scale",
             "diagram_params": params,
+            "scaffold_widget": "scale_stepper",
+            "scaffold_widget_params": {
+                "min_value": params["min_value"], "max_value": params["max_value"],
+                "major_step": params["major_step"], "minor_step": params["minor_step"],
+                "marker_value": params["marker_value"], "unit_label": params["unit_label"],
+            },
         },
     )
 
@@ -157,6 +163,13 @@ def _metric_conversion_question():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "unit_conversion",
+            "scaffold_widget_params": {
+                "kind": "metric", "value": value, "from_unit": conv["from_unit"],
+                "to_unit": conv["to_unit"], "factor": conv["factor"],
+            },
+        },
     )
 
 
@@ -185,6 +198,10 @@ def _mph_kmh_question():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "unit_conversion",
+            "scaffold_widget_params": {"kind": "mph", "mph": mph},
+        },
     )
 
 

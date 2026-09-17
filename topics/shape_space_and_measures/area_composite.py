@@ -17,11 +17,18 @@ from the top-right corner.
 """
 
 
-def _diagram(vertices, edge_labels):
-    return {
+def _diagram(vertices, edge_labels, l_shape=None):
+    metadata = {
         "diagram": "rect_shape",
         "diagram_params": {"vertices": vertices, "edge_labels": edge_labels, "title": "Area"},
     }
+    if l_shape is not None:
+        W, H, a, b = l_shape
+        metadata["scaffold_widget"] = "area_composite"
+        metadata["scaffold_widget_params"] = {
+            "width": W, "height": H, "notch_width": a, "notch_height": b,
+        }
+    return metadata
 
 
 def _split_and_answer(W, H, a, b):
@@ -66,7 +73,7 @@ def generate_area_composite_l1():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
-        metadata=_diagram(vertices, edge_labels),
+        metadata=_diagram(vertices, edge_labels, l_shape=(W, H, a, b)),
     )
 
 
@@ -116,7 +123,7 @@ def generate_area_composite_l2():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
-        metadata=_diagram(vertices, edge_labels),
+        metadata=_diagram(vertices, edge_labels, l_shape=(W, H, a, b)),
     )
 
 

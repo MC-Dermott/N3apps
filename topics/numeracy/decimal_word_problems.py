@@ -67,6 +67,7 @@ def generate_decimal_word_problems_l1():
             f"What is the total?"
         )
         worked = [f"Total = {_fmt(a, dp)} + {_fmt(b, dp)} = {_fmt(answer, dp)} {item['unit']}"]
+        widget_kind, widget_params = "total", {"a": _fmt(a, dp), "b": _fmt(b, dp)}
     else:
         start = _decimal(20, 90, dp)
         removed = _decimal(2, start - 5, dp)
@@ -77,6 +78,7 @@ def generate_decimal_word_problems_l1():
             f"How much is left?"
         )
         worked = [f"Left = {_fmt(start, dp)} − {_fmt(removed, dp)} = {_fmt(answer, dp)} {item['unit']}"]
+        widget_kind, widget_params = "difference", {"start": _fmt(start, dp), "removed": _fmt(removed, dp)}
 
     return Question(
         question_text=question_text,
@@ -86,6 +88,10 @@ def generate_decimal_word_problems_l1():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "workings_pad",
+            "scaffold_widget_params": {"kind": widget_kind, "unit": item["unit"], **widget_params},
+        },
     )
 
 
@@ -115,6 +121,12 @@ def _sharing_question():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "workings_pad",
+            "scaffold_widget_params": {
+                "kind": "sharing", "unit": item["unit"], "total": _fmt(total, dp), "n": n_shares,
+            },
+        },
     )
 
 
@@ -148,6 +160,13 @@ def _multiply_then_subtract_question():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "workings_pad",
+            "scaffold_widget_params": {
+                "kind": "multiply_subtract", "unit": item["unit"],
+                "n": n, "per_unit": _fmt(per_unit, dp), "start": _fmt(start, dp),
+            },
+        },
     )
 
 

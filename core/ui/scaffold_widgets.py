@@ -269,6 +269,10 @@ def render_probability_fraction_scaffold(kind, **kwargs):
             + _set_value("pfb-favInput", kwargs["favourable"])
             + _set_value("pfb-totalInput", kwargs["total"])
         )
+        if kwargs.get("favourable_values"):
+            setup_js += _set_value(
+                "pfb-favValuesInput", ",".join(str(v) for v in kwargs["favourable_values"])
+            )
     elif kind == "counters":
         setup_js += (
             _set_value("pfb-coloursInput", ",".join(kwargs["colours"]))

@@ -44,6 +44,8 @@ def generate_area_rectangles_l1():
             "diagram": "rect_shape",
             "diagram_params": {"vertices": vertices, "edge_labels": edge_labels,
                                 "title": "Area"},
+            "scaffold_widget": "area_rectangles",
+            "scaffold_widget_params": {"width": w, "height": h},
         },
     )
 
@@ -72,6 +74,10 @@ def generate_area_rectangles_l2():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "area_rectangles",
+            "scaffold_widget_params": {"width": w, "height": h},
+        },
     )
 
 

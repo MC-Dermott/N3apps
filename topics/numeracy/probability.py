@@ -90,10 +90,11 @@ def generate_probability_l1():
 def _dice_question():
     outcome = random.choice(["a 6", "an even number", "an odd number", "a number less than 3",
                               "a number more than 4", "a 1"])
-    favourable = {
-        "a 6": 1, "an even number": 3, "an odd number": 3,
-        "a number less than 3": 2, "a number more than 4": 2, "a 1": 1,
+    values = {
+        "a 6": [6], "an even number": [2, 4, 6], "an odd number": [1, 3, 5],
+        "a number less than 3": [1, 2], "a number more than 4": [5, 6], "a 1": [1],
     }[outcome]
+    favourable = len(values)
     question_text = f"An ordinary six-sided die is rolled. What is the probability of getting {outcome}?"
     answer = _frac_str(favourable, 6)
     worked = [f"P({outcome}) = {favourable}/6 = {answer}"]
@@ -109,6 +110,13 @@ def _dice_question():
         ],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "probability_fraction",
+            "scaffold_widget_params": {
+                "kind": "dice", "outcome": outcome, "favourable": favourable, "total": 6,
+                "favourable_values": values,
+            },
+        },
     )
 
 
@@ -116,11 +124,12 @@ def _spinner_question():
     n = random.choice([4, 5, 6, 8])
     outcome = random.choice(["an even number", "an odd number", "the number " + str(random.randint(1, n))])
     if outcome.startswith("an even"):
-        favourable = n // 2
+        values = [v for v in range(1, n + 1) if v % 2 == 0]
     elif outcome.startswith("an odd"):
-        favourable = n - n // 2
+        values = [v for v in range(1, n + 1) if v % 2 == 1]
     else:
-        favourable = 1
+        values = [int(outcome.rsplit(" ", 1)[-1])]
+    favourable = len(values)
     question_text = (
         f"A spinner has {n} equal sections, numbered 1 to {n}. "
         f"What is the probability the spinner lands on {outcome}?"
@@ -139,6 +148,13 @@ def _spinner_question():
         ],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "probability_fraction",
+            "scaffold_widget_params": {
+                "kind": "spinner", "outcome": outcome, "favourable": favourable, "total": n,
+                "favourable_values": values,
+            },
+        },
     )
 
 
@@ -166,6 +182,10 @@ def _card_question():
         ],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "probability_fraction",
+            "scaffold_widget_params": {"kind": "cards", "outcome": outcome, "favourable": favourable, "total": 52},
+        },
     )
 
 
@@ -198,6 +218,12 @@ def _coloured_items_question():
         ],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "probability_fraction",
+            "scaffold_widget_params": {
+                "kind": "counters", "colours": colours, "counts": counts, "fav_colour": colour,
+            },
+        },
     )
 
 
@@ -240,6 +266,13 @@ def _letters_question():
         ],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "probability_fraction",
+            "scaffold_widget_params": {
+                "kind": "letters", "word": word, "letter_mode": mode,
+                "letter": letter if mode == "letter" else "",
+            },
+        },
     )
 
 
@@ -294,6 +327,13 @@ def _without_replacement_question():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "probability_fraction",
+            "scaffold_widget_params": {
+                "kind": "without_replacement",
+                "colour_a": colour_a, "count_a": count_a, "colour_b": colour_b, "count_b": count_b,
+            },
+        },
     )
 
 
@@ -356,6 +396,13 @@ def _frequency_table_question():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "probability_fraction",
+            "scaffold_widget_params": {
+                "kind": "table", "label": ctx["label"].capitalize(), "values": values, "freqs": freqs,
+                "qmode": mode, "qvalue": v,
+            },
+        },
     )
 
 

@@ -96,6 +96,10 @@ def generate_numeracy_percentages_l1():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "percentage_stepper",
+            "scaffold_widget_params": {"kind": "common", "pct_str": pct_str, "amount": amount, "unit": unit},
+        },
     )
 
 
@@ -129,6 +133,10 @@ def generate_numeracy_percentages_l2():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "percentage_stepper",
+            "scaffold_widget_params": {"kind": "any", "pct": pct, "amount": amount, "unit": unit},
+        },
     )
 
 
@@ -164,6 +172,10 @@ def _vat_question():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "percentage_stepper",
+            "scaffold_widget_params": {"kind": "vat", "price": price},
+        },
     )
 
 
@@ -212,6 +224,12 @@ def _compare_offers_question():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "percentage_stepper",
+            "scaffold_widget_params": {
+                "kind": "compare", "pct1": pct1, "base1": base1, "pct2": pct2, "base2": base2,
+            },
+        },
     )
 
 

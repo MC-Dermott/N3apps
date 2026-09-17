@@ -46,6 +46,8 @@ def _triangle_question(base, height, right_angled, dp):
                 "base": base, "height": height, "apex_frac": apex_frac,
                 "base_label": f"{fmt_num(base, dp)} cm", "height_label": f"{fmt_num(height, dp)} cm",
             },
+            "scaffold_widget": "area_triangles",
+            "scaffold_widget_params": {"base": base, "height": height},
         },
     )
 

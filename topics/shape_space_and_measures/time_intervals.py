@@ -65,6 +65,12 @@ def generate_time_intervals_l1():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "time_intervals",
+            "scaffold_widget_params": {
+                "direction": "elapsed", "start": start, "end": end, "use24": use24,
+            },
+        },
     )
 
 
@@ -105,6 +111,12 @@ def generate_time_intervals_l2():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "time_intervals",
+            "scaffold_widget_params": {
+                "direction": "elapsed", "start": start, "end": end, "use24": use24,
+            },
+        },
     )
 
 
@@ -143,6 +155,11 @@ def generate_time_intervals_l3():
         answer = fmt12(leave)
         worked = [f"{fmt12(target)} − {duration} minutes = {answer}"]
 
+    if direction == "forwards":
+        scaffold_params = {"direction": "forward", "start": start, "duration": duration, "use24": False}
+    else:
+        scaffold_params = {"direction": "backward", "target": target, "duration": duration, "use24": False}
+
     return Question(
         question_text=question_text,
         correct_answer=answer,
@@ -151,6 +168,7 @@ def generate_time_intervals_l3():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={"scaffold_widget": "time_intervals", "scaffold_widget_params": scaffold_params},
     )
 
 

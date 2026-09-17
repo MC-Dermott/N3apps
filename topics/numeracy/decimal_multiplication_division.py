@@ -68,6 +68,12 @@ def generate_decimal_multiplication_division_l1():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "decimal_mul_div",
+            "scaffold_widget_params": {
+                "value": _fmt(value), "operation": op, "kind": "single_digit", "n": n,
+            },
+        },
     )
 
 
@@ -109,6 +115,12 @@ def generate_decimal_multiplication_division_l2():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "decimal_mul_div",
+            "scaffold_widget_params": {
+                "value": _fmt(value), "operation": op, "kind": "shift", "n": power,
+            },
+        },
     )
 
 

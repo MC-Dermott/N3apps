@@ -66,6 +66,10 @@ def generate_decimal_addition_subtraction_l1():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "decimal_column",
+            "scaffold_widget_params": {"a": _fmt(a, dp), "b": _fmt(b, dp), "op": op},
+        },
     )
 
 
@@ -105,11 +109,17 @@ def _addition_word_question():
 
     worked = [" + ".join(_fmt(v, dp) for v in values) + f" = {_fmt(total, dp)} {context['unit']}"]
     scaffold_steps = []
+    metadata = {}
     if n == 3:
         scaffold_steps = [
             {"prompt": f"Add the first two values ({_fmt(values[0], dp)} + {_fmt(values[1], dp)})",
              "answer": round(values[0] + values[1], dp)},
         ]
+    else:
+        metadata = {
+            "scaffold_widget": "decimal_column",
+            "scaffold_widget_params": {"a": _fmt(values[0], dp), "b": _fmt(values[1], dp), "op": "+"},
+        }
 
     return Question(
         question_text=question_text,
@@ -119,6 +129,7 @@ def _addition_word_question():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata=metadata,
     )
 
 
@@ -151,6 +162,10 @@ def _subtraction_word_question():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "decimal_column",
+            "scaffold_widget_params": {"a": _fmt(start, dp), "b": _fmt(removed, dp), "op": "-"},
+        },
     )
 
 

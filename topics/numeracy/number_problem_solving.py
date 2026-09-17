@@ -54,6 +54,11 @@ def generate_number_problem_solving_l1():
     box_text = "  ".join(str(v) for v in numbers)
     focus = random.choice(["sum_odds", "sum_evens", "range", "count_evens"])
 
+    metadata = {
+        "scaffold_widget": "number_problem_solving",
+        "scaffold_widget_params": {"kind": "sorter", "numbers": numbers, "focus": focus},
+    }
+
     if focus == "sum_odds":
         odds = [v for v in numbers if v % 2 == 1]
         answer = sum(odds)
@@ -98,6 +103,7 @@ def generate_number_problem_solving_l1():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata=metadata,
     )
 
 
@@ -143,6 +149,10 @@ def generate_number_problem_solving_l2():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "number_problem_solving",
+            "scaffold_widget_params": {"kind": "sequence", "terms": terms, "step": step, "direction": direction},
+        },
     )
 
 
@@ -188,6 +198,10 @@ def generate_number_problem_solving_l3():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "number_problem_solving",
+            "scaffold_widget_params": {"kind": "estimate", "a": a, "b": b, "op": op, "place": place},
+        },
     )
 
 

@@ -73,6 +73,15 @@ def _diagram_params(tt):
     }
 
 
+def _scaffold_params(tt, focus, **extra):
+    params = {
+        "title": _MODE_LABELS[tt["mode"]], "stops": tt["stops"], "services": tt["service_labels"],
+        "times_str": tt["times_str"], "times_min": tt["times"], "focus": focus,
+    }
+    params.update(extra)
+    return {"scaffold_widget": "timetables", "scaffold_widget_params": params}
+
+
 # ---------------------------------------------------------------------------
 # Level 1 — reading a timetable: departure, arrival, journey time
 # ---------------------------------------------------------------------------
@@ -114,7 +123,7 @@ def generate_timetables_l1():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
-        metadata=_diagram_params(tt),
+        metadata={**_diagram_params(tt), **_scaffold_params(tt, "journey", svc_idx=svc_idx, end_idx=end_idx)},
     )
 
 
@@ -167,7 +176,13 @@ def generate_timetables_l2():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
-        metadata=_diagram_params(tt),
+        metadata={
+            **_diagram_params(tt),
+            **_scaffold_params(
+                tt, "deadline", dest_idx=dest_idx, start_idx=start_idx,
+                deadline_str=fmt24(deadline), deadline_min=deadline,
+            ),
+        },
     )
 
 

@@ -50,6 +50,8 @@ def generate_volume_cuboids_l1():
                 "length_label": f"{length} cm", "width_label": f"{width} cm",
                 "height_label": f"{height} cm",
             },
+            "scaffold_widget": "volume_cuboids",
+            "scaffold_widget_params": {"length": length, "width": width, "height": height},
         },
     )
 
@@ -87,6 +89,10 @@ def generate_volume_cuboids_l2():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "scaffold_widget": "volume_cuboids",
+            "scaffold_widget_params": {"length": length, "width": width, "height": height},
+        },
     )
 
 

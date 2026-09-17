@@ -75,8 +75,12 @@ def _lr_lists(streets):
     return left, right
 
 
-def _diagram(streets):
-    return {"diagram": "street_map", "diagram_params": {"streets": streets}}
+def _diagram(streets, scaffold_params=None):
+    metadata = {"diagram": "street_map", "diagram_params": {"streets": streets}}
+    if scaffold_params is not None:
+        metadata["scaffold_widget"] = "directions"
+        metadata["scaffold_widget_params"] = {"streets": streets, **scaffold_params}
+    return metadata
 
 
 def _preamble():
@@ -98,6 +102,7 @@ def generate_directions_l1():
         answer = s["name"]
         scaffold_steps = []
         worked = [f"{s['landmark']} is at the end of {s['name']}."]
+        scaffold_params = {"query_type": "landmark", "target_landmark": s["landmark"]}
     elif focus == "nth_name":
         side = random.choice(["left", "right"])
         lst = left if side == "left" else right
@@ -107,6 +112,7 @@ def generate_directions_l1():
         answer = s["name"]
         scaffold_steps = []
         worked = [f"The {ordinal(n)} turning on the {side} is {s['name']}."]
+        scaffold_params = {"query_type": "nth", "side": side, "n": n, "reveal": "name"}
     else:
         side = random.choice(["left", "right"])
         lst = left if side == "left" else right
@@ -124,6 +130,7 @@ def generate_directions_l1():
             f"The {ordinal(n)} turning on the {side} is {s['name']}.",
             f"{s['name']} leads to {s['landmark']}.",
         ]
+        scaffold_params = {"query_type": "nth", "side": side, "n": n, "reveal": "landmark"}
 
     return Question(
         question_text=question_text,
@@ -133,7 +140,7 @@ def generate_directions_l1():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
-        metadata=_diagram(streets),
+        metadata=_diagram(streets, scaffold_params),
     )
 
 
@@ -172,7 +179,9 @@ def generate_directions_l2():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
-        metadata=_diagram(streets),
+        metadata=_diagram(streets, {
+            "query_type": "ext", "side": side, "n": n, "sub_side": sub_side,
+        }),
     )
 
 
