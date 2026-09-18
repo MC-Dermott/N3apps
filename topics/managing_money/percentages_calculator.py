@@ -4,12 +4,13 @@ from core.models.question_model import Question
 NOTES = """
 **Calculator Percentages:**
 
-To find any percentage of an amount:
+To find any percentage of an amount, divide the amount by 100 to find 1%, then multiply by
+the percentage:
 
-$$\\text{percentage} \\div 100 \\times \\text{amount}$$
+$$\\text{amount} \\div 100 \\times \\text{percentage}$$
 
 **Example:** Find 35% of £640.
-- 35 ÷ 100 × 640 = **£224**
+- 640 ÷ 100 × 35 = **£224**
 """
 
 _ITEMS = [
@@ -32,12 +33,12 @@ def generate_percentages_calculator_l1():
     answer = round(pct / 100 * amount, 2)
 
     scaffold_steps = [
-        {"prompt": "Divide the percentage by 100", "answer": round(pct / 100, 4)},
-        {"prompt": "Multiply this by the amount", "answer": answer},
+        {"prompt": "Divide the amount by 100 to find 1%", "answer": round(amount / 100, 4)},
+        {"prompt": "Multiply this by the percentage", "answer": answer},
     ]
 
     question_text = f"Calculate {pct}% of £{amount:,.2f}."
-    worked = [f"{pct}% of £{amount:,.2f} = {pct} ÷ 100 × {amount:,.2f} = £{answer:,.2f}"]
+    worked = [f"{pct}% of £{amount:,.2f} = {amount:,.2f} ÷ 100 × {pct} = £{answer:,.2f}"]
 
     return Question(
         question_text=question_text,
@@ -70,10 +71,10 @@ def generate_percentages_calculator_l2():
         f"How much is the deposit?"
     )
     scaffold_steps = [
-        {"prompt": "Divide the percentage by 100", "answer": round(pct / 100, 4)},
-        {"prompt": "Multiply this by the price", "answer": deposit},
+        {"prompt": "Divide the price by 100 to find 1%", "answer": round(price / 100, 4)},
+        {"prompt": "Multiply this by the percentage", "answer": deposit},
     ]
-    worked = [f"Deposit = {pct}% of £{price:,.2f} = {pct} ÷ 100 × {price:,.2f} = £{deposit:,.2f}"]
+    worked = [f"Deposit = {pct}% of £{price:,.2f} = {price:,.2f} ÷ 100 × {pct} = £{deposit:,.2f}"]
 
     return Question(
         question_text=question_text,

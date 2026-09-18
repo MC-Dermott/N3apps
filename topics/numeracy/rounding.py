@@ -61,7 +61,10 @@ def generate_rounding_l1():
     target = random.choice(["whole number", "ten", "hundred", "thousand"])
 
     if target == "whole number":
-        value = round(_random_decimal(random.choice([1, 2, 3]), random.choice([1, 2])), 2)
+        # Keep the number no more than ~2 orders of magnitude above the place being
+        # rounded to (1 -> tens/units only), matching the ten/hundred/thousand cases
+        # below, which already cap their random ranges the same way.
+        value = round(_random_decimal(random.choice([1, 2]), random.choice([1, 2])), 2)
         answer = _round_half_up(value, 0)
         question_text = f"Round {_fmt(value)} to the nearest whole number."
     elif target == "ten":

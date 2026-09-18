@@ -182,6 +182,55 @@
   }
   .runningTotalBox .rtLabel{ font-family:'IBM Plex Sans', sans-serif; font-weight:600; font-size:13.5px; color: var(--ink-soft); }
 
+  /* ---- money chimney: gather-and-add-up scaffold (wage slip / receipt) ---- */
+  .dccRow{ display:flex; align-items:flex-end; gap:2px; }
+  .dccGutter{
+    width:32px; flex:0 0 32px; font-family:'IBM Plex Mono', monospace;
+    font-weight:700; font-size:26px; text-align:center; color: var(--ink-soft);
+  }
+  .subDigitCell{
+    width:38px; flex:0 0 38px; font-family:'IBM Plex Mono', monospace;
+    font-weight:700; font-size:26px; text-align:center; height:32px; line-height:32px;
+  }
+  .subDigitCell.pointCol{ width:14px; flex:0 0 14px; }
+  .carryCell{
+    width:38px; flex:0 0 38px; font-family:'IBM Plex Mono', monospace;
+    font-size:16px; font-weight:700; text-align:center; height:22px; line-height:22px;
+    color: var(--exchange);
+  }
+  .carryCell.pointCol{ width:14px; flex:0 0 14px; }
+  .subBottomRow{ border-bottom:3px solid var(--ink); padding-bottom:4px; margin-bottom:2px; }
+  .subAnswerCell{
+    width:38px; flex:0 0 38px; font-family:'IBM Plex Mono', monospace;
+    font-size:26px; font-weight:700; text-align:center; height:32px; line-height:32px;
+    color: var(--good);
+  }
+  .subAnswerCell.pointCol{ width:14px; flex:0 0 14px; color: var(--ink); }
+  .subAnswerCell.placeholder{ color: transparent; border-bottom: 3px dashed var(--line); }
+  .subAnswerCell.active{ background:#fdf6e3; border-radius:6px; color: var(--ink); border-bottom: 3px solid var(--mark-deep); }
+  .dccOverflowGap{ width:38px; flex:0 0 38px; }
+  .carryInputBox{
+    width:24px; font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:700;
+    text-align:center; padding:1px 0; border:1.5px solid var(--line); border-radius:5px;
+    background:#fff; color: var(--ink); outline:none;
+  }
+  .carryInputBox:focus{ border-color: var(--mark-deep); }
+  .quotHint{ font-size: 12.5px; color: var(--ink-soft); margin: -6px 0 12px; }
+  .mcAnswerInput{
+    font-family:'IBM Plex Mono', monospace; font-size: 19px; font-weight:600;
+    width: 60px; text-align:center; padding: 7px 8px;
+    border: 1.5px solid var(--line); border-radius:7px;
+    background: #fff; color: var(--ink); outline: none;
+  }
+  .mcAnswerInput:focus{ border-color: var(--mark-deep); }
+  .mcGatherInput{
+    font-family:'IBM Plex Mono', monospace; font-size: 19px; font-weight:600;
+    width: 110px; text-align:center; padding: 7px 8px;
+    border: 1.5px solid var(--line); border-radius:7px;
+    background: #fff; color: var(--ink); outline: none;
+  }
+  .mcGatherInput:focus{ border-color: var(--mark-deep); }
+
   /* ---- bar model splitter ---- */
   .barModelHost{ margin: 20px 0 8px; }
   .barModelTotal{ font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:15px; margin-bottom:6px; color: var(--ink-soft); }
@@ -273,6 +322,9 @@
     .panel{ padding: 16px; }
     .chartBars{ height:150px; }
     .pieRow{ flex-direction:column; }
+    .subDigitCell, .carryCell, .subAnswerCell{ width:28px; flex:0 0 28px; font-size:20px; }
+    .dccGutter{ width:24px; flex:0 0 24px; font-size:20px; }
+    .dccOverflowGap{ width:28px; flex:0 0 28px; }
   }
 </style>
 </head>
@@ -316,16 +368,13 @@
   </div>
 
   <div class="panel" id="wg-presentation" style="display:none">
-    <div class="stageLabel" id="wg-stageLabel"></div>
-    <p class="stagePrompt" id="wg-stagePrompt"></p>
-
-    <div id="wg-ledgerHost"></div>
-    <div id="wg-subtractHost"></div>
+    <div class="stageLabel" id="wg-overallLabel"></div>
+    <div id="wg-flowHost"></div>
     <div id="wg-finishHost"></div>
 
     <div class="controls"><button class="btn secondary" id="wg-resetBtn">New question</button></div>
   </div>
-  <p class="foot">Reveal and add each row in turn — watch the running total build up at the bottom.</p>
+  <p class="foot">Type in each amount from the wage slip to build up the sum, then choose add or subtract and work through it column by column.</p>
 </div>
 </div>
 
@@ -345,22 +394,29 @@
     </div>
     <div id="rc-customOptions" style="display:none">
       <div class="field">
-        <label>One item per line: "Label, amount" — use a minus sign for a discount, e.g. Discount, -12.50</label>
+        <label>One item per line: "Label, amount"</label>
         <textarea class="numInput" id="rc-itemsTextarea">Bread, 1.29
 Milk, 1.10
 Biscuits, 0.89</textarea>
+      </div>
+      <div class="field">
+        <label>Operation</label>
+        <div class="pills" id="rc-opPills">
+          <button class="pill active" data-op="+">Add (+)</button>
+          <button class="pill" data-op="-">Subtract (&minus;)</button>
+        </div>
       </div>
     </div>
     <div class="startRow"><button class="btn" id="rc-startBtn">Start</button></div>
   </div>
 
   <div class="panel" id="rc-presentation" style="display:none">
-    <div class="stageLabel" id="rc-stageLabel">Add up the receipt</div>
-    <div id="rc-ledgerHost"></div>
+    <div class="stageLabel" id="rc-overallLabel"></div>
+    <div id="rc-flowHost"></div>
     <div id="rc-finishHost"></div>
     <div class="controls"><button class="btn secondary" id="rc-resetBtn">New question</button></div>
   </div>
-  <p class="foot">Reveal each amount in turn and watch the running total at the bottom.</p>
+  <p class="foot">Type in each amount to build up the sum, then choose add or subtract and work through it column by column.</p>
 </div>
 </div>
 
@@ -805,38 +861,391 @@ function makeStepChecker(inputId, btnId, feedbackId, expected, tol, onCorrect){
   input.onkeydown = (e) => { if (e.key === 'Enter') check(); };
   setTimeout(() => input.focus(), 30);
 }
-/* Generic reveal-and-accumulate ledger: rows = [{label, amount}] (amount's sign
-   decides +/-). Renders into rowsHostId / totalId / btnId and calls onDone(total). */
-function runLedger(rowsHostId, totalId, btnId, rows, isMoney, onDone){
-  const rowsHost = el(rowsHostId), totalEl = el(totalId), btn = el(btnId);
-  let idx = 0, running = 0;
-  const fmt = isMoney ? fmtMoney : fmtNum;
-  function render(){
-    rowsHost.innerHTML = rows.map((r, i) => {
-      const revealed = i < idx;
-      const opSign = r.amount < 0 ? '−' : (i === 0 ? '' : '+');
-      const amtStr = revealed ? fmt(Math.abs(r.amount)) : '?';
-      return `<div class="ledgerRow ${revealed ? 'revealed' : ''} ${i === idx ? 'active' : ''}">
-        <span class="ledgerOp">${opSign}</span>
-        <span class="ledgerLabel">${r.label}</span>
-        <span class="ledgerAmount ${revealed ? '' : 'pending'}">${amtStr}</span>
-      </div>`;
-    }).join('');
-    totalEl.textContent = fmt(running);
-    if (idx >= rows.length){ btn.style.display = 'none'; }
-    else { btn.style.display = 'inline-block'; btn.textContent = 'Reveal & add: ' + rows[idx].label; }
-  }
-  btn.onclick = () => {
-    if (idx >= rows.length) return;
-    running = roundMoney(running + rows[idx].amount);
-    idx += 1;
-    render();
-    if (idx >= rows.length) onDone(running);
-  };
-  render();
+/* Element-creation helper (distinct from el(id) above, which looks elements up). */
+function mkEl(tag, cls, text){
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined && text !== null) e.textContent = text;
+  return e;
 }
-function ledgerTotalRowHtml(totalId, label){
-  return `<div class="runningTotalBox"><span class="rtLabel">${label}</span><span id="${totalId}">£0.00</span></div>`;
+
+/* ---------------------------------------------------------------------
+   Money chimney: the shared "gather each value -> pick + or - -> column
+   sum with carrying" flow used by the Wage Slip Calculator and the
+   Receipt Adder. Mirrors the Decimal Column Calculator in
+   numeracy_scaffolds.html (carried/borrowed digits are written into small
+   boxes by the pupil, not just shown), fixed to 2 decimal places for money.
+--------------------------------------------------------------------- */
+
+/* Walks a single a OP b column sum (2dp) into `host`, calling onDone(result)
+   once every column (and any final carry) has been solved. resultLabel, if
+   given, names the running total in the "Finished" box (e.g. "Gross Pay"). */
+function runDccColumn(host, aVal, bVal, op, onDone, resultLabel){
+  const aStr = roundMoney(aVal).toFixed(2);
+  const bStr = roundMoney(bVal).toFixed(2);
+
+  function digitsOf(str){
+    const parts = str.split('.');
+    const ip = parts[0].replace(/^0+(?=\d)/, '') || '0';
+    return { ip, dp: parts[1] || '00' };
+  }
+  function padLeft(s, len){ while (s.length < len) s = '0' + s; return s; }
+
+  let a = digitsOf(aStr), b = digitsOf(bStr);
+  const intLen = Math.max(a.ip.length, b.ip.length);
+  let aIp = padLeft(a.ip, intLen), bIp = padLeft(b.ip, intLen);
+  let aDp = a.dp, bDp = b.dp;
+
+  if (op === '-' && parseFloat(bStr) > parseFloat(aStr)){
+    [aIp, bIp] = [bIp, aIp]; [aDp, bDp] = [bDp, aDp];
+  }
+
+  const columns = [];
+  for (let i = 0; i < intLen; i++) columns.push({ type: 'digit', top: +aIp[i], bottom: +bIp[i] });
+  columns.push({ type: 'point' });
+  for (let j = 0; j < 2; j++) columns.push({ type: 'digit', top: +aDp[j], bottom: +bDp[j] });
+
+  const order = [];
+  for (let k = columns.length - 1; k >= 0; k--) if (columns[k].type === 'digit') order.push(k);
+
+  let carry = 0, borrow = 0;
+  order.forEach((idx) => {
+    const col = columns[idx];
+    if (op === '+'){
+      const sum = col.top + col.bottom + carry;
+      col.carryIn = carry; col.ansDigit = sum % 10; col.carryOut = Math.floor(sum / 10);
+      carry = col.carryOut;
+    } else {
+      let t = col.top - borrow;
+      col.borrowIn = borrow;
+      if (t < col.bottom){ t += 10; col.borrowOut = 1; } else { col.borrowOut = 0; }
+      col.ansDigit = t - col.bottom;
+      borrow = col.borrowOut;
+    }
+  });
+  const overflow = (op === '+') ? carry : 0;
+
+  let pos = 0;
+  let carryConfirmed = columns.map(() => false);
+  let finalCarryDigit = 0, finalCarryConfirmed = false;
+
+  const activeIdx = () => (pos < order.length ? order[pos] : null);
+  const isSolved = (idx) => order.indexOf(idx) !== -1 && order.indexOf(idx) < pos;
+  function placeName(idx){
+    const pIdx = columns.findIndex(c => c.type === 'point');
+    const lastIntIdx = pIdx - 1;
+    if (idx <= lastIntIdx){
+      const fromRight = lastIntIdx - idx;
+      return ['units', 'tens', 'hundreds', 'thousands'][fromRight] || (fromRight + 1) + '-thousands';
+    }
+    return (idx - pIdx === 1) ? 'tenths' : 'hundredths';
+  }
+
+  function mkCarryInput(wrapCls, id){
+    const wrap = mkEl('div', wrapCls);
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.inputMode = 'numeric'; inp.maxLength = 1; inp.autocomplete = 'off';
+    inp.className = 'carryInputBox'; inp.id = id;
+    wrap.appendChild(inp);
+    return wrap;
+  }
+  function carryCellFor(idx, known, act){
+    const col = columns[idx];
+    if (op !== '+') return mkEl('div', 'carryCell', (known && col.borrowIn) ? '−1' : '');
+    if (idx === order[0]) return mkEl('div', 'carryCell');
+    if (carryConfirmed[idx]) return mkEl('div', 'carryCell', col.carryIn ? '+' + col.carryIn : '');
+    if (act !== null) return mkCarryInput('carryCell', 'mc-carryInput' + idx);
+    return mkEl('div', 'carryCell');
+  }
+  function overflowAnswerCell(act){
+    if (finalCarryConfirmed) return mkEl('div', 'subAnswerCell', finalCarryDigit ? String(finalCarryDigit) : '');
+    if (act !== null) return mkCarryInput('subAnswerCell', 'mc-finalCarryInput');
+    return mkEl('div', 'dccOverflowGap');
+  }
+
+  function renderGrid(){
+    const gridHost = el('mc-gridHost');
+    gridHost.innerHTML = '';
+    const act = activeIdx();
+    const addMode = (op === '+');
+    const makeRow = (cls) => mkEl('div', 'dccRow' + (cls ? ' ' + cls : ''));
+    const carryRow = makeRow(), topRow = makeRow(), bottomRow = makeRow('subBottomRow'), ansRow = makeRow();
+
+    if (addMode){
+      carryRow.appendChild(mkEl('div', 'dccOverflowGap'));
+      topRow.appendChild(mkEl('div', 'dccOverflowGap'));
+      bottomRow.appendChild(mkEl('div', 'dccOverflowGap'));
+      ansRow.appendChild(overflowAnswerCell(act));
+    }
+    carryRow.appendChild(mkEl('div', 'dccGutter'));
+    topRow.appendChild(mkEl('div', 'dccGutter'));
+    bottomRow.appendChild(mkEl('div', 'dccGutter', op === '+' ? '+' : '−'));
+    ansRow.appendChild(mkEl('div', 'dccGutter'));
+
+    columns.forEach((col, idx) => {
+      if (col.type === 'point'){
+        carryRow.appendChild(mkEl('div', 'carryCell pointCol'));
+        topRow.appendChild(mkEl('div', 'subDigitCell pointCol', '.'));
+        bottomRow.appendChild(mkEl('div', 'subDigitCell pointCol', '.'));
+        ansRow.appendChild(mkEl('div', 'subAnswerCell pointCol', '.'));
+        return;
+      }
+      const known = isSolved(idx) || idx === act;
+      carryRow.appendChild(carryCellFor(idx, known, act));
+      topRow.appendChild(mkEl('div', 'subDigitCell', String(col.top)));
+      bottomRow.appendChild(mkEl('div', 'subDigitCell', String(col.bottom)));
+      if (isSolved(idx)) ansRow.appendChild(mkEl('div', 'subAnswerCell', String(col.ansDigit)));
+      else if (idx === act) ansRow.appendChild(mkEl('div', 'subAnswerCell placeholder active', '?'));
+      else ansRow.appendChild(mkEl('div', 'subAnswerCell placeholder', ''));
+    });
+
+    gridHost.appendChild(carryRow); gridHost.appendChild(topRow); gridHost.appendChild(bottomRow); gridHost.appendChild(ansRow);
+
+    if (addMode && act !== null){
+      gridHost.querySelectorAll('.carryInputBox').forEach((inp) => {
+        inp.addEventListener('input', () => { inp.value = inp.value.replace(/[^0-9]/g, '').slice(0, 1); });
+        inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') el('mc-checkBtn').click(); });
+      });
+    }
+  }
+
+  function finalAnswerStr(){
+    let s = columns.map(c => c.type === 'point' ? '.' : String(c.ansDigit)).join('');
+    if (overflow > 0) s = overflow + s;
+    return s;
+  }
+
+  function updateStage(){
+    renderGrid();
+    const act = activeIdx();
+    const promptEl = el('mc-promptText'), hintEl = el('mc-quotHint'), checkRow = el('mc-checkRow'),
+          finishHost = el('mc-finishHost'), fb = el('mc-checkFeedback'), stageLbl = el('mc-stageLabel');
+    finishHost.innerHTML = ''; fb.textContent = ''; fb.className = 'checkFeedback';
+    const answerInput = el('mc-answerInput');
+    answerInput.value = ''; answerInput.disabled = false;
+    el('mc-checkBtn').disabled = false;
+
+    if (act !== null){
+      stageLbl.textContent = 'Step ' + (pos + 1) + ' of ' + (order.length + 1);
+      const col = columns[act];
+      let extra = '';
+      if (op === '+' && col.carryIn) extra = ', plus the ' + col.carryIn + ' carried in';
+      if (op === '-' && col.borrowIn) extra = ' (remember you borrowed a ten from this column)';
+      promptEl.textContent = 'Work out the ' + placeName(act) + ' column: ' + col.top + ' ' + op + ' ' + col.bottom + extra + '.';
+      checkRow.style.display = 'flex';
+      if (op === '+'){
+        hintEl.textContent = (order.indexOf(act) === order.length - 1)
+          ? 'Type your answer below the line. If it carries, write that digit in the box on the far left too — then check them together.'
+          : 'Type your answer below the line. If this column totals 10 or more, write the carried ten in the small box above the next column too — then check them together.';
+      } else {
+        hintEl.textContent = '';
+      }
+      setTimeout(() => answerInput.focus(), 30);
+    } else {
+      checkRow.style.display = 'none';
+      hintEl.textContent = '';
+      stageLbl.textContent = 'Finished';
+      const aTop = columns.map(c => c.type === 'point' ? '.' : c.top).join('');
+      const bBottom = columns.map(c => c.type === 'point' ? '.' : c.bottom).join('');
+      promptEl.textContent = 'Every column is solved.';
+      const labelLine = resultLabel ? `<p>${resultLabel} = <span class="ans">£${finalAnswerStr()}</span></p>` : '';
+      finishHost.innerHTML = `<div class="finishBox"><div class="headline">${op === '+' ? 'Added!' : 'Subtracted!'}</div>
+        <p>£${aTop} ${op} £${bBottom} = £${finalAnswerStr()}</p>${labelLine}</div>`;
+      setTimeout(() => onDone(parseFloat(finalAnswerStr())), 900);
+    }
+  }
+
+  function doCheck(){
+    const act = activeIdx();
+    if (act === null) return;
+    const answerInput = el('mc-answerInput');
+    const val = parseInt(answerInput.value, 10);
+    const col = columns[act];
+    const fb = el('mc-checkFeedback');
+    if (isNaN(val)){ fb.textContent = 'Type a number in the box first.'; fb.className = 'checkFeedback bad'; return; }
+
+    if (op !== '+'){
+      if (val === col.ansDigit){
+        fb.textContent = '✓ Correct!'; fb.className = 'checkFeedback good';
+        pos++; answerInput.disabled = true; el('mc-checkBtn').disabled = true;
+        setTimeout(updateStage, 350);
+      } else {
+        fb.textContent = '✗ Not quite — try again.'; fb.className = 'checkFeedback bad';
+      }
+      return;
+    }
+
+    const posIdx = order.indexOf(act);
+    const isLast = posIdx === order.length - 1;
+    const carryEl = isLast ? el('mc-finalCarryInput') : el('mc-carryInput' + order[posIdx + 1]);
+    const rawCarry = carryEl ? carryEl.value.trim() : '';
+    const carryVal = rawCarry === '' ? 0 : parseInt(rawCarry, 10);
+    const answerOk = val === col.ansDigit;
+    const carryOk = carryVal === col.carryOut;
+
+    if (answerOk && carryOk){
+      fb.textContent = '✓ Correct!'; fb.className = 'checkFeedback good';
+      if (isLast){ finalCarryDigit = col.carryOut === 1 ? 1 : 0; finalCarryConfirmed = true; }
+      else { carryConfirmed[order[posIdx + 1]] = true; }
+      pos++; answerInput.disabled = true; el('mc-checkBtn').disabled = true;
+      setTimeout(updateStage, 350);
+      return;
+    }
+    if (!answerOk && col.carryOut === 1 && val === col.top + col.bottom + (col.carryIn || 0)){
+      fb.textContent = "That's the full total for this column. Write just the last digit here, and carry the other digit into the box above the next column.";
+    } else if (!answerOk){
+      fb.textContent = '✗ Not quite — check the answer digit and try again.';
+    } else if (col.carryOut === 1){
+      fb.textContent = "The answer digit is right, but this column totals 10 or more — don't forget to carry the ten.";
+    } else {
+      fb.textContent = "The answer digit is right, but check the carry box — this column doesn't need one.";
+    }
+    fb.className = 'checkFeedback bad';
+    if (!answerOk){ answerInput.value = ''; answerInput.focus(); }
+    if (!carryOk && carryEl){ carryEl.value = ''; if (answerOk) carryEl.focus(); }
+  }
+
+  host.innerHTML = `
+    <div class="stageLabel" id="mc-stageLabel"></div>
+    <p class="prompt" id="mc-promptText"></p>
+    <div id="mc-gridHost"></div>
+    <div class="quotHint" id="mc-quotHint"></div>
+    <div class="checkRow" id="mc-checkRow">
+      <input id="mc-answerInput" class="mcAnswerInput" type="text" inputmode="numeric">
+      <button class="btn" id="mc-checkBtn">Check</button>
+    </div>
+    <div class="checkFeedback" id="mc-checkFeedback"></div>
+    <div id="mc-finishHost"></div>
+  `;
+  el('mc-checkBtn').addEventListener('click', doCheck);
+  el('mc-answerInput').addEventListener('keydown', (e) => { if (e.key === 'Enter'){ e.preventDefault(); doCheck(); } });
+  updateStage();
+}
+
+/* Runs a whole "money chimney" question: stages = [{ label, op: '+'|'-',
+   items: [{label,value}] | (stageResults => [...]) }]. For each stage, every
+   named value is asked for in turn (stacked into a running list as it's
+   confirmed), the pupil then picks + or - for that stage, and the resulting
+   values are combined via runDccColumn (chained pairwise when there are more
+   than two). onAllDone(finalResult) fires once every stage is solved. */
+function runMoneyChimney(hostId, overallLabelId, stages, onAllDone){
+  const host = el(hostId);
+  const overallLabel = overallLabelId ? el(overallLabelId) : null;
+  const stageResults = [];
+  let stageIdx = 0;
+
+  function startStage(){
+    const def = stages[stageIdx];
+    const items = typeof def.items === 'function' ? def.items(stageResults) : def.items;
+    const stage = { label: def.label, op: def.op, items };
+    if (overallLabel){
+      overallLabel.textContent = stages.length > 1
+        ? `Part ${stageIdx + 1} of ${stages.length}: ${stage.label}`
+        : stage.label;
+    }
+    gatherValues(stage, () => {
+      chooseOp(stage, () => {
+        runChain(stage, (result) => {
+          stageResults.push(result);
+          stageIdx++;
+          if (stageIdx < stages.length) startStage();
+          else if (onAllDone) onAllDone(result);
+        });
+      });
+    });
+  }
+
+  function renderStack(items, upTo){
+    return `<div class="ledgerRows">${items.slice(0, upTo).map((it, i) => `
+      <div class="ledgerRow revealed">
+        <span class="ledgerOp">${i === 0 ? '' : '+'}</span>
+        <span class="ledgerLabel">${it.label}</span>
+        <span class="ledgerAmount">£${roundMoney(it.value).toFixed(2)}</span>
+      </div>`).join('')}</div>`;
+  }
+
+  function gatherValues(stage, done){
+    let gathered = 0;
+    function askNext(){
+      if (gathered >= stage.items.length){ done(); return; }
+      const item = stage.items[gathered];
+      host.innerHTML = `
+        <div class="stageLabel">Value ${gathered + 1} of ${stage.items.length}</div>
+        <p class="stagePrompt">What is the ${item.label}?</p>
+        ${renderStack(stage.items, gathered)}
+        <div class="checkRow">
+          <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;">£</span>
+          <input id="mc-gatherInput" class="mcGatherInput" type="text" inputmode="decimal" placeholder="0.00">
+          <button class="btn" id="mc-gatherBtn">Check</button>
+        </div>
+        <div class="checkFeedback" id="mc-gatherFeedback"></div>
+      `;
+      const input = el('mc-gatherInput'), btn = el('mc-gatherBtn'), fb = el('mc-gatherFeedback');
+      function check(){
+        const val = parseNum(input.value);
+        if (val === null){ fb.textContent = 'Type an amount first.'; fb.className = 'checkFeedback bad'; return; }
+        if (Math.abs(val - item.value) <= 0.005){
+          fb.textContent = '✓ Correct!'; fb.className = 'checkFeedback good';
+          input.disabled = true; btn.disabled = true;
+          gathered++;
+          setTimeout(askNext, 400);
+        } else {
+          fb.textContent = '✗ Not quite — check the question and try again.'; fb.className = 'checkFeedback bad';
+          input.value = ''; input.focus();
+        }
+      }
+      btn.onclick = check;
+      input.onkeydown = (e) => { if (e.key === 'Enter') check(); };
+      setTimeout(() => input.focus(), 30);
+    }
+    askNext();
+  }
+
+  function chooseOp(stage, done){
+    host.innerHTML = `
+      <p class="stagePrompt">Now think about what the question is asking: should these amounts be added together, or should one be taken away from another?</p>
+      ${renderStack(stage.items, stage.items.length)}
+      <div class="choiceRow">
+        <button class="choiceBtn" id="mc-opAdd">+ Add them</button>
+        <button class="choiceBtn" id="mc-opSub">&minus; Subtract</button>
+      </div>
+      <div class="checkFeedback" id="mc-opFeedback"></div>
+    `;
+    const fb = el('mc-opFeedback');
+    function pick(op, btnEl){
+      if (op === stage.op){
+        fb.textContent = '✓ Correct!'; fb.className = 'checkFeedback good';
+        el('mc-opAdd').disabled = true; el('mc-opSub').disabled = true;
+        btnEl.classList.add('correct');
+        setTimeout(done, 400);
+      } else {
+        fb.textContent = "✗ Not quite — look again at what's happening to the amounts."; fb.className = 'checkFeedback bad';
+        btnEl.classList.add('wrong');
+        setTimeout(() => btnEl.classList.remove('wrong'), 700);
+      }
+    }
+    el('mc-opAdd').addEventListener('click', function(){ pick('+', this); });
+    el('mc-opSub').addEventListener('click', function(){ pick('-', this); });
+  }
+
+  function runChain(stage, done){
+    const values = stage.items.map(it => roundMoney(it.value));
+    if (values.length === 1){ done(values[0]); return; }
+    let running = values[0];
+    let idx = 1;
+    function next(){
+      const isFinalOfStage = (idx === values.length - 1);
+      runDccColumn(host, running, values[idx], stage.op, (result) => {
+        running = result;
+        idx++;
+        if (idx >= values.length) done(running);
+        else setTimeout(next, 600);
+      }, isFinalOfStage ? stage.label : null);
+    }
+    next();
+  }
+
+  startStage();
 }
 </script>
 
@@ -867,62 +1276,31 @@ function randomiseValues(){
   };
 }
 
-function grossRows(){ return [{label: 'Basic Pay', amount: vals.basic}, {label: 'Overtime', amount: vals.overtime}, {label: 'Bonus', amount: vals.bonus}]; }
-function deductionRows(){ return [{label: 'Income Tax', amount: vals.tax}, {label: 'National Insurance', amount: vals.ni}, {label: 'Pension', amount: vals.pension}]; }
+function grossItems(){ return [{label: 'Basic Pay', value: vals.basic}, {label: 'Overtime', value: vals.overtime}, {label: 'Bonus', value: vals.bonus}]; }
+function deductionItems(){ return [{label: 'Income Tax', value: vals.tax}, {label: 'National Insurance', value: vals.ni}, {label: 'Pension', value: vals.pension}]; }
+
+function buildStages(){
+  if (wgKind === 'gross') return [{ label: 'Gross Pay', op: '+', items: grossItems() }];
+  if (wgKind === 'deductions') return [{ label: 'Total Deductions', op: '+', items: deductionItems() }];
+  return [
+    { label: 'Gross Pay', op: '+', items: grossItems() },
+    { label: 'Total Deductions', op: '+', items: deductionItems() },
+    { label: 'Net Pay', op: '-', items: (results) => [
+      { label: 'Gross Pay', value: results[0] }, { label: 'Total Deductions', value: results[1] },
+    ] },
+  ];
+}
 
 function start(){
   el('wg-setup').style.display = 'none';
   el('wg-presentation').style.display = 'block';
-  runFlow();
-}
-
-function runFlow(){
-  const finishHost = el('wg-finishHost');
-  finishHost.innerHTML = '';
-  el('wg-subtractHost').innerHTML = '';
-  if (wgKind === 'gross' || wgKind === 'full'){
-    el('wg-stageLabel').textContent = wgKind === 'full' ? 'Stage 1 of 3: Gross Pay' : 'Find the Gross Pay';
-    el('wg-stagePrompt').textContent = 'Add up the parts of the pay, one row at a time.';
-    el('wg-ledgerHost').innerHTML = `<div id="wg-ledgerRows" class="ledgerRows"></div>${ledgerTotalRowHtml('wg-runningTotal', 'Gross Pay so far')}<div class="answerRow"><button class="btn" id="wg-addBtn"></button></div>`;
-    runLedger('wg-ledgerRows', 'wg-runningTotal', 'wg-addBtn', grossRows(), true, (gross) => {
-      vals.gross = gross;
-      if (wgKind === 'gross'){ showFinish('Gross Pay', gross); }
-      else { runDeductionsStage(); }
-    });
-  } else {
-    runDeductionsStage();
-  }
-}
-
-function runDeductionsStage(){
-  el('wg-stageLabel').textContent = wgKind === 'full' ? 'Stage 2 of 3: Total Deductions' : 'Find the Total Deductions';
-  el('wg-stagePrompt').textContent = 'Add up the deductions, one row at a time.';
-  el('wg-ledgerHost').innerHTML = `<div id="wg-ledgerRows" class="ledgerRows"></div>${ledgerTotalRowHtml('wg-runningTotal', 'Deductions so far')}<div class="answerRow"><button class="btn" id="wg-addBtn"></button></div>`;
-  runLedger('wg-ledgerRows', 'wg-runningTotal', 'wg-addBtn', deductionRows(), true, (deductions) => {
-    vals.deductions = deductions;
-    if (wgKind === 'deductions'){ showFinish('Total Deductions', deductions); }
-    else { runNetStage(); }
+  el('wg-finishHost').innerHTML = '';
+  runMoneyChimney('wg-flowHost', 'wg-overallLabel', buildStages(), (finalResult) => {
+    el('wg-flowHost').innerHTML = '';
+    el('wg-overallLabel').textContent = '';
+    const label = wgKind === 'gross' ? 'Gross Pay' : wgKind === 'deductions' ? 'Total Deductions' : 'Net Pay';
+    el('wg-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Solved!</div><p>${label} = <span class="ans">${fmtMoney(finalResult)}</span></p></div>`;
   });
-}
-
-function runNetStage(){
-  el('wg-stageLabel').textContent = 'Stage 3 of 3: Net Pay';
-  el('wg-stagePrompt').textContent = 'Now subtract the Total Deductions from the Gross Pay.';
-  el('wg-ledgerHost').innerHTML = '';
-  el('wg-subtractHost').innerHTML = `
-    <div class="sentenceBox">${fmtMoney(vals.gross)} − ${fmtMoney(vals.deductions)} = <input id="wg-netInput" class="blankInput" type="text" inputmode="decimal" placeholder="?"></div>
-    <div class="checkRow"><button class="btn" id="wg-netCheckBtn">Check</button></div>
-    <div class="checkFeedback" id="wg-netFeedback"></div>
-  `;
-  makeStepChecker('wg-netInput', 'wg-netCheckBtn', 'wg-netFeedback', roundMoney(vals.gross - vals.deductions), 0.015, () => {
-    showFinish('Net Pay', roundMoney(vals.gross - vals.deductions));
-  });
-}
-
-function showFinish(label, value){
-  el('wg-stageLabel').textContent = '';
-  el('wg-stagePrompt').textContent = '';
-  el('wg-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Solved!</div><p>${label} = <span class="ans">${fmtMoney(value)}</span></p></div>`;
 }
 
 el('wg-startBtn').addEventListener('click', () => {
@@ -966,19 +1344,21 @@ window.wgStart = function(params){
    ======================================================================= */
 (function(){
 let rcMode = 'random';
+let rcOp = '+';
 let rcItems = [];
 
 attachPills('rc-modePills', 'mode', (m) => {
   rcMode = m;
   el('rc-customOptions').style.display = (m === 'custom') ? 'block' : 'none';
 });
+attachPills('rc-opPills', 'op', (o) => { rcOp = o; });
 
 function parseItemsTextarea(text){
   return text.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
     const parts = line.split(',');
     const label = (parts[0] || 'Item').trim();
-    const amount = parseNum(parts[1]) || 0;
-    return { label, amount };
+    const value = Math.abs(parseNum(parts[1]) || 0);
+    return { label, value };
   });
 }
 
@@ -991,15 +1371,17 @@ function randomiseItems(){
     const idx = randInt(0, pool.length - 1);
     chosen.push(pool.splice(idx, 1)[0]);
   }
-  rcItems = chosen.map(label => ({ label, amount: roundMoney(0.29 + Math.random() * 6.2) }));
+  rcOp = '+';
+  rcItems = chosen.map(label => ({ label, value: roundMoney(0.29 + Math.random() * 6.2) }));
 }
 
 function start(){
   el('rc-setup').style.display = 'none';
   el('rc-presentation').style.display = 'block';
   el('rc-finishHost').innerHTML = '';
-  el('rc-ledgerHost').innerHTML = `<div id="rc-ledgerRows" class="ledgerRows"></div>${ledgerTotalRowHtml('rc-runningTotal', 'Total so far')}<div class="answerRow"><button class="btn" id="rc-addBtn"></button></div>`;
-  runLedger('rc-ledgerRows', 'rc-runningTotal', 'rc-addBtn', rcItems, true, (total) => {
+  runMoneyChimney('rc-flowHost', 'rc-overallLabel', [{ label: '', op: rcOp, items: rcItems }], (total) => {
+    el('rc-flowHost').innerHTML = '';
+    el('rc-overallLabel').textContent = '';
     el('rc-finishHost').innerHTML = `<div class="finishBox"><div class="headline">Solved!</div><p>Total = <span class="ans">${fmtMoney(total)}</span></p></div>`;
   });
 }
@@ -1017,8 +1399,10 @@ el('rc-resetBtn').addEventListener('click', () => {
 
 window.rcStart = function(params){
   rcMode = 'custom';
-  rcItems = (params.items || []).map(([label, amount]) => ({ label, amount }));
+  rcOp = params.op || '+';
+  rcItems = (params.items || []).map(([label, amount]) => ({ label, value: Math.abs(amount) }));
   document.querySelectorAll('#rc-modePills .pill').forEach(b => b.classList.toggle('active', b.dataset.mode === 'custom'));
+  document.querySelectorAll('#rc-opPills .pill').forEach(b => b.classList.toggle('active', b.dataset.op === rcOp));
   el('rc-customOptions').style.display = 'block';
   start();
 };
@@ -1278,9 +1662,9 @@ function renderFlow(stage){
   el('pc-flowRow').innerHTML = `
     <div class="flowBox">${fmtMoney(pc.amount)}</div>
     <div class="flowArrow">&rarr;</div>
-    <div class="flowBox ${stage >= 1 ? 'solved' : ''}" id="pc-flow1">${stage >= 1 ? fmtNum(pc.div100) : '÷ 100'}</div>
+    <div class="flowBox ${stage >= 1 ? 'solved' : ''}" id="pc-flow1">${stage >= 1 ? fmtMoney(pc.onePercent) : '÷ 100'}</div>
     <div class="flowArrow">&rarr;</div>
-    <div class="flowBox ${stage >= 2 ? 'solved' : ''}" id="pc-flow2">${stage >= 2 ? fmtMoney(pc.answer) : '× ' + pc.pct + '%'}</div>
+    <div class="flowBox ${stage >= 2 ? 'solved' : ''}" id="pc-flow2">${stage >= 2 ? fmtMoney(pc.answer) : '× ' + pc.pct}</div>
   `;
 }
 
@@ -1288,14 +1672,14 @@ function start(){
   el('pc-setup').style.display = 'none';
   el('pc-presentation').style.display = 'block';
   el('pc-finishHost').innerHTML = '';
-  pc.div100 = roundMoney(pc.pct / 100 * 10000) / 10000;
+  pc.onePercent = roundMoney(pc.amount / 100);
   pc.answer = roundMoney(pc.pct / 100 * pc.amount);
   el('pc-stageLabel').textContent = 'Step 1 of 2';
   el('pc-promptText').textContent = `Calculate ${pc.pct}% of ${fmtMoney(pc.amount)}.`;
   renderFlow(0);
-  el('pc-stepPrompt').textContent = `Step 1: divide the percentage by 100 (${pc.pct} ÷ 100).`;
+  el('pc-stepPrompt').textContent = `Step 1: divide the amount by 100 to find 1% (${fmtMoney(pc.amount)} ÷ 100).`;
   el('pc-answerInput').value = '';
-  makeStepChecker('pc-answerInput', 'pc-checkBtn', 'pc-checkFeedback', pc.pct / 100, 0.0015, () => {
+  makeStepChecker('pc-answerInput', 'pc-checkBtn', 'pc-checkFeedback', pc.onePercent, 0.015, () => {
     renderFlow(1);
     step2();
   });
@@ -1303,8 +1687,7 @@ function start(){
 
 function step2(){
   el('pc-stageLabel').textContent = 'Step 2 of 2';
-  el('pc-stepPrompt').textContent = `Step 2: multiply by the amount (${fmtNum(pc.div100)} × ${fmtMoney(pc.amount)}).`;
-  const input = document.createElement('input');
+  el('pc-stepPrompt').textContent = `Step 2: multiply by ${pc.pct} to find ${pc.pct}% (${fmtMoney(pc.onePercent)} × ${pc.pct}).`;
   el('pc-checkFeedback').textContent = '';
   const answerInput = el('pc-answerInput');
   answerInput.value = '';

@@ -135,7 +135,7 @@ def _discount_subtraction_question():
         notes=NOTES,
         metadata={
             "scaffold_widget": "receipt_adder",
-            "scaffold_widget_params": {"items": [("Original price", original), ("Discount", -discount)]},
+            "scaffold_widget_params": {"items": [("Original price", original), ("Discount", discount)], "op": "-"},
         },
     )
 

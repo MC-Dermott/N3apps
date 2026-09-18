@@ -111,6 +111,21 @@ def render_time_conversion_scaffold(direction):
     _embed("tc-app", setup_js, height=520)
 
 
+def render_bus_stop_division_scaffold(dividend, divisor):
+    """dividend, divisor: whole numbers only (the bus-stop tool works digit-by-digit on a
+    whole-number dividend, letting any decimal places in the quotient emerge naturally as the
+    division continues — it doesn't accept a dividend that already has its own decimal point).
+    Where a question's actual dividend has decimal places, pass it with the point removed (the
+    same "ignore the point, divide, then put the point back" whole-number division used by
+    topics/numeracy/decimal_multiplication_division.py's single-digit case), rather than the
+    question's own formatted value. Unlike the other maths-scaffolds ports, this tool's own
+    "My own numbers" mode has no plain numeric fields to fill in (pupils type digits straight
+    into an empty bus stop instead), so this calls the window.bsStart() entry point added to
+    N3apps's copy of assets/maths_scaffolds.html for this purpose."""
+    setup_js = f"window.bsStart({_json({'dividend': dividend, 'divisor': divisor})});"
+    _embed("bs-app", setup_js, height=640)
+
+
 # ---------------------------------------------------------------------------
 # Numeracy unit widgets — assets/numeracy_scaffolds.html. Each mirrors the exact numbers of
 # the question that triggered it by switching the tool to "My own numbers" mode and filling
@@ -132,6 +147,23 @@ def render_decimal_column_scaffold(a, b, op):
         + "document.getElementById('dcc-startBtn').click();"
     )
     _embed("dcc-app", setup_js, height=760, html_file="numeracy_scaffolds.html")
+
+
+def render_lattice_multiplication_scaffold(a, b):
+    """a, b: the two whole numbers to multiply, as strings or ints (e.g. '236', 47) — no
+    decimal points. Pupils fill in each number's digits around the blank grid, multiply cell
+    by cell (with a per-cell times-table hint button, mirroring the bus stop division tool's
+    "Show table" toggle), then add down the diagonals with carry boxes exactly like the
+    Decimal Column Calculator's addition mode. Not yet wired to a specific topic module —
+    register a metadata["scaffold_widget"] = "lattice_multiplication" entry pointing here
+    when one needs it."""
+    setup_js = (
+        _click_matching("lat-modePills", "mode", "custom")
+        + _set_value("lat-aInput", a)
+        + _set_value("lat-bInput", b)
+        + "document.getElementById('lat-startBtn').click();"
+    )
+    _embed("lat-app", setup_js, height=820, html_file="numeracy_scaffolds.html")
 
 
 def render_decimal_mul_div_scaffold(value, operation, kind, n):
@@ -222,8 +254,12 @@ def render_number_problem_solving_scaffold(kind, **kwargs):
 
 
 def render_percentage_stepper_scaffold(kind, **kwargs):
-    """kind: 'common' (pct_str, amount, unit), 'any' (pct, amount, unit), 'vat' (price), or
-    'compare' (pct1, base1, pct2, base2). Powers topics/numeracy/numeracy_percentages.py."""
+    """kind: 'common' (pct_str, amount, unit), 'any' (pct, amount, unit), 'vat' (price, pct), or
+    'compare' (pct1, base1, pct2, base2). Powers topics/numeracy/numeracy_percentages.py.
+    'any' and 'vat' both walk through the ÷100 x amount method by dividing the AMOUNT by 100
+    first (to find 1%) rather than dividing the percentage — 'vat' additionally opens by
+    asking for the VAT percentage itself, then finishes with a chimney-sum addition of the
+    price and VAT (see runChimneySum in numeracy_scaffolds.html)."""
     setup_js = (
         _click_matching("pct-modePills", "mode", "custom")
         + _click_matching("pct-kindPills", "kind", kind)
@@ -241,7 +277,10 @@ def render_percentage_stepper_scaffold(kind, **kwargs):
             + _set_value("pct-anyUnitInput", kwargs.get("unit", ""))
         )
     elif kind == "vat":
-        setup_js += _set_value("pct-priceInput", kwargs["price"])
+        setup_js += (
+            _set_value("pct-priceInput", kwargs["price"])
+            + _set_value("pct-vatRateInput", kwargs.get("pct", 20))
+        )
     else:
         setup_js += (
             _set_value("pct-pct1Input", kwargs["pct1"])
@@ -350,7 +389,10 @@ def render_unit_conversion_scaffold(kind="metric", value=None, from_unit=None, t
 
 def render_wages_scaffold(kind, basic=0, overtime=0, bonus=0, tax=0, ni=0, pension=0):
     """kind: 'gross' (Level 1), 'deductions' (Level 2) or 'full' (Level 3, chains Gross Pay ->
-    Total Deductions -> Net Pay). Unused fields for a given kind can be left at 0."""
+    Total Deductions -> Net Pay). Unused fields for a given kind can be left at 0. Each stage
+    has the pupil re-enter its named values one at a time, choose add or subtract, then work
+    through the column sum with carrying/borrowing — mirrors topics/numeracy/
+    decimal_addition_subtraction.py's own scaffold, fixed to money's 2 decimal places."""
     params = {
         "kind": kind, "basic": basic, "overtime": overtime, "bonus": bonus,
         "tax": tax, "ni": ni, "pension": pension,
@@ -359,10 +401,15 @@ def render_wages_scaffold(kind, basic=0, overtime=0, bonus=0, tax=0, ni=0, pensi
     _embed("wg-app", setup_js, height=700, html_file="managing_money_scaffolds.html")
 
 
-def render_receipt_scaffold(items):
-    """items: list of (label, amount) pairs, in the order they should be added — a negative
-    amount (e.g. a discount) is subtracted instead of added, shown with a minus sign."""
-    setup_js = f"window.rcStart({_json({'items': [list(i) for i in items]})});"
+def render_receipt_scaffold(items, op="+"):
+    """items: list of (label, amount) pairs (amounts always positive), in the order they
+    should be entered. op: '+' to add every item, or '-' to subtract the later items from the
+    first (used for a discount/deduction pair). The pupil must re-enter each amount, choose
+    the operation themselves, then work through the column sum with carrying/borrowing —
+    mirrors topics/numeracy/decimal_addition_subtraction.py's own scaffold, fixed to money's
+    2 decimal places."""
+    params = {"items": [list(i) for i in items], "op": op}
+    setup_js = f"window.rcStart({_json(params)});"
     _embed("rc-app", setup_js, height=640, html_file="managing_money_scaffolds.html")
 
 
@@ -571,7 +618,9 @@ WIDGET_REGISTRY = {
     "rounding": render_rounding_scaffold,
     "l_shape_perimeter": render_l_shape_perimeter_scaffold,
     "time_conversion": render_time_conversion_scaffold,
+    "bus_stop_division": render_bus_stop_division_scaffold,
     "decimal_column": render_decimal_column_scaffold,
+    "lattice_multiplication": render_lattice_multiplication_scaffold,
     "decimal_mul_div": render_decimal_mul_div_scaffold,
     "workings_pad": render_workings_pad_scaffold,
     "fraction_bar": render_fraction_bar_scaffold,

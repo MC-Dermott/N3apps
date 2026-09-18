@@ -53,12 +53,26 @@ def generate_decimal_multiplication_division_l1():
         answer = _mul(value, n, dp)
         question_text = f"Work out {_fmt(value)} × {n}"
         worked = [f"{_fmt(value)} × {n} = {_fmt(answer)}"]
+        metadata = {
+            "scaffold_widget": "decimal_mul_div",
+            "scaffold_widget_params": {
+                "value": _fmt(value), "operation": op, "kind": "single_digit", "n": n,
+            },
+        }
     else:
         # build the division so it comes out exact and clean
         answer = _decimal(1, 40, dp)
         value = _mul(answer, n, dp)
         question_text = f"Work out {_fmt(value)} ÷ {n}"
         worked = [f"{_fmt(value)} ÷ {n} = {_fmt(answer)}"]
+        # The "ignore the point" method reduces this to a whole-number division — hand that
+        # straight to the bus stop division scaffold (maths-scaffolds.html) rather than a bare
+        # answer box, so the actual division is worked through column by column.
+        whole_in = int(_fmt(value).replace(".", ""))
+        metadata = {
+            "scaffold_widget": "bus_stop_division",
+            "scaffold_widget_params": {"dividend": whole_in, "divisor": n},
+        }
 
     return Question(
         question_text=question_text,
@@ -68,12 +82,7 @@ def generate_decimal_multiplication_division_l1():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
-        metadata={
-            "scaffold_widget": "decimal_mul_div",
-            "scaffold_widget_params": {
-                "value": _fmt(value), "operation": op, "kind": "single_digit", "n": n,
-            },
-        },
+        metadata=metadata,
     )
 
 

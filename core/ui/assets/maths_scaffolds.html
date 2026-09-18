@@ -1615,6 +1615,28 @@ document.getElementById('bs-tableToggleBtn').addEventListener('click', () => {
     t.classList.contains('show') ? 'Hide table' : `Show ×${divisor} table`;
 });
 
+/* Jumps straight into a division of the given whole-number dividend/divisor —
+   used when this tool is embedded to mirror another question's own numbers
+   (see N3apps's core/ui/scaffold_widgets.py render_bus_stop_division_scaffold). */
+window.bsStart = function(params){
+  dividend = params.dividend; divisor = params.divisor;
+  result = computeSteps(dividend, divisor, params.maxDecimals || 10);
+  columns = result.wholeDigits.map(d => ({ type:'digit', digit:String(d), quotient:null, exchange:null, revealed:true }));
+  composeMode = false;
+  divisorRevealed = true;
+  stepIndex = 0; substage = 'quotient'; finished = false; pendingNextColIdx = null;
+
+  document.querySelectorAll('#bs-modePills .pill').forEach(b => b.classList.toggle('active', b.dataset.mode === 'custom'));
+  document.getElementById('bs-setup').style.display = 'none';
+  document.getElementById('bs-presentation').style.display = 'block';
+  document.getElementById('bs-questionLabel').textContent = `${dividend} ÷ ${divisor}`;
+  document.getElementById('bs-tableToggleBtn').style.display = 'inline-block';
+  buildTimesTable();
+  document.getElementById('bs-timesTable').classList.remove('show');
+  document.getElementById('bs-tableToggleBtn').textContent = `Show ×${divisor} table`;
+  render();
+};
+
 function buildTimesTable(){
   const t = document.getElementById('bs-timesTable');
   let html = `<div class="ttHead">÷${divisor} table</div>`;

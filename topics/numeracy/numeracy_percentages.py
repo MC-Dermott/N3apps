@@ -13,7 +13,7 @@ NOTES = """
   - 20% → ÷ 10, then × 2
   - 33⅓% = one third → ÷ 3
   - 66⅔% = two thirds → ÷ 3, then × 2
-- **Any percentage (calculator):** percentage ÷ 100 × amount.
+- **Any percentage (calculator):** amount ÷ 100 (to find 1%), then × the percentage.
 - **VAT** (Value Added Tax) is a tax added to the price of goods. The current rate is **20%**.
   VAT amount = 20% of the price. Total to pay = price + VAT.
 
@@ -118,12 +118,13 @@ def generate_numeracy_percentages_l2():
     amount_str = _fmt_unit(amount, unit)
     answer_str = _fmt_unit(answer, unit)
 
+    one_percent = round(amount / 100, 4)
     scaffold_steps = [
-        {"prompt": "Divide the percentage by 100", "answer": round(pct / 100, 4)},
-        {"prompt": f"Multiply this by {amount}", "answer": answer},
+        {"prompt": f"Divide {amount_str} by 100 to find 1%", "answer": one_percent},
+        {"prompt": f"Multiply this by {pct} to find {pct}%", "answer": answer},
     ]
     question_text = f"Calculate {pct}% of {amount_str}."
-    worked = [f"{pct}% of {amount_str} = {pct} ÷ 100 × {amount} = {answer_str}"]
+    worked = [f"{pct}% of {amount_str} = {amount} ÷ 100 × {pct} = {answer_str}"]
 
     return Question(
         question_text=question_text,
@@ -145,22 +146,23 @@ def generate_numeracy_percentages_l2():
 # ---------------------------------------------------------------------------
 
 def _vat_question():
+    pct = 20
     price = round(random.uniform(20, 2500), 2)
-    vat = round(price * 0.2, 2)
+    vat = round(price * pct / 100, 2)
     total = round(price + vat, 2)
 
     question_text = (
-        f"VAT (Value Added Tax) is charged at 20%.\n\n"
+        f"VAT (Value Added Tax) is charged at {pct}%.\n\n"
         f"An item costs £{price:,.2f} before VAT.\n\n"
         f"**(a)** How much VAT must be added?\n\n"
         f"**(b)** What is the total price including VAT?\n\n"
         f"**Enter your answer for part (b).**"
     )
     scaffold_steps = [
-        {"prompt": f"Find the VAT (20% of £{price:,.2f})", "answer": vat},
+        {"prompt": f"Find the VAT ({pct}% of £{price:,.2f})", "answer": vat},
     ]
     worked = [
-        f"(a) VAT = 20% of £{price:,.2f} = £{price:,.2f} ÷ 100 × 20 = £{vat:,.2f}",
+        f"(a) VAT = {pct}% of £{price:,.2f} = £{price:,.2f} ÷ 100 × {pct} = £{vat:,.2f}",
         f"(b) Total = £{price:,.2f} + £{vat:,.2f} = £{total:,.2f}",
     ]
 
@@ -174,7 +176,7 @@ def _vat_question():
         notes=NOTES,
         metadata={
             "scaffold_widget": "percentage_stepper",
-            "scaffold_widget_params": {"kind": "vat", "price": price},
+            "scaffold_widget_params": {"kind": "vat", "price": price, "pct": pct},
         },
     )
 

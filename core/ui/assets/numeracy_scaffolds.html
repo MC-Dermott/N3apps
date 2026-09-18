@@ -190,6 +190,14 @@
   .subAnswerCell.pointCol{ width:14px; flex:0 0 14px; color: var(--ink); }
   .subAnswerCell.placeholder{ color: transparent; border-bottom: 3px dashed var(--line); }
   .subAnswerCell.active{ background:#fdf6e3; border-radius:6px; color: var(--ink); border-bottom: 3px solid var(--mark-deep); }
+  .dccOverflowGap{ width:38px; flex:0 0 38px; }
+  .carryInputBox{
+    width:24px; font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:700;
+    text-align:center; padding:1px 0; border:1.5px solid var(--line); border-radius:5px;
+    background:#fff; color: var(--ink); outline:none;
+  }
+  .carryInputBox:focus{ border-color: var(--mark-deep); }
+  .quotHint{ font-size: 12.5px; color: var(--ink-soft); margin: -6px 0 12px; }
 
   /* ---- decimal point shifter ---- */
   .pointShiftStrip{
@@ -260,6 +268,12 @@
   .seqBox.next{ border-color: var(--mark-deep); background:#fdf6e3; color: var(--mark-deep); }
   .seqBox.placeholder{ color: var(--line); }
   .seqGap{ font-size:13px; color: var(--exchange); font-weight:700; min-width:44px; text-align:center; }
+  .seqAnswerInput{
+    width:52px; border:none; background:transparent; outline:none;
+    font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:20px;
+    color: var(--mark-deep); text-align:center; padding:0;
+  }
+  .seqAnswerInput.correct{ color: var(--good); }
 
   /* ---- notepad (workings pad) ---- */
   .notepad{
@@ -270,12 +284,60 @@
     border-radius: 4px; padding: 18px 20px 10px;
   }
 
+  /* ---- times table hint (lattice multiplication) ---- */
+  .answerRow{ display:flex; gap:10px; align-items:center; margin-bottom: 8px; flex-wrap:wrap; }
+  .timesTable{
+    display:none; background:#fff; border:1px solid var(--line); border-radius:8px;
+    padding:12px 14px; font-family:'IBM Plex Mono', monospace; font-size:14px; line-height:1.9;
+    margin-bottom:10px;
+  }
+  .timesTable.show{ display:block; }
+
+  /* ---- lattice multiplication ---- */
+  .latticeGrid{ display:inline-grid; margin: 18px 0; }
+  .latticeCornerCell{ width:54px; height:54px; }
+  .latticeHeaderCell{
+    width:54px; height:54px; display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:22px;
+    border:2px solid var(--ink); background:#fff;
+  }
+  .latticeHeaderCell.solved{ background:#fdf6e3; color: var(--mark-deep); }
+  .latticeHeaderCell input{
+    width:32px; text-align:center; font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:20px;
+    border:1.5px solid var(--line); border-radius:6px; padding:4px 2px; outline:none; background:#fff; color:var(--ink);
+  }
+  .latticeHeaderCell input:focus{ border-color: var(--mark-deep); }
+  .latticeHeaderCell input.correct{ border-color: var(--good); color: var(--good); }
+  .latticeHeaderCell input.wrong{ border-color: var(--bad); color: var(--bad); }
+  .latticeCell{
+    position:relative; width:54px; height:54px; border:1px solid var(--ink); background:#fff;
+    background-image: linear-gradient(135deg, transparent calc(50% - 1px), var(--line) calc(50% - 1px), var(--line) calc(50% + 1px), transparent calc(50% + 1px));
+  }
+  .latticeCell.active{ background-color:#fdf6e3; }
+  .latticeTens, .latticeUnits{
+    position:absolute; font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:15px; color: var(--good);
+  }
+  .latticeTens{ top:3px; left:5px; }
+  .latticeUnits{ bottom:3px; right:5px; }
+  .latticeTensInput, .latticeUnitsInput{
+    position:absolute; width:20px; height:18px; text-align:center; font-family:'IBM Plex Mono', monospace;
+    font-weight:700; font-size:13px; border:1px solid var(--line); border-radius:4px; padding:0; outline:none; background:#fff; color:var(--ink);
+  }
+  .latticeTensInput{ top:2px; left:3px; }
+  .latticeUnitsInput{ bottom:2px; right:3px; }
+  .latticeTensInput:focus, .latticeUnitsInput:focus{ border-color: var(--mark-deep); }
+  .latticeBandHost{ margin: 10px 0 16px; }
+
   @media (max-width:480px){
     .panel{ padding: 16px; }
     .subDigitCell, .carryCell, .subAnswerCell{ width:28px; flex:0 0 28px; font-size:20px; }
     .dccGutter{ width:24px; flex:0 0 24px; font-size:20px; }
+    .dccOverflowGap{ width:28px; flex:0 0 28px; }
     .choiceRow{ flex-direction: column; }
     .probTile{ width:36px; height:36px; font-size:13px; }
+    .latticeCornerCell, .latticeHeaderCell, .latticeCell{ width:42px; height:42px; }
+    .latticeHeaderCell{ font-size:18px; }
+    .latticeHeaderCell input{ width:26px; font-size:16px; }
   }
 </style>
 </head>
@@ -323,6 +385,7 @@
     <div class="stageLabel" id="dcc-stageLabel"></div>
     <p class="prompt" id="dcc-promptText"></p>
     <div id="dcc-gridHost"></div>
+    <div class="quotHint" id="dcc-quotHint"></div>
     <div class="checkRow" id="dcc-checkRow">
       <input id="dcc-answerInput" class="blankInput" type="text" inputmode="numeric" style="width:60px;">
       <button class="btn" id="dcc-checkBtn">Check</button>
@@ -331,7 +394,7 @@
     <div id="dcc-finishHost"></div>
     <div class="controls"><button class="btn secondary" id="dcc-resetBtn">New question</button></div>
   </div>
-  <p class="foot">Always start with the column furthest to the right. Watch the small carry/borrow row above each column.</p>
+  <p class="foot">Always start with the column furthest to the right. When adding, write any carried ten in the small box above the next column yourself; when subtracting, watch the borrow row above each column.</p>
 </div>
 </div>
 
@@ -617,6 +680,7 @@
       </div>
       <div id="pct-vatFields" style="display:none; gap:12px; flex-wrap:wrap;">
         <div><label for="pct-priceInput">Price before VAT (&pound;)</label><input id="pct-priceInput" type="number" value="689" class="shapeInput" style="width:110px;"></div>
+        <div><label for="pct-vatRateInput">VAT rate (%)</label><input id="pct-vatRateInput" type="number" value="20" class="shapeInput" style="width:90px;"></div>
       </div>
       <div id="pct-compareFields" style="display:none; gap:12px; flex-wrap:wrap;">
         <div><label for="pct-pct1Input">Offer 1: %</label><input id="pct-pct1Input" type="number" value="10" class="shapeInput" style="width:80px;"></div>
@@ -800,6 +864,66 @@
 </div>
 </div>
 
+<!-- ===================================================================
+     11. LATTICE MULTIPLICATION
+=================================================================== -->
+<div class="appContainer" id="lat-app">
+<div class="wrap">
+  <h1>Lattice multiplication</h1>
+  <p class="sub">Fill in the digits around the grid, multiply cell by cell, then add along the diagonals — carrying into the next one whenever you need to.</p>
+
+  <div class="panel" id="lat-setup">
+    <div class="field">
+      <label>Question source</label>
+      <div class="pills" id="lat-modePills">
+        <button class="pill active" data-mode="random">Random question</button>
+        <button class="pill" data-mode="custom">My own numbers</button>
+      </div>
+    </div>
+    <div id="lat-customOptions" style="display:none">
+      <div class="field" style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end;">
+        <div>
+          <label for="lat-aInput">First number</label>
+          <input id="lat-aInput" type="text" inputmode="numeric" value="236" class="shapeInput" style="width:120px;">
+        </div>
+        <div>
+          <label for="lat-bInput">Second number</label>
+          <input id="lat-bInput" type="text" inputmode="numeric" value="47" class="shapeInput" style="width:120px;">
+        </div>
+      </div>
+    </div>
+    <div class="field" id="lat-digitFields">
+      <label>Number of digits (random question)</label>
+      <div style="display:flex; gap:20px; flex-wrap:wrap;">
+        <div>
+          <label style="font-weight:400; font-size:12px;">First number</label>
+          <div class="pills" id="lat-aDigitsPills">
+            <button class="pill" data-digits="2">2-digit</button>
+            <button class="pill active" data-digits="3">3-digit</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-weight:400; font-size:12px;">Second number</label>
+          <div class="pills" id="lat-bDigitsPills">
+            <button class="pill active" data-digits="2">2-digit</button>
+            <button class="pill" data-digits="3">3-digit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="startRow"><button class="btn" id="lat-startBtn">Start</button></div>
+  </div>
+
+  <div class="panel" id="lat-presentation" style="display:none">
+    <div class="stageLabel" id="lat-stageLabel"></div>
+    <p class="prompt" id="lat-promptText"></p>
+    <div id="lat-mainHost"></div>
+    <div class="controls"><button class="btn secondary" id="lat-resetBtn">New question</button></div>
+  </div>
+  <p class="foot">Multiply along each row and column, splitting the answer across the diagonal — tens above the line, units below — then add down each diagonal strip.</p>
+</div>
+</div>
+
 <script>
 /* =====================================================================
    SHARED HELPERS
@@ -903,11 +1027,253 @@ function finishBox(headline, lines){
   return box;
 }
 
+/* Generic two-number column sum with carrying (addition) or borrowing (subtraction) —
+   the same interactive mechanic as the Decimal Column Calculator below, but reusable from
+   any other tool on this page (e.g. the VAT flow's final "price + VAT" step). Renders into
+   `host`, fixed to `dp` decimal places, and calls onDone(result) once every column (and any
+   final carry) is solved. resultLabel, if given, names the total in the "Finished" box. */
+function runChimneySum(host, aVal, bVal, op, dp, onDone, resultLabel){
+  var aStr = aVal.toFixed(dp), bStr = bVal.toFixed(dp);
+  function digitsOf(str){
+    var parts = str.split('.');
+    var ip = parts[0].replace(/^0+(?=\d)/, '') || '0';
+    return { ip: ip, dp: parts[1] || '' };
+  }
+  function padLeft(s, len){ while (s.length < len) s = '0' + s; return s; }
+  var a = digitsOf(aStr), b = digitsOf(bStr);
+  var intLen = Math.max(a.ip.length, b.ip.length);
+  var aIp = padLeft(a.ip, intLen), bIp = padLeft(b.ip, intLen);
+  var aDp = a.dp, bDp = b.dp;
+  if (op === '-' && parseFloat(bStr) > parseFloat(aStr)){
+    var t = aIp; aIp = bIp; bIp = t; var t2 = aDp; aDp = bDp; bDp = t2;
+  }
+  var columns = [];
+  for (var i = 0; i < intLen; i++) columns.push({ type: 'digit', top: +aIp[i], bottom: +bIp[i] });
+  if (dp > 0) columns.push({ type: 'point' });
+  for (var j = 0; j < dp; j++) columns.push({ type: 'digit', top: +aDp[j], bottom: +bDp[j] });
+
+  var order = [];
+  for (var k = columns.length - 1; k >= 0; k--) if (columns[k].type === 'digit') order.push(k);
+
+  var carry = 0, borrow = 0;
+  order.forEach(function(idx){
+    var col = columns[idx];
+    if (op === '+'){
+      var sum = col.top + col.bottom + carry;
+      col.carryIn = carry; col.ansDigit = sum % 10; col.carryOut = Math.floor(sum / 10);
+      carry = col.carryOut;
+    } else {
+      var t3 = col.top - borrow;
+      col.borrowIn = borrow;
+      if (t3 < col.bottom){ t3 += 10; col.borrowOut = 1; } else { col.borrowOut = 0; }
+      col.ansDigit = t3 - col.bottom;
+      borrow = col.borrowOut;
+    }
+  });
+  var overflow = (op === '+') ? carry : 0;
+
+  var pos = 0;
+  var carryConfirmed = columns.map(function(){ return false; });
+  var finalCarryDigit = 0, finalCarryConfirmed = false;
+
+  function activeIdx(){ return pos < order.length ? order[pos] : null; }
+  function isSolved(idx){ return order.indexOf(idx) !== -1 && order.indexOf(idx) < pos; }
+  function placeName(idx){
+    var pIdx = -1;
+    for (var i2 = 0; i2 < columns.length; i2++) if (columns[i2].type === 'point') pIdx = i2;
+    var lastIntIdx = pIdx === -1 ? columns.length - 1 : pIdx - 1;
+    if (idx <= lastIntIdx){
+      var fromRight = lastIntIdx - idx;
+      return ['units', 'tens', 'hundreds', 'thousands'][fromRight] || (fromRight + 1) + '-thousands';
+    }
+    var decPos = idx - pIdx;
+    return ['tenths', 'hundredths', 'thousandths'][decPos - 1] || decPos + '-decimal place';
+  }
+
+  function mkCarryInput(wrapCls, id){
+    var wrap = el('div', wrapCls);
+    var inp = document.createElement('input');
+    inp.type = 'text'; inp.inputMode = 'numeric'; inp.maxLength = 1; inp.autocomplete = 'off';
+    inp.className = 'carryInputBox'; inp.id = id;
+    wrap.appendChild(inp);
+    return wrap;
+  }
+  function carryCellFor(idx, known, act){
+    var col = columns[idx];
+    if (op !== '+') return el('div', 'carryCell', (known && col.borrowIn) ? '−1' : '');
+    if (idx === order[0]) return el('div', 'carryCell');
+    if (carryConfirmed[idx]) return el('div', 'carryCell', col.carryIn ? '+' + col.carryIn : '');
+    if (act !== null) return mkCarryInput('carryCell', 'chim-carryInput' + idx);
+    return el('div', 'carryCell');
+  }
+  function overflowAnswerCell(act){
+    if (finalCarryConfirmed) return el('div', 'subAnswerCell', finalCarryDigit ? String(finalCarryDigit) : '');
+    if (act !== null) return mkCarryInput('subAnswerCell', 'chim-finalCarryInput');
+    return el('div', 'dccOverflowGap');
+  }
+
+  function renderGrid(){
+    var gridHost = document.getElementById('chim-gridHost');
+    gridHost.innerHTML = '';
+    var act = activeIdx();
+    var addMode = (op === '+');
+    function makeRow(cls){ return el('div', 'dccRow' + (cls ? ' ' + cls : '')); }
+    var carryRow = makeRow(), topRow = makeRow(), bottomRow = makeRow('subBottomRow'), ansRow = makeRow();
+    if (addMode){
+      carryRow.appendChild(el('div', 'dccOverflowGap'));
+      topRow.appendChild(el('div', 'dccOverflowGap'));
+      bottomRow.appendChild(el('div', 'dccOverflowGap'));
+      ansRow.appendChild(overflowAnswerCell(act));
+    }
+    carryRow.appendChild(el('div', 'dccGutter'));
+    topRow.appendChild(el('div', 'dccGutter'));
+    bottomRow.appendChild(el('div', 'dccGutter', op === '+' ? '+' : '−'));
+    ansRow.appendChild(el('div', 'dccGutter'));
+
+    columns.forEach(function(col, idx){
+      if (col.type === 'point'){
+        carryRow.appendChild(el('div', 'carryCell pointCol'));
+        topRow.appendChild(el('div', 'subDigitCell pointCol', '.'));
+        bottomRow.appendChild(el('div', 'subDigitCell pointCol', '.'));
+        ansRow.appendChild(el('div', 'subAnswerCell pointCol', '.'));
+        return;
+      }
+      var known = isSolved(idx) || idx === act;
+      carryRow.appendChild(carryCellFor(idx, known, act));
+      topRow.appendChild(el('div', 'subDigitCell', String(col.top)));
+      bottomRow.appendChild(el('div', 'subDigitCell', String(col.bottom)));
+      if (isSolved(idx)) ansRow.appendChild(el('div', 'subAnswerCell', String(col.ansDigit)));
+      else if (idx === act) ansRow.appendChild(el('div', 'subAnswerCell placeholder active', '?'));
+      else ansRow.appendChild(el('div', 'subAnswerCell placeholder', ''));
+    });
+
+    gridHost.appendChild(carryRow); gridHost.appendChild(topRow); gridHost.appendChild(bottomRow); gridHost.appendChild(ansRow);
+
+    if (addMode && act !== null){
+      gridHost.querySelectorAll('.carryInputBox').forEach(function(inp){
+        inp.addEventListener('input', function(){ inp.value = inp.value.replace(/[^0-9]/g, '').slice(0, 1); });
+        inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') document.getElementById('chim-checkBtn').click(); });
+      });
+    }
+  }
+
+  function finalAnswerStr(){
+    var s = columns.map(function(c){ return c.type === 'point' ? '.' : String(c.ansDigit); }).join('');
+    if (overflow > 0) s = overflow + s;
+    return s;
+  }
+
+  function updateStage(){
+    renderGrid();
+    var act = activeIdx();
+    var promptEl = document.getElementById('chim-promptText'), hintEl = document.getElementById('chim-quotHint'),
+        checkRow = document.getElementById('chim-checkRow'), finishHost = document.getElementById('chim-finishHost'),
+        fb = document.getElementById('chim-checkFeedback'), stageLbl = document.getElementById('chim-stageLabel');
+    finishHost.innerHTML = ''; fb.textContent = ''; fb.className = 'checkFeedback';
+    var answerInput = document.getElementById('chim-answerInput');
+    answerInput.value = ''; answerInput.disabled = false;
+    document.getElementById('chim-checkBtn').disabled = false;
+
+    if (act !== null){
+      stageLbl.textContent = 'Step ' + (pos + 1) + ' of ' + (order.length + 1);
+      var col = columns[act];
+      var extra = '';
+      if (op === '+' && col.carryIn) extra = ', plus the ' + col.carryIn + ' carried in';
+      if (op === '-' && col.borrowIn) extra = ' (remember you borrowed a ten from this column)';
+      promptEl.textContent = 'Work out the ' + placeName(act) + ' column: ' + col.top + ' ' + op + ' ' + col.bottom + extra + '.';
+      checkRow.style.display = 'flex';
+      if (op === '+'){
+        hintEl.textContent = (order.indexOf(act) === order.length - 1)
+          ? 'Type your answer below the line. If it carries, write that digit in the box on the far left too — then check them together.'
+          : 'Type your answer below the line. If this column totals 10 or more, write the carried ten in the small box above the next column too — then check them together.';
+      } else { hintEl.textContent = ''; }
+      setTimeout(function(){ answerInput.focus(); }, 30);
+    } else {
+      checkRow.style.display = 'none';
+      hintEl.textContent = '';
+      stageLbl.textContent = 'Finished';
+      var aTop = columns.map(function(c){ return c.type === 'point' ? '.' : c.top; }).join('');
+      var bBottom = columns.map(function(c){ return c.type === 'point' ? '.' : c.bottom; }).join('');
+      promptEl.textContent = 'Every column is solved.';
+      var labelLine = resultLabel ? ('<p>' + resultLabel + ' = <span class="ans">' + finalAnswerStr() + '</span></p>') : '';
+      finishHost.innerHTML = '<div class="finishBox"><div class="headline">' + (op === '+' ? 'Added!' : 'Subtracted!') + '</div>' +
+        '<p>' + aTop + ' ' + op + ' ' + bBottom + ' = ' + finalAnswerStr() + '</p>' + labelLine + '</div>';
+      setTimeout(function(){ onDone(parseFloat(finalAnswerStr())); }, 900);
+    }
+  }
+
+  function doCheck(){
+    var act = activeIdx();
+    if (act === null) return;
+    var answerInput = document.getElementById('chim-answerInput');
+    var val = parseInt(answerInput.value, 10);
+    var col = columns[act];
+    var fb = document.getElementById('chim-checkFeedback');
+    if (isNaN(val)){ fb.textContent = 'Type a number in the box first.'; fb.className = 'checkFeedback bad'; return; }
+
+    if (op !== '+'){
+      if (val === col.ansDigit){
+        fb.textContent = '✓ Correct!'; fb.className = 'checkFeedback good';
+        pos++; answerInput.disabled = true; document.getElementById('chim-checkBtn').disabled = true;
+        setTimeout(updateStage, 350);
+      } else {
+        fb.textContent = '✗ Not quite — try again.'; fb.className = 'checkFeedback bad';
+      }
+      return;
+    }
+
+    var posIdx = order.indexOf(act);
+    var isLast = posIdx === order.length - 1;
+    var carryEl = isLast ? document.getElementById('chim-finalCarryInput') : document.getElementById('chim-carryInput' + order[posIdx + 1]);
+    var rawCarry = carryEl ? carryEl.value.trim() : '';
+    var carryVal = rawCarry === '' ? 0 : parseInt(rawCarry, 10);
+    var answerOk = val === col.ansDigit;
+    var carryOk = carryVal === col.carryOut;
+
+    if (answerOk && carryOk){
+      fb.textContent = '✓ Correct!'; fb.className = 'checkFeedback good';
+      if (isLast){ finalCarryDigit = col.carryOut === 1 ? 1 : 0; finalCarryConfirmed = true; }
+      else { carryConfirmed[order[posIdx + 1]] = true; }
+      pos++; answerInput.disabled = true; document.getElementById('chim-checkBtn').disabled = true;
+      setTimeout(updateStage, 350);
+      return;
+    }
+    if (!answerOk && col.carryOut === 1 && val === col.top + col.bottom + (col.carryIn || 0)){
+      fb.textContent = "That's the full total for this column. Write just the last digit here, and carry the other digit into the box above the next column.";
+    } else if (!answerOk){
+      fb.textContent = '✗ Not quite — check the answer digit and try again.';
+    } else if (col.carryOut === 1){
+      fb.textContent = "The answer digit is right, but this column totals 10 or more — don't forget to carry the ten.";
+    } else {
+      fb.textContent = "The answer digit is right, but check the carry box — this column doesn't need one.";
+    }
+    fb.className = 'checkFeedback bad';
+    if (!answerOk){ answerInput.value = ''; answerInput.focus(); }
+    if (!carryOk && carryEl){ carryEl.value = ''; if (answerOk) carryEl.focus(); }
+  }
+
+  host.innerHTML =
+    '<div class="stageLabel" id="chim-stageLabel"></div>' +
+    '<p class="prompt" id="chim-promptText"></p>' +
+    '<div id="chim-gridHost"></div>' +
+    '<div class="quotHint" id="chim-quotHint"></div>' +
+    '<div class="checkRow" id="chim-checkRow">' +
+      '<input id="chim-answerInput" class="blankInput" type="text" inputmode="numeric" style="width:60px;">' +
+      '<button class="btn" id="chim-checkBtn">Check</button>' +
+    '</div>' +
+    '<div class="checkFeedback" id="chim-checkFeedback"></div>' +
+    '<div id="chim-finishHost"></div>';
+  document.getElementById('chim-checkBtn').addEventListener('click', doCheck);
+  document.getElementById('chim-answerInput').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); doCheck(); } });
+  updateStage();
+}
+
 /* =====================================================================
    1. DECIMAL COLUMN CALCULATOR
 ===================================================================== */
 (function(){
   var op = '+', columns = [], order = [], pos = 0, overflow = 0;
+  var carryConfirmed = [], finalCarryDigit = 0, finalCarryConfirmed = false;
 
   function digitsOf(str){
     str = String(str).trim();
@@ -956,6 +1322,9 @@ function finishBox(headline, lines){
     });
     overflow = (op === '+') ? carry : 0;
     pos = 0;
+    carryConfirmed = columns.map(function(){ return false; });
+    finalCarryDigit = 0;
+    finalCarryConfirmed = false;
   }
 
   function pointIndex(){ for (var i = 0; i < columns.length; i++) if (columns[i].type === 'point') return i; return -1; }
@@ -982,16 +1351,55 @@ function finishBox(headline, lines){
     return { a: a.toFixed(dp), b: b.toFixed(dp), op: operation };
   }
 
+  function makeCarryInput(wrapCls, id){
+    var wrap = el('div', wrapCls);
+    var inp = document.createElement('input');
+    inp.type = 'text'; inp.inputMode = 'numeric'; inp.maxLength = 1; inp.autocomplete = 'off';
+    inp.className = 'carryInputBox'; inp.id = id;
+    wrap.appendChild(inp);
+    return wrap;
+  }
+
+  function carryCellFor(idx, known, act){
+    var col = columns[idx];
+    if (op !== '+'){
+      var carryTxt = (known && col.borrowIn) ? '−1' : '';
+      return el('div', 'carryCell', carryTxt);
+    }
+    if (idx === order[0]) return el('div', 'carryCell'); // least significant column never has an incoming carry
+    if (carryConfirmed[idx]) return el('div', 'carryCell', col.carryIn ? '+' + col.carryIn : '');
+    if (act !== null) return makeCarryInput('carryCell', 'dcc-carryInput' + idx);
+    return el('div', 'carryCell');
+  }
+
+  function overflowAnswerCell(act){
+    if (finalCarryConfirmed) return el('div', 'subAnswerCell', finalCarryDigit ? String(finalCarryDigit) : '');
+    if (act !== null) return makeCarryInput('subAnswerCell', 'dcc-finalCarryInput');
+    return el('div', 'dccOverflowGap');
+  }
+
   function renderGrid(){
     var host = document.getElementById('dcc-gridHost');
     host.innerHTML = '';
     var act = activeIdx();
+    var addMode = (op === '+');
 
     function makeRow(cls){ var r = el('div', 'dccRow' + (cls ? ' ' + cls : '')); return r; }
-    var carryRow = makeRow(); carryRow.appendChild(el('div', 'dccGutter'));
-    var topRow = makeRow(); topRow.appendChild(el('div', 'dccGutter'));
-    var bottomRow = makeRow('subBottomRow'); bottomRow.appendChild(el('div', 'dccGutter', op === '+' ? '+' : '−'));
-    var ansRow = makeRow(); ansRow.appendChild(el('div', 'dccGutter'));
+    var carryRow = makeRow();
+    var topRow = makeRow();
+    var bottomRow = makeRow('subBottomRow');
+    var ansRow = makeRow();
+
+    if (addMode){
+      carryRow.appendChild(el('div', 'dccOverflowGap'));
+      topRow.appendChild(el('div', 'dccOverflowGap'));
+      bottomRow.appendChild(el('div', 'dccOverflowGap'));
+      ansRow.appendChild(overflowAnswerCell(act));
+    }
+    carryRow.appendChild(el('div', 'dccGutter'));
+    topRow.appendChild(el('div', 'dccGutter'));
+    bottomRow.appendChild(el('div', 'dccGutter', op === '+' ? '+' : '−'));
+    ansRow.appendChild(el('div', 'dccGutter'));
 
     columns.forEach(function(col, idx){
       if (col.type === 'point'){
@@ -1002,12 +1410,7 @@ function finishBox(headline, lines){
         return;
       }
       var known = isSolved(idx) || idx === act;
-      var carryTxt = '';
-      if (known){
-        if (op === '+' && col.carryIn) carryTxt = '+' + col.carryIn;
-        if (op === '-' && col.borrowIn) carryTxt = '−1';
-      }
-      carryRow.appendChild(el('div', 'carryCell', carryTxt));
+      carryRow.appendChild(carryCellFor(idx, known, act));
       topRow.appendChild(el('div', 'subDigitCell', String(col.top)));
       bottomRow.appendChild(el('div', 'subDigitCell', String(col.bottom)));
 
@@ -1021,6 +1424,13 @@ function finishBox(headline, lines){
     });
 
     host.appendChild(carryRow); host.appendChild(topRow); host.appendChild(bottomRow); host.appendChild(ansRow);
+
+    if (addMode && act !== null){
+      host.querySelectorAll('.carryInputBox').forEach(function(inp){
+        inp.addEventListener('input', function(){ inp.value = inp.value.replace(/[^0-9]/g, '').slice(0, 1); });
+        inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') document.getElementById('dcc-checkBtn').click(); });
+      });
+    }
   }
 
   function finalAnswerStr(){
@@ -1037,6 +1447,7 @@ function finishBox(headline, lines){
     var checkRow = document.getElementById('dcc-checkRow');
     var finishHost = document.getElementById('dcc-finishHost');
     var fb = document.getElementById('dcc-checkFeedback');
+    var hintEl = document.getElementById('dcc-quotHint');
     finishHost.innerHTML = ''; fb.textContent = ''; fb.className = 'checkFeedback';
     var answerInput = document.getElementById('dcc-answerInput');
     answerInput.value = ''; answerInput.disabled = false;
@@ -1050,8 +1461,16 @@ function finishBox(headline, lines){
       if (op === '-' && col.borrowIn) extra = ' (remember you borrowed a ten from this column)';
       promptEl.textContent = 'Work out the ' + placeName(act) + ' column: ' + col.top + ' ' + op + ' ' + col.bottom + extra + '.';
       checkRow.style.display = 'flex';
+      if (op === '+'){
+        hintEl.textContent = (order.indexOf(act) === order.length - 1)
+          ? 'Type your answer below the line. If it carries, write that digit in the box on the far left too — then check them together.'
+          : 'Type your answer below the line. If this column totals 10 or more, write the carried ten in the small box above the next column too — then check them together.';
+      } else {
+        hintEl.textContent = '';
+      }
     } else {
       checkRow.style.display = 'none';
+      hintEl.textContent = '';
       stageLbl.textContent = 'Finished';
       promptEl.textContent = 'Every column is solved — here is the full calculation.';
       var aTop = columns.map(function(c){ return c.type === 'point' ? '.' : c.top; }).join('');
@@ -1066,18 +1485,65 @@ function finishBox(headline, lines){
   document.getElementById('dcc-checkBtn').addEventListener('click', function(){
     var act = activeIdx();
     if (act === null) return;
-    var val = parseInt(document.getElementById('dcc-answerInput').value, 10);
+    var answerInput = document.getElementById('dcc-answerInput');
+    var val = parseInt(answerInput.value, 10);
     var col = columns[act];
     var fb = document.getElementById('dcc-checkFeedback');
-    if (val === col.ansDigit){
+    if (isNaN(val)){
+      fb.textContent = 'Type a number in the box first.'; fb.className = 'checkFeedback bad';
+      return;
+    }
+
+    if (op !== '+'){
+      if (val === col.ansDigit){
+        fb.textContent = '✓ Correct!'; fb.className = 'checkFeedback good';
+        pos++;
+        answerInput.disabled = true;
+        document.getElementById('dcc-checkBtn').disabled = true;
+        setTimeout(updateStage, 350);
+      } else {
+        fb.textContent = '✗ Not quite — try again.'; fb.className = 'checkFeedback bad';
+      }
+      return;
+    }
+
+    var posIdx = order.indexOf(act);
+    var isLast = posIdx === order.length - 1;
+    var carryEl = isLast
+      ? document.getElementById('dcc-finalCarryInput')
+      : document.getElementById('dcc-carryInput' + order[posIdx + 1]);
+    var rawCarry = carryEl ? carryEl.value.trim() : '';
+    var carryVal = rawCarry === '' ? 0 : parseInt(rawCarry, 10);
+    var answerOk = val === col.ansDigit;
+    var carryOk = carryVal === col.carryOut;
+
+    if (answerOk && carryOk){
       fb.textContent = '✓ Correct!'; fb.className = 'checkFeedback good';
+      if (isLast){
+        finalCarryDigit = col.carryOut === 1 ? 1 : 0;
+        finalCarryConfirmed = true;
+      } else {
+        carryConfirmed[order[posIdx + 1]] = true;
+      }
       pos++;
-      document.getElementById('dcc-answerInput').disabled = true;
+      answerInput.disabled = true;
       document.getElementById('dcc-checkBtn').disabled = true;
       setTimeout(updateStage, 350);
-    } else {
-      fb.textContent = '✗ Not quite — try again.'; fb.className = 'checkFeedback bad';
+      return;
     }
+
+    if (!answerOk && col.carryOut === 1 && val === col.top + col.bottom + (col.carryIn || 0)){
+      fb.textContent = "That's the full total for this column. Write just the last digit here, and carry the other digit into the box above the next column.";
+    } else if (!answerOk){
+      fb.textContent = '✗ Not quite — check the answer digit and try again.';
+    } else if (col.carryOut === 1){
+      fb.textContent = "The answer digit is right, but this column totals 10 or more — don't forget to carry the ten.";
+    } else {
+      fb.textContent = "The answer digit is right, but check the carry box — this column doesn't need one.";
+    }
+    fb.className = 'checkFeedback bad';
+    if (!answerOk){ answerInput.value = ''; answerInput.focus(); }
+    if (!carryOk && carryEl){ carryEl.value = ''; if (answerOk) carryEl.focus(); }
   });
   document.getElementById('dcc-answerInput').addEventListener('keydown', function(e){
     if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('dcc-checkBtn').click(); }
@@ -1193,10 +1659,14 @@ function finishBox(headline, lines){
       if (pos === digits.length) strip.appendChild(el('div', 'psPoint', '.'));
     }
     drawStrip(pointPos);
-    if (direction === 1) leftBtn.disabled = true; else rightBtn.disabled = true;
 
     function move(dir){
-      if ((dir === 1 && direction !== 1) || (dir === -1 && direction !== -1)) return;
+      if (dir !== direction){
+        if (dir === 1) rightBtn.disabled = true; else leftBtn.disabled = true;
+        counter.textContent = '✗ Not quite — think about whether ' + (operation === 'multiply' ? 'multiplying' : 'dividing') + ' by ' + n + ' moves the point left or right.';
+        counter.className = 'checkFeedback bad';
+        return;
+      }
       if (stepsTaken >= places) return;
       stepsTaken++;
       drawStrip(pointPos + direction * stepsTaken);
@@ -1588,16 +2058,21 @@ function finishBox(headline, lines){
     host.appendChild(el('p', 'prompt', 'Reveal the common difference between the terms, then work out what comes next.'));
     var seqRow = el('div', 'seqRow');
     var gapEls = [];
-    terms.forEach(function(t, i){
+    terms.forEach(function(t){
       seqRow.appendChild(el('div', 'seqBox', String(t)));
-      if (i < terms.length - 1){
-        var g = el('div', 'seqGap', '?');
-        gapEls.push(g);
-        seqRow.appendChild(g);
-      }
+      var g = el('div', 'seqGap', '?');
+      gapEls.push(g);
+      seqRow.appendChild(g);
     });
-    var nextBox = el('div', 'seqBox next placeholder', '?');
-    seqRow.appendChild(el('div', 'seqGap', direction === 'up' ? '+' + step : '−' + step));
+
+    var next1 = direction === 'up' ? terms[terms.length - 1] + step : terms[terms.length - 1] - step;
+    var next2 = direction === 'up' ? next1 + step : next1 - step;
+
+    var answerInput = document.createElement('input');
+    answerInput.type = 'text'; answerInput.inputMode = 'numeric'; answerInput.placeholder = '?';
+    answerInput.className = 'seqAnswerInput';
+    var nextBox = el('div', 'seqBox next');
+    nextBox.appendChild(answerInput);
     seqRow.appendChild(nextBox);
     host.appendChild(seqRow);
 
@@ -1608,16 +2083,33 @@ function finishBox(headline, lines){
       revealBtn.disabled = true;
     };
 
-    var next1 = direction === 'up' ? terms[terms.length - 1] + step : terms[terms.length - 1] - step;
-    var next2 = direction === 'up' ? next1 + step : next1 - step;
-    var stageHost = el('div');
-    host.appendChild(el('p', 'stagePrompt', 'What is the next term in the sequence?'));
-    host.appendChild(stageHost);
-    buildStepFlow(stageHost, [{ prompt: 'Next term:', answer: next1 }], function(container){
-      container.innerHTML = '';
-      nextBox.textContent = next1; nextBox.classList.remove('placeholder');
-      container.appendChild(finishBox('Finished!', ['Next term = <span class="ans">' + next1 + '</span> (the one after that would be ' + next2 + ')']));
-    });
+    host.appendChild(el('p', 'stagePrompt', 'What is the next term in the sequence? Type it in the empty box above.'));
+    var checkRow = el('div', 'checkRow');
+    var checkBtn = el('button', 'btn', 'Check');
+    checkRow.appendChild(checkBtn);
+    host.appendChild(checkRow);
+    var fb = el('div', 'checkFeedback');
+    host.appendChild(fb);
+    var finishHost = el('div');
+    host.appendChild(finishHost);
+
+    function doCheck(){
+      var val = parseNum(answerInput.value);
+      if (val === null){ fb.textContent = 'Type a number first.'; fb.className = 'checkFeedback bad'; return; }
+      if (val === next1){
+        fb.textContent = '✓ Correct!'; fb.className = 'checkFeedback good';
+        answerInput.disabled = true; checkBtn.disabled = true;
+        answerInput.classList.add('correct');
+        finishHost.appendChild(finishBox('Finished!', ['Next term = ' + next1 + ' (the one after that would be ' + next2 + ')']));
+        finishHost.lastChild.querySelector('p').innerHTML = 'Next term = <span class="ans">' + next1 + '</span> (the one after that would be ' + next2 + ')';
+      } else {
+        fb.textContent = '✗ Not quite — try again.'; fb.className = 'checkFeedback bad';
+        answerInput.value = ''; answerInput.focus();
+      }
+    }
+    checkBtn.onclick = doCheck;
+    answerInput.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); doCheck(); } });
+    setTimeout(function(){ answerInput.focus(); }, 30);
   }
 
   function runEstimate(host, a, b, op, place){
@@ -1729,7 +2221,7 @@ function finishBox(headline, lines){
       return { kind: kind, pctStr: pctStr, amount: amount, unit: '' };
     }
     if (kind === 'any') return { kind: kind, pct: randInt(1, 99), amount: randInt(10, 900), unit: '' };
-    if (kind === 'vat') return { kind: kind, price: randInt(20, 2500) };
+    if (kind === 'vat') return { kind: kind, price: randInt(20, 2500), pct: 20 };
     return { kind: kind, pct1: [5, 8, 10, 15, 22, 30][randInt(0, 5)], base1: randInt(50, 800), pct2: [25, 30, 40, 50, 60][randInt(0, 4)], base2: randInt(20, 200) };
   }
 
@@ -1771,30 +2263,45 @@ function finishBox(headline, lines){
     host.appendChild(el('p', 'prompt', 'Calculate ' + pct + '% of ' + amount + suffix + '.'));
     var stageHost = el('div');
     host.appendChild(stageHost);
-    var factor = pct / 100;
-    var answer = factor * amount;
+    var onePercent = amount / 100;
+    var answer = onePercent * pct;
     buildStepFlow(stageHost, [
-      { prompt: 'Divide the percentage by 100.', answer: factor, tol: 0.001 },
-      { prompt: 'Multiply this by ' + amount + '.', answer: answer }
+      { prompt: 'Divide ' + amount + suffix + ' by 100 to find 1%.', answer: onePercent },
+      { prompt: 'Multiply this by ' + pct + ' to find ' + pct + '%.', answer: answer }
     ], function(container){
       container.innerHTML = '';
       container.appendChild(finishBox('Finished!', [pct + '% of ' + amount + suffix + ' = <span class="ans">' + fmt(answer) + suffix + '</span>']));
+      container.querySelector('p').innerHTML = pct + '% of ' + amount + suffix + ' = <span class="ans">' + fmt(answer) + suffix + '</span>';
     });
   }
-  function runVat(host, price){
+  function runVat(host, price, pct){
     host.innerHTML = '';
-    host.appendChild(el('p', 'prompt', 'An item costs £' + fmt(price) + ' before VAT (20%). Find the VAT, then the total price.'));
-    var vat = price * 0.2, total = price + vat;
-    var stageHost = el('div');
-    host.appendChild(stageHost);
-    buildStepFlow(stageHost, [
-      { prompt: 'Find the VAT (20% of £' + fmt(price) + ').', answer: vat },
-      { prompt: 'Add the VAT to the original price for the total.', answer: total }
+    host.appendChild(el('p', 'prompt', 'An item costs £' + fmt(price) + ' before VAT. Find the VAT, then the total price.'));
+    var vat = roundMoney2(price * pct / 100);
+
+    var rateHost = el('div');
+    host.appendChild(rateHost);
+    buildStepFlow(rateHost, [
+      { prompt: 'What percentage is VAT charged at here?', answer: pct }
     ], function(container){
       container.innerHTML = '';
-      container.appendChild(finishBox('Finished!', ['VAT = £' + fmt(vat), 'Total = <span class="ans">£' + fmt(total) + '</span>']));
+      var onePercent = price / 100;
+      var vatHost = el('div');
+      container.appendChild(el('p', 'stagePrompt', 'Now find ' + pct + '% of £' + fmt(price) + ' — the amount of VAT.'));
+      container.appendChild(vatHost);
+      buildStepFlow(vatHost, [
+        { prompt: 'Divide £' + fmt(price) + ' by 100 to find 1%.', answer: onePercent },
+        { prompt: 'Multiply this by ' + pct + ' to find the VAT.', answer: vat }
+      ], function(container2){
+        container2.innerHTML = '';
+        container2.appendChild(el('p', 'stagePrompt', 'VAT = £' + fmt(vat) + '. Now add it to the original price to find the total — work through it column by column.'));
+        var chimHost = el('div');
+        container2.appendChild(chimHost);
+        runChimneySum(chimHost, price, vat, '+', 2, function(){}, 'Total');
+      });
     });
   }
+  function roundMoney2(v){ return Math.round((v + Number.EPSILON) * 100) / 100; }
   function runCompare(host, pct1, base1, pct2, base2){
     host.innerHTML = '';
     host.appendChild(el('p', 'prompt', 'Which is worth more — ' + pct1 + '% of £' + base1 + ', or ' + pct2 + '% of £' + base2 + '?'));
@@ -1834,7 +2341,7 @@ function finishBox(headline, lines){
       var kind = activePill(document.getElementById('pct-kindPills'), 'kind');
       if (kind === 'common') data = { kind: kind, pctStr: document.getElementById('pct-commonPctInput').value, amount: parseFloat(document.getElementById('pct-commonAmountInput').value), unit: document.getElementById('pct-commonUnitInput').value };
       else if (kind === 'any') data = { kind: kind, pct: parseFloat(document.getElementById('pct-anyPctInput').value), amount: parseFloat(document.getElementById('pct-anyAmountInput').value), unit: document.getElementById('pct-anyUnitInput').value };
-      else if (kind === 'vat') data = { kind: kind, price: parseFloat(document.getElementById('pct-priceInput').value) };
+      else if (kind === 'vat') data = { kind: kind, price: parseFloat(document.getElementById('pct-priceInput').value), pct: parseFloat(document.getElementById('pct-vatRateInput').value) };
       else data = { kind: kind, pct1: parseFloat(document.getElementById('pct-pct1Input').value), base1: parseFloat(document.getElementById('pct-base1Input').value), pct2: parseFloat(document.getElementById('pct-pct2Input').value), base2: parseFloat(document.getElementById('pct-base2Input').value) };
     } else {
       data = randomGenerate();
@@ -1846,7 +2353,7 @@ function finishBox(headline, lines){
     var host = document.getElementById('pct-mainHost');
     if (data.kind === 'common') runCommon(host, data.pctStr, data.amount, data.unit);
     else if (data.kind === 'any') runAny(host, data.pct, data.amount, data.unit);
-    else if (data.kind === 'vat') runVat(host, data.price);
+    else if (data.kind === 'vat') runVat(host, data.price, data.pct);
     else runCompare(host, data.pct1, data.base1, data.pct2, data.base2);
   });
   document.getElementById('pct-resetBtn').addEventListener('click', function(){
@@ -2217,6 +2724,400 @@ function finishBox(headline, lines){
   document.getElementById('uc-resetBtn').addEventListener('click', function(){
     document.getElementById('uc-setup').style.display = 'block';
     document.getElementById('uc-presentation').style.display = 'none';
+  });
+})();
+</script>
+
+<script>
+/* =====================================================================
+   11. LATTICE MULTIPLICATION
+===================================================================== */
+(function(){
+  var A_DIGITS = [], B_DIGITS = [], nA = 0, nB = 0;
+  var cells = [];        // cells[r][c] = {top, side, product, tens, units, solved}
+  var cellOrder = [], cellPos = 0;
+  var bands = [], bandPos = 0;
+  var stage = 'headers'; // 'headers' -> 'cells' -> 'diagonals' -> 'finished'
+
+  wireModeToggle('lat', function(mode){
+    document.getElementById('lat-digitFields').style.display = mode === 'random' ? 'block' : 'none';
+  });
+  wirePills(document.getElementById('lat-aDigitsPills'), 'digits');
+  wirePills(document.getElementById('lat-bDigitsPills'), 'digits');
+
+  function randomDigits(n){
+    var s = String(randInt(1, 9));
+    for (var i = 1; i < n; i++) s += String(randInt(0, 9));
+    return s;
+  }
+
+  function prepareGrid(aStr, bStr){
+    A_DIGITS = aStr.split('').map(Number);
+    B_DIGITS = bStr.split('').map(Number);
+    nA = A_DIGITS.length; nB = B_DIGITS.length;
+    cells = [];
+    for (var r = 0; r < nB; r++){
+      var row = [];
+      for (var c = 0; c < nA; c++){
+        var product = A_DIGITS[c] * B_DIGITS[r];
+        row.push({ top: A_DIGITS[c], side: B_DIGITS[r], product: product, tens: Math.floor(product / 10), units: product % 10, solved: false });
+      }
+      cells.push(row);
+    }
+    cellOrder = [];
+    for (var r2 = 0; r2 < nB; r2++) for (var c2 = 0; c2 < nA; c2++) cellOrder.push([r2, c2]);
+    cellPos = 0;
+    stage = 'headers';
+  }
+
+  function prepareBands(){
+    var maxBand = (nA - 1) + (nB - 1) + 1;
+    var raw = [];
+    for (var b = 0; b <= maxBand; b++) raw.push([]);
+    for (var r = 0; r < nB; r++){
+      for (var c = 0; c < nA; c++){
+        var cell = cells[r][c];
+        var unitsBand = (nB - 1 - r) + (nA - 1 - c);
+        raw[unitsBand].push(cell.units);
+        raw[unitsBand + 1].push(cell.tens);
+      }
+    }
+    bands = raw.map(function(contributors, idx){ return { index: idx, contributors: contributors, carryIn: 0, sum: 0, digit: 0, carryOut: 0 }; });
+    var carry = 0;
+    bands.forEach(function(band){
+      band.carryIn = carry;
+      band.sum = band.contributors.reduce(function(s, v){ return s + v; }, 0) + carry;
+      band.digit = band.sum % 10;
+      band.carryOut = Math.floor(band.sum / 10);
+      carry = band.carryOut;
+    });
+    if (carry > 0){
+      bands.push({ index: bands.length, contributors: [], carryIn: carry, sum: carry, digit: carry % 10, carryOut: Math.floor(carry / 10) });
+    }
+    bandPos = 0;
+  }
+
+  function finalAnswerStr(){
+    return bands.slice().reverse().map(function(b){ return b.digit; }).join('').replace(/^0+(?=\d)/, '');
+  }
+
+  /* Builds the lattice grid itself — used by both the header-fill stage (blank cells) and
+     the cell-fill / diagonal stages (cells shown solved as they're confirmed). activeRC, if
+     given, marks that [row,col] cell as the one currently being worked on. */
+  function buildGrid(opts){
+    opts = opts || {};
+    var grid = el('div', 'latticeGrid');
+    grid.style.gridTemplateColumns = 'repeat(' + (nA + 1) + ', 54px)';
+    grid.style.gridTemplateRows = 'repeat(' + (nB + 1) + ', 54px)';
+    grid.appendChild(el('div', 'latticeCornerCell'));
+
+    for (var c = 0; c < nA; c++){
+      if (opts.headerInputs){
+        var hc = el('div', 'latticeHeaderCell');
+        var hi = document.createElement('input');
+        hi.type = 'text'; hi.inputMode = 'numeric'; hi.maxLength = 1; hi.autocomplete = 'off';
+        hi.id = 'lat-headA' + c;
+        hc.appendChild(hi);
+        grid.appendChild(hc);
+      } else {
+        grid.appendChild(el('div', 'latticeHeaderCell solved', String(A_DIGITS[c])));
+      }
+    }
+
+    for (var r = 0; r < nB; r++){
+      if (opts.headerInputs){
+        var hc2 = el('div', 'latticeHeaderCell');
+        var hi2 = document.createElement('input');
+        hi2.type = 'text'; hi2.inputMode = 'numeric'; hi2.maxLength = 1; hi2.autocomplete = 'off';
+        hi2.id = 'lat-headB' + r;
+        hc2.appendChild(hi2);
+        grid.appendChild(hc2);
+      } else {
+        grid.appendChild(el('div', 'latticeHeaderCell solved', String(B_DIGITS[r])));
+      }
+      for (var c2 = 0; c2 < nA; c2++){
+        var cellData = cells[r][c2];
+        var isActive = opts.activeRC && opts.activeRC[0] === r && opts.activeRC[1] === c2;
+        var cellDiv = el('div', 'latticeCell' + (isActive ? ' active' : ''));
+        if (opts.headerInputs){
+          // blank placeholder — nothing filled in yet at this stage
+        } else if (cellData.solved){
+          cellDiv.appendChild(el('div', 'latticeTens', String(cellData.tens)));
+          cellDiv.appendChild(el('div', 'latticeUnits', String(cellData.units)));
+        } else if (isActive){
+          var tensInp = document.createElement('input');
+          tensInp.type = 'text'; tensInp.inputMode = 'numeric'; tensInp.maxLength = 1; tensInp.autocomplete = 'off';
+          tensInp.className = 'latticeTensInput'; tensInp.id = 'lat-tensInput';
+          var unitsInp = document.createElement('input');
+          unitsInp.type = 'text'; unitsInp.inputMode = 'numeric'; unitsInp.maxLength = 1; unitsInp.autocomplete = 'off';
+          unitsInp.className = 'latticeUnitsInput'; unitsInp.id = 'lat-unitsInput';
+          cellDiv.appendChild(tensInp); cellDiv.appendChild(unitsInp);
+        }
+        grid.appendChild(cellDiv);
+      }
+    }
+    return grid;
+  }
+
+  function render(){
+    var host = document.getElementById('lat-mainHost');
+    var stageLbl = document.getElementById('lat-stageLabel');
+    var promptEl = document.getElementById('lat-promptText');
+    stageLbl.textContent =
+      stage === 'headers' ? 'Step 1 of 3: fill in the grid' :
+      stage === 'cells' ? 'Step 2 of 3: multiply cell by cell' :
+      stage === 'diagonals' ? 'Step 3 of 3: add along the diagonals' : 'Finished';
+    promptEl.textContent = '';
+    host.innerHTML = '';
+    if (stage === 'headers') renderHeaders(host);
+    else if (stage === 'cells') renderCells(host);
+    else if (stage === 'diagonals') renderDiagonals(host);
+    else renderFinished(host);
+  }
+
+  function renderHeaders(host){
+    host.appendChild(el('p', 'prompt',
+      'Type each digit of ' + A_DIGITS.join('') + ' along the top, and each digit of ' + B_DIGITS.join('') + ' down the side.'));
+    host.appendChild(buildGrid({ headerInputs: true }));
+
+    var checkRow = el('div', 'checkRow');
+    var checkBtn = el('button', 'btn', 'Check numbers');
+    checkRow.appendChild(checkBtn);
+    host.appendChild(checkRow);
+    var fb = el('div', 'checkFeedback');
+    host.appendChild(fb);
+
+    checkBtn.onclick = function(){
+      var ok = true;
+      for (var c = 0; c < nA; c++){
+        var inp = document.getElementById('lat-headA' + c);
+        if (parseInt(inp.value, 10) === A_DIGITS[c]){ inp.classList.remove('wrong'); inp.classList.add('correct'); inp.disabled = true; }
+        else { inp.classList.add('wrong'); ok = false; }
+      }
+      for (var r = 0; r < nB; r++){
+        var inp2 = document.getElementById('lat-headB' + r);
+        if (parseInt(inp2.value, 10) === B_DIGITS[r]){ inp2.classList.remove('wrong'); inp2.classList.add('correct'); inp2.disabled = true; }
+        else { inp2.classList.add('wrong'); ok = false; }
+      }
+      if (ok){
+        fb.textContent = '✓ Correct! Now multiply cell by cell.'; fb.className = 'checkFeedback good';
+        checkBtn.disabled = true;
+        setTimeout(function(){ stage = 'cells'; render(); }, 500);
+      } else {
+        fb.textContent = '✗ Check the highlighted boxes and try again.'; fb.className = 'checkFeedback bad';
+      }
+    };
+  }
+
+  function renderCells(host){
+    var act = cellPos < cellOrder.length ? cellOrder[cellPos] : null;
+    if (!act){
+      host.appendChild(el('p', 'prompt', 'Every cell is filled in.'));
+      setTimeout(function(){ stage = 'diagonals'; prepareBands(); render(); }, 600);
+      return;
+    }
+    var r = act[0], c = act[1];
+    var cellData = cells[r][c];
+    host.appendChild(el('p', 'prompt',
+      'Multiply the top digit by the side digit: ' + cellData.top + ' × ' + cellData.side + '. Write the tens digit above the line, the units digit below.'));
+    host.appendChild(buildGrid({ activeRC: act }));
+
+    var hintRow = el('div', 'answerRow');
+    var hintBtn = el('button', 'btn secondary small', 'Show ×' + cellData.side + ' table');
+    hintRow.appendChild(hintBtn);
+    host.appendChild(hintRow);
+    var hintHost = el('div', 'timesTable');
+    host.appendChild(hintHost);
+    hintBtn.onclick = function(){
+      if (!hintHost.classList.contains('show')){
+        var lines = '<div class="ttHead">×' + cellData.side + ' table</div>';
+        for (var i = 1; i <= 12; i++) lines += i + ' × ' + cellData.side + ' = ' + (i * cellData.side) + '<br>';
+        hintHost.innerHTML = lines;
+        hintHost.classList.add('show');
+        hintBtn.textContent = 'Hide table';
+      } else {
+        hintHost.classList.remove('show');
+        hintBtn.textContent = 'Show ×' + cellData.side + ' table';
+      }
+    };
+
+    var checkRow = el('div', 'checkRow');
+    var tensLabel = el('span', null, 'Tens:');
+    var tensAns = document.createElement('input');
+    tensAns.type = 'text'; tensAns.inputMode = 'numeric'; tensAns.maxLength = 1; tensAns.className = 'blankInput'; tensAns.id = 'lat-tensAnswer'; tensAns.style.width = '44px';
+    var unitsLabel = el('span', null, 'Units:');
+    var unitsAns = document.createElement('input');
+    unitsAns.type = 'text'; unitsAns.inputMode = 'numeric'; unitsAns.maxLength = 1; unitsAns.className = 'blankInput'; unitsAns.id = 'lat-unitsAnswer'; unitsAns.style.width = '44px';
+    var checkBtn = el('button', 'btn', 'Check');
+    checkRow.appendChild(tensLabel); checkRow.appendChild(tensAns);
+    checkRow.appendChild(unitsLabel); checkRow.appendChild(unitsAns);
+    checkRow.appendChild(checkBtn);
+    host.appendChild(checkRow);
+    var fb = el('div', 'checkFeedback');
+    host.appendChild(fb);
+
+    function doCheck(){
+      var tv = tensAns.value.trim() === '' ? 0 : parseInt(tensAns.value, 10);
+      var uv = parseInt(unitsAns.value, 10);
+      if (isNaN(uv)){ fb.textContent = 'Type at least the units digit.'; fb.className = 'checkFeedback bad'; return; }
+      if (tv === cellData.tens && uv === cellData.units){
+        fb.textContent = '✓ Correct!'; fb.className = 'checkFeedback good';
+        cellData.solved = true;
+        cellPos++;
+        tensAns.disabled = true; unitsAns.disabled = true; checkBtn.disabled = true;
+        setTimeout(render, 350);
+      } else {
+        fb.textContent = '✗ Not quite — check ' + cellData.top + ' × ' + cellData.side + ' and try again.'; fb.className = 'checkFeedback bad';
+        tensAns.value = ''; unitsAns.value = ''; unitsAns.focus();
+      }
+    }
+    checkBtn.onclick = doCheck;
+    unitsAns.addEventListener('keydown', function(e){ if (e.key === 'Enter') doCheck(); });
+    tensAns.addEventListener('keydown', function(e){ if (e.key === 'Enter') doCheck(); });
+    setTimeout(function(){ unitsAns.focus(); }, 30);
+  }
+
+  function renderDiagonals(host){
+    host.appendChild(el('p', 'prompt', 'Every cell is multiplied out. Now add down each diagonal strip, starting from the right.'));
+    host.appendChild(buildGrid({}));
+
+    var n = bands.length;
+    var act = bandPos < n ? bands[bandPos] : null;
+
+    var bandHost = el('div', 'latticeBandHost');
+    host.appendChild(bandHost);
+    renderBandStrip(bandHost);
+
+    if (!act){
+      setTimeout(function(){ stage = 'finished'; render(); }, 700);
+      return;
+    }
+
+    var exprParts = act.contributors.slice();
+    var exprStr = exprParts.length ? exprParts.join(' + ') : '0';
+    if (act.carryIn) exprStr += (exprParts.length ? ' + ' : '') + act.carryIn + ' carried in';
+    host.appendChild(el('p', 'stagePrompt', 'Add this diagonal: ' + exprStr + '.'));
+    if (bandPos < n - 1){
+      host.appendChild(el('div', 'quotHint', 'Type the digit below the line. If the total is 10 or more, write the carried ten in the small box above the next diagonal too — then check them together.'));
+    } else {
+      host.appendChild(el('div', 'quotHint', 'This is the last diagonal — just type the digit below the line.'));
+    }
+
+    var checkRow = el('div', 'checkRow');
+    var answerInput = document.createElement('input');
+    answerInput.type = 'text'; answerInput.inputMode = 'numeric'; answerInput.className = 'blankInput'; answerInput.id = 'lat-bandAnswerInput'; answerInput.style.width = '60px';
+    var checkBtn = el('button', 'btn', 'Check');
+    checkRow.appendChild(answerInput); checkRow.appendChild(checkBtn);
+    host.appendChild(checkRow);
+    var fb = el('div', 'checkFeedback');
+    host.appendChild(fb);
+
+    function doCheck(){
+      var val = parseInt(answerInput.value, 10);
+      if (isNaN(val)){ fb.textContent = 'Type a number in the box first.'; fb.className = 'checkFeedback bad'; return; }
+      var isLast = bandPos === n - 1;
+      var carryEl = isLast ? null : document.getElementById('lat-carryInput' + (bandPos + 1));
+      var rawCarry = carryEl ? carryEl.value.trim() : '';
+      var carryVal = rawCarry === '' ? 0 : parseInt(rawCarry, 10);
+      var answerOk = val === act.digit;
+      var carryOk = isLast ? true : (carryVal === act.carryOut);
+
+      if (answerOk && carryOk){
+        fb.textContent = '✓ Correct!'; fb.className = 'checkFeedback good';
+        bandPos++;
+        answerInput.disabled = true; checkBtn.disabled = true;
+        setTimeout(render, 350);
+        return;
+      }
+      var rawSum = exprParts.reduce(function(s, v){ return s + v; }, 0) + act.carryIn;
+      if (!answerOk && act.carryOut === 1 && val === rawSum){
+        fb.textContent = "That's the full total for this diagonal. Write just the last digit here, and carry the other digit into the box above the next diagonal.";
+      } else if (!answerOk){
+        fb.textContent = '✗ Not quite — check the digit and try again.';
+      } else if (act.carryOut >= 1){
+        fb.textContent = "The digit is right, but this diagonal totals 10 or more — don't forget to carry.";
+      } else {
+        fb.textContent = "The digit is right, but check the carry box — this diagonal doesn't need one.";
+      }
+      fb.className = 'checkFeedback bad';
+      if (!answerOk){ answerInput.value = ''; answerInput.focus(); }
+      if (!carryOk && carryEl){ carryEl.value = ''; if (answerOk) carryEl.focus(); }
+    }
+    checkBtn.onclick = doCheck;
+    answerInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') doCheck(); });
+    setTimeout(function(){ answerInput.focus(); }, 30);
+  }
+
+  function renderBandStrip(bandHost){
+    bandHost.innerHTML = '';
+    var n = bands.length;
+    var carryRow = el('div', 'dccRow');
+    var ansRow = el('div', 'dccRow');
+    for (var i = n - 1; i >= 0; i--){
+      var band = bands[i];
+      var solvedHere = i < bandPos;
+      var isActive = i === bandPos;
+      if (i === 0){
+        carryRow.appendChild(el('div', 'carryCell'));
+      } else if (solvedHere){
+        carryRow.appendChild(el('div', 'carryCell', band.carryIn ? '+' + band.carryIn : ''));
+      } else {
+        var wrap = el('div', 'carryCell');
+        var inp = document.createElement('input');
+        inp.type = 'text'; inp.inputMode = 'numeric'; inp.maxLength = 1; inp.autocomplete = 'off';
+        inp.className = 'carryInputBox'; inp.id = 'lat-carryInput' + i;
+        wrap.appendChild(inp);
+        carryRow.appendChild(wrap);
+      }
+      if (solvedHere) ansRow.appendChild(el('div', 'subAnswerCell', String(band.digit)));
+      else if (isActive) ansRow.appendChild(el('div', 'subAnswerCell placeholder active', '?'));
+      else ansRow.appendChild(el('div', 'subAnswerCell placeholder', ''));
+    }
+    bandHost.appendChild(carryRow);
+    bandHost.appendChild(ansRow);
+    if (bandPos > 0){
+      bandHost.querySelectorAll('.carryInputBox').forEach(function(inp){
+        inp.addEventListener('input', function(){ inp.value = inp.value.replace(/[^0-9]/g, '').slice(0, 1); });
+        inp.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ var b = document.getElementById('lat-bandAnswerInput'); if (b) document.querySelector('#lat-mainHost .checkRow .btn').click(); } });
+      });
+    }
+  }
+
+  function renderFinished(host){
+    var aVal = A_DIGITS.join(''), bVal = B_DIGITS.join('');
+    host.appendChild(buildGrid({}));
+    var bandHost = el('div', 'latticeBandHost');
+    host.appendChild(bandHost);
+    renderBandStrip(bandHost);
+    host.appendChild(finishBox('Finished!', [aVal + ' × ' + bVal + ' = <span class="ans">' + finalAnswerStr() + '</span>']));
+    host.lastChild.querySelector('p').innerHTML = aVal + ' × ' + bVal + ' = <span class="ans">' + finalAnswerStr() + '</span>';
+  }
+
+  function start(aStr, bStr){
+    prepareGrid(aStr, bStr);
+    document.getElementById('lat-setup').style.display = 'none';
+    document.getElementById('lat-presentation').style.display = 'block';
+    render();
+  }
+
+  document.getElementById('lat-startBtn').addEventListener('click', function(){
+    var mode = activePill(document.getElementById('lat-modePills'), 'mode');
+    var aStr, bStr;
+    if (mode === 'custom'){
+      aStr = document.getElementById('lat-aInput').value.trim();
+      bStr = document.getElementById('lat-bInput').value.trim();
+    } else {
+      var aDigits = parseInt(activePill(document.getElementById('lat-aDigitsPills'), 'digits'), 10);
+      var bDigits = parseInt(activePill(document.getElementById('lat-bDigitsPills'), 'digits'), 10);
+      aStr = randomDigits(aDigits);
+      bStr = randomDigits(bDigits);
+    }
+    if (!/^[0-9]+$/.test(aStr) || !/^[0-9]+$/.test(bStr)) return;
+    start(aStr, bStr);
+  });
+  document.getElementById('lat-resetBtn').addEventListener('click', function(){
+    document.getElementById('lat-setup').style.display = 'block';
+    document.getElementById('lat-presentation').style.display = 'none';
   });
 })();
 </script>
