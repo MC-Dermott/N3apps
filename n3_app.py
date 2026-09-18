@@ -147,10 +147,16 @@ if st.session_state.get("last_question_type") != question_type:
     st.session_state.submitted = False
     st.session_state.quiz["current_question"] = None
 
-# --- Level selection ---
+mode = st.radio("Mode", ["Practice", "Test"], horizontal=True, index=0)
+
+if st.session_state.mode != mode:
+    st.session_state.mode = mode
+    reset_test()
+
+# --- Level selection (not for Test: a Test mixes all of a Topic's levels) ---
 levels = get_levels(unit, question_type)
 selected_level = None
-if levels:
+if levels and mode != "Test":
     level_options = ["All Question Types"] + list(levels.keys())
     level_choice = st.selectbox("Choose Level", level_options)
     selected_level = None if level_choice == "All Question Types" else level_choice
@@ -160,18 +166,12 @@ if st.session_state.get("last_level") != selected_level:
     st.session_state.submitted = False
     st.session_state.quiz["current_question"] = None
 
-mode = st.radio("Mode", ["Practice", "Test"], horizontal=True, index=0)
-
-if st.session_state.mode != mode:
-    st.session_state.mode = mode
-    reset_test()
-
 st.divider()
 
 user_id = user["id"]
 
 if mode == "Test":
-    render_test(unit, question_type, level=selected_level, user_id=user_id)
+    render_test(unit, question_type, user_id=user_id)
 else:
     quiz = st.session_state.quiz
 

@@ -33,20 +33,21 @@ def _is_correct(user_input, expected):
         return str(user_input).strip().lower() == str(expected).strip().lower()
 
 
-def render_test(unit, question_type, level=None, user_id=None):
+def render_test(unit, question_type, user_id=None):
     test = st.session_state.test
 
     if not test["questions"]:
-        level_label = f" — {level}" if level else ""
         st.markdown(
-            f"You will be given **{_NUM_QUESTIONS} questions** on *{question_type}{level_label}*. "
+            f"You will be given **{_NUM_QUESTIONS} questions** on *{question_type}*. "
             "Each question is marked automatically. A summary with feedback is shown at the end. "
             "A perfect score unlocks a game!"
         )
         if st.button("Start Test", type="primary"):
             reset_test()
+            # No level= here: the plain dispatcher already mixes across every
+            # level registered for this question type.
             st.session_state.test["questions"] = [
-                generate_question(unit, question_type, level=level)
+                generate_question(unit, question_type)
                 for _ in range(_NUM_QUESTIONS)
             ]
             st.rerun()
