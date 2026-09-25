@@ -58,10 +58,14 @@ Same contract as N5apps:
    one level) `_N3_LEVELS["<Unit>"]["<Question Type>"] = {"Level label": generate_<type>_lN, ...}`.
 3. Every generated question should include `scaffold_steps` except genuinely single-step
    calculations.
-4. For chart-based question types, reuse `core/ui/question_ui.py`'s `_render_bar_chart` /
+4. For word problems (sharing, change, differences, parts of a total, percentages of an
+   amount), add a bar model with `metadata["bar_model"] = bar_model.bar_model([...])`
+   using the builders in `core/models/bar_model.py`. It shows in its own "📊 Bar
+   model" expander alongside any `scaffold_widget`.
+5. For chart-based question types, reuse `core/ui/question_ui.py`'s `_render_bar_chart` /
    `_render_pie_chart` / `_render_line_chart` / `_render_pictograph` where the mechanism
    matches, rather than building a new renderer — wire `metadata["diagram"]` /
    `metadata["diagram_params"]` the same way the existing chart topics do.
-5. **Stress-test with 100+ random iterations** before committing — check for exceptions,
+6. **Stress-test with 100+ random iterations** before committing — check for exceptions,
    absurd/negative values, and formatting artifacts (e.g. `f"{x:g}"` producing
    `1e+07`-style output on large numbers).

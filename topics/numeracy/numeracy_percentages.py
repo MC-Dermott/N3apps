@@ -1,5 +1,6 @@
 import random
 
+from core.models import bar_model as bm
 from core.models.question_model import Question
 
 NOTES = """
@@ -99,6 +100,10 @@ def generate_numeracy_percentages_l1():
         metadata={
             "scaffold_widget": "percentage_stepper",
             "scaffold_widget_params": {"kind": "common", "pct_str": pct_str, "amount": amount, "unit": unit},
+            "bar_model": bm.bar_model([
+                bm.common_percent(f"Find {pct_str}%", bm.given("Whole amount (100%)", amount), pct_str,
+                                  bm.unknown(f"{pct_str}%", answer)),
+            ], suffix=f" {unit}" if unit in ("pupils", "marbles") else unit),
         },
     )
 
@@ -177,6 +182,11 @@ def _vat_question():
         metadata={
             "scaffold_widget": "percentage_stepper",
             "scaffold_widget_params": {"kind": "vat", "price": price, "pct": pct},
+            "bar_model": bm.bar_model([
+                bm.percent("Find the VAT", bm.given("Price before VAT", price), pct, bm.unknown("VAT", vat)),
+                bm.part_whole("Total price", bm.unknown("Total", total),
+                              [bm.carried("Price", price), bm.carried("VAT", vat)]),
+            ], prefix="£", dp=2),
         },
     )
 

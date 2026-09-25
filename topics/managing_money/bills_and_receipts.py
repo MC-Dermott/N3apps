@@ -1,4 +1,5 @@
 import random
+from core.models import bar_model as bm
 from core.models.question_model import Question
 
 NOTES = """
@@ -108,6 +109,10 @@ def _standing_charge_question():
         metadata={
             "scaffold_widget": "receipt_adder",
             "scaffold_widget_params": {"items": [("Standing Charge", standing), ("Cost of Units Used", usage)]},
+            "bar_model": bm.bar_model([
+                bm.part_whole("Total bill", bm.unknown("Total bill", total),
+                              [bm.given("Standing Charge", standing), bm.given("Units Used", usage)]),
+            ], prefix="£", dp=2),
         },
     )
 
@@ -136,6 +141,10 @@ def _discount_subtraction_question():
         metadata={
             "scaffold_widget": "receipt_adder",
             "scaffold_widget_params": {"items": [("Original price", original), ("Discount", discount)], "op": "-"},
+            "bar_model": bm.bar_model([
+                bm.part_whole("New price", bm.given("Usual price", original),
+                              [bm.unknown("New price", sale), bm.given("Discount", discount)]),
+            ], prefix="£", dp=2),
         },
     )
 
@@ -164,6 +173,10 @@ def _postage_question():
         metadata={
             "scaffold_widget": "receipt_adder",
             "scaffold_widget_params": {"items": [("Item cost", cost), ("Postage", postage)]},
+            "bar_model": bm.bar_model([
+                bm.part_whole("Total cost", bm.unknown("Total", total),
+                              [bm.given(item.capitalize(), cost), bm.given("Postage", postage)]),
+            ], prefix="£", dp=2),
         },
     )
 
@@ -214,6 +227,12 @@ def generate_bills_and_receipts_l3():
         metadata={
             "scaffold_widget": "receipt_adder",
             "scaffold_widget_params": {"items": [("Cost before VAT", cost), ("VAT", vat)]},
+            "bar_model": bm.bar_model([
+                bm.percent("Find the VAT", bm.given("Cost before VAT", cost), vat_rate,
+                           bm.unknown("VAT", vat)),
+                bm.part_whole("Total to pay", bm.unknown("Total", total),
+                              [bm.carried("Cost before VAT", cost), bm.carried("VAT", vat)]),
+            ], prefix="£", dp=2),
         },
     )
 

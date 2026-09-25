@@ -1,5 +1,6 @@
 import random
 
+from core.models import bar_model as bm
 from core.models.question_model import Question
 
 NOTES = """
@@ -68,6 +69,8 @@ def generate_decimal_word_problems_l1():
         )
         worked = [f"Total = {_fmt(a, dp)} + {_fmt(b, dp)} = {_fmt(answer, dp)} {item['unit']}"]
         widget_kind, widget_params = "total", {"a": _fmt(a, dp), "b": _fmt(b, dp)}
+        model = bm.part_whole("Find the total", bm.unknown("Total", answer),
+                              [bm.given("First piece", a), bm.given("Second piece", b)])
     else:
         start = _decimal(20, 90, dp)
         removed = _decimal(2, start - 5, dp)
@@ -79,6 +82,8 @@ def generate_decimal_word_problems_l1():
         )
         worked = [f"Left = {_fmt(start, dp)} − {_fmt(removed, dp)} = {_fmt(answer, dp)} {item['unit']}"]
         widget_kind, widget_params = "difference", {"start": _fmt(start, dp), "removed": _fmt(removed, dp)}
+        model = bm.part_whole("Find what is left", bm.given("Start", start),
+                              [bm.given("Taken away", removed), bm.unknown("Left", answer)])
 
     return Question(
         question_text=question_text,
@@ -91,6 +96,7 @@ def generate_decimal_word_problems_l1():
         metadata={
             "scaffold_widget": "workings_pad",
             "scaffold_widget_params": {"kind": widget_kind, "unit": item["unit"], **widget_params},
+            "bar_model": bm.bar_model([model], suffix=f" {item['unit']}", dp=dp),
         },
     )
 
@@ -126,6 +132,10 @@ def _sharing_question():
             "scaffold_widget_params": {
                 "kind": "sharing", "unit": item["unit"], "total": _fmt(total, dp), "n": n_shares,
             },
+            "bar_model": bm.bar_model([
+                bm.equal_parts("Share equally", bm.given("Total", total),
+                               bm.unknown("Each share", share), bm.given("people", n_shares)),
+            ], suffix=f" {item['unit']}", dp=dp),
         },
     )
 
@@ -166,6 +176,12 @@ def _multiply_then_subtract_question():
                 "kind": "multiply_subtract", "unit": item["unit"],
                 "n": n, "per_unit": _fmt(per_unit, dp), "start": _fmt(start, dp),
             },
+            "bar_model": bm.bar_model([
+                bm.equal_parts("Amount removed", bm.unknown("Removed", removed),
+                               bm.given("One spoonful", per_unit), bm.given("spoonfuls", n)),
+                bm.part_whole("Amount left", bm.given("Start", start),
+                              [bm.carried("Removed", removed), bm.unknown("Left", answer)]),
+            ], suffix=f" {item['unit']}", dp=dp),
         },
     )
 

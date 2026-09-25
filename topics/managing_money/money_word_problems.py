@@ -1,5 +1,6 @@
 import math
 import random
+from core.models import bar_model as bm
 from core.models.question_model import Question
 
 NOTES = """
@@ -56,6 +57,10 @@ def _equal_sharing_question():
         metadata={
             "scaffold_widget": "bar_model_splitter",
             "scaffold_widget_params": {"total": total, "mode": "share", "n": n_people},
+            "bar_model": bm.bar_model([
+                bm.equal_parts("Share equally", bm.given("Total", total),
+                               bm.unknown("Each share", per_person), bm.given("people", n_people)),
+            ], prefix="£"),
         },
     )
 
@@ -83,6 +88,12 @@ def _change_question():
         scaffold_steps=[],
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "bar_model": bm.bar_model([
+                bm.part_whole("Find what is left", bm.given("Money to start", paid),
+                              [bm.given(item.capitalize(), cost), bm.unknown("Left", change)]),
+            ], prefix="£", dp=2),
+        },
     )
 
 
@@ -118,6 +129,14 @@ def _weight_subtraction_question():
         scaffold_steps=scaffold_steps,
         worked_solution=worked,
         notes=NOTES,
+        metadata={
+            "bar_model": bm.bar_model([
+                bm.part_whole("Weight now", bm.given("Starting weight", start),
+                              [bm.given("Lost", lost_so_far), bm.unknown("Weight now", now)]),
+                bm.compare("Still to lose", bm.carried("Weight now", now), bm.given("Target", target),
+                           bm.unknown("Still to lose", still_to_lose)),
+            ], suffix=" kg", dp=1),
+        },
     )
 
 
@@ -156,6 +175,10 @@ def _monthly_pay_question():
         metadata={
             "scaffold_widget": "bar_model_splitter",
             "scaffold_widget_params": {"total": annual, "mode": "share", "n": 12},
+            "bar_model": bm.bar_model([
+                bm.equal_parts("Split the year into months", bm.given("Pay for the year", annual),
+                               bm.unknown("Each month", monthly), bm.given("months", 12)),
+            ], prefix="£"),
         },
     )
 
@@ -184,6 +207,10 @@ def _envelope_sharing_question():
         metadata={
             "scaffold_widget": "bar_model_splitter",
             "scaffold_widget_params": {"total": total, "mode": "share", "n": n_items},
+            "bar_model": bm.bar_model([
+                bm.equal_parts("Share the envelopes", bm.given("Envelopes", total),
+                               bm.unknown("Each pupil", per_pupil), bm.given("pupils", n_items)),
+            ]),
         },
     )
 
@@ -239,6 +266,14 @@ def _boxes_needed_question():
                 "total": needed, "mode": "group", "n": per_box,
                 "multiplier": price_per_box, "multiplier_label": "Cost per box (£)",
             },
+            "bar_model": bm.bar_model([
+                bm.equal_parts("How many boxes?", bm.given(f"{item.capitalize()} needed", needed),
+                               bm.given("In each box", per_box), bm.unknown("boxes", boxes),
+                               round_up=True),
+                bm.with_units(bm.equal_parts("Total cost", bm.unknown("Total cost", total_cost),
+                                             bm.given("Cost of one box", price_per_box),
+                                             bm.carried("boxes", boxes)), prefix="£", dp=2),
+            ], suffix=f" {item}"),
         },
     )
 
@@ -278,6 +313,13 @@ def _savings_weeks_question():
         metadata={
             "scaffold_widget": "bar_model_splitter",
             "scaffold_widget_params": {"total": cost, "mode": "group", "n": weekly2},
+            "bar_model": bm.bar_model([
+                bm.equal_parts(f"{name1}'s weeks", bm.given(f"Cost of the {item}", cost),
+                               bm.given(f"{name1} saves each week", weekly1), bm.unknown("weeks", n_weeks1)),
+                bm.equal_parts(f"{name2}'s weeks", bm.carried(f"Cost of the {item}", cost),
+                               bm.given(f"{name2} saves each week", weekly2), bm.unknown("weeks", weeks2),
+                               round_up=True),
+            ], prefix="£", dp=2),
         },
     )
 

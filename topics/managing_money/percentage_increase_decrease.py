@@ -1,4 +1,5 @@
 import random
+from core.models import bar_model as bm
 from core.models.question_model import Question
 
 NOTES = """
@@ -49,6 +50,7 @@ def generate_percentage_increase_decrease_l1():
     if is_increase:
         name, noun, unit, is_money = random.choice(_INCREASE_ITEMS)
         amount_str = f"£{amount}" if is_money else f"{amount}{unit}"
+        units = {"prefix": "£", "dp": 2} if is_money else {"suffix": unit}
         question_text = (
             f"A {name} of {amount_str} is increased by {pct}%.\n\n"
             f"Calculate the new {noun}."
@@ -59,6 +61,7 @@ def generate_percentage_increase_decrease_l1():
             f"A {item} costing £{amount} is reduced by {pct}% in a sale.\n\n"
             f"Calculate the sale price of the {item}."
         )
+        units = {"prefix": "£", "dp": 2}
 
     scaffold_steps = [
         {"prompt": f"Calculate {pct}% of {amount}", "answer": change},
@@ -83,6 +86,15 @@ def generate_percentage_increase_decrease_l1():
             "scaffold_widget_params": {
                 "is_increase": is_increase, "original": amount, "pct": pct, "new_amount": new_amount,
             },
+            "bar_model": bm.bar_model([
+                bm.percent(f"Find the {verb_word}", bm.given("Original (100%)", amount), pct,
+                           bm.unknown(f"{verb_word.capitalize()} ({pct}%)", change)),
+                bm.compare("New amount", bm.unknown("New amount", new_amount), bm.carried("Original", amount),
+                           bm.carried("Increase", change))
+                if is_increase else
+                bm.part_whole("New amount", bm.carried("Original", amount),
+                              [bm.unknown("New amount", new_amount), bm.carried("Decrease", change)]),
+            ], **units),
         },
     )
 
@@ -194,8 +206,17 @@ def generate_percentage_increase_decrease_l3():
 
     if kind == "bonus":
         widget_params = {"is_increase": True, "original": salary, "pct": pct, "new_amount": total}
+        model = [
+            bm.percent("Find the bonus", bm.given("Salary (100%)", salary), pct, bm.unknown("Bonus", bonus)),
+            bm.part_whole("Salary plus bonus", bm.unknown("Altogether", total),
+                          [bm.carried("Salary", salary), bm.carried("Bonus", bonus)]),
+        ]
     else:
         widget_params = {"is_increase": False, "original": full_rent, "pct": 100 - pct, "new_amount": paid}
+        model = [
+            bm.percent(f"Find {pct}% of the rent", bm.given("Full rent (100%)", full_rent), pct,
+                       bm.unknown("They pay", paid)),
+        ]
 
     return Question(
         question_text=question_text,
@@ -208,6 +229,7 @@ def generate_percentage_increase_decrease_l3():
         metadata={
             "scaffold_widget": "increase_decrease_number_line",
             "scaffold_widget_params": widget_params,
+            "bar_model": bm.bar_model(model, prefix="£", dp=2),
         },
     )
 

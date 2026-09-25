@@ -1,6 +1,6 @@
 import streamlit as st
 
-from core.ui.scaffold_widgets import WIDGET_REGISTRY
+from core.ui.scaffold_widgets import WIDGET_REGISTRY, render_bar_model_diagram
 
 
 def _parse_numeric(s):
@@ -72,6 +72,16 @@ def render_simulation(question):
     params = question.metadata.get("scaffold_widget_params", {})
     with st.expander("🎮 Interactive scaffold"):
         render_fn(**params)
+
+
+def render_bar_model(question):
+    """Renders a bar model (metadata["bar_model"], built with
+    core/models/bar_model.py) in its own expander, alongside any interactive scaffold."""
+    spec = question.metadata.get("bar_model")
+    if not spec:
+        return
+    with st.expander("📊 Bar model"):
+        render_bar_model_diagram(spec)
 
 
 def render_solution(question):

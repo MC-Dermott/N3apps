@@ -3,7 +3,7 @@ import streamlit as st
 from core.engine.question_factory import generate_question, get_levels, _N3_TOPICS
 from core.engine.session_manager import initialise_session, reset_test
 from core.ui.question_ui import render_question
-from core.ui.scaffold_ui import render_notes, render_scaffold, render_simulation, render_solution
+from core.ui.scaffold_ui import render_notes, render_bar_model, render_scaffold, render_simulation, render_solution
 from core.ui.test_ui import render_test
 from core.ui.auth_ui import render_auth, render_change_password
 from core.auth.auth import login_as_admin
@@ -189,6 +189,7 @@ else:
 
         if not st.session_state.submitted:
             render_scaffold(question, suffix="main")
+            render_bar_model(question)
             render_simulation(question)
 
         if st.button("Submit Answer"):

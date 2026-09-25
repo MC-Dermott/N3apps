@@ -1,4 +1,5 @@
 import random
+from core.models import bar_model as bm
 from core.models.question_model import Question
 
 NOTES = """
@@ -102,6 +103,10 @@ def generate_percentages_non_calculator_l1():
         metadata={
             "scaffold_widget": "percentage_method_picker",
             "scaffold_widget_params": {"pct_label": pct_str, "amount": amount},
+            "bar_model": bm.bar_model([
+                bm.common_percent(f"Find {pct_str}%", bm.given("Whole amount (100%)", amount), pct_str,
+                                  bm.unknown(f"{pct_str}%", answer)),
+            ], *bm.unit_affixes(unit)),
         },
     )
 
@@ -156,6 +161,10 @@ def generate_percentages_non_calculator_l2():
         metadata={
             "scaffold_widget": "percentage_method_picker",
             "scaffold_widget_params": {"pct_label": str(pct), "amount": n},
+            "bar_model": bm.bar_model([
+                bm.common_percent(f"Find {pct}%", bm.given(f"All {ctx['noun']} (100%)", n), str(pct),
+                                  bm.unknown(f"{pct}%", answer)),
+            ], suffix=f" {ctx['noun']}"),
         },
     )
 

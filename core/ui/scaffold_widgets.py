@@ -608,6 +608,21 @@ def render_directions_scaffold(streets, query_type, side=None, n=None, reveal=No
 
 
 # ---------------------------------------------------------------------------
+# Bar model — assets/bar_model_scaffolds.html. Not in WIDGET_REGISTRY: it's driven by
+# its own metadata["bar_model"] key (built with core/models/bar_model.py) and shown in its own
+# expander by core/ui/scaffold_ui.py's render_bar_model(), so it can sit alongside a question's
+# existing scaffold_widget rather than replacing it.
+# ---------------------------------------------------------------------------
+
+
+def render_bar_model_diagram(spec):
+    """spec: a core.models.bar_model.bar_model(...) dict. The tool steps through each stage:
+    fill in the known values on the bars, choose the operation, then calculate the '?'."""
+    setup_js = f"window.sbmStart({_json(spec)});"
+    _embed("sbm-app", setup_js, height=640, html_file="bar_model_scaffolds.html")
+
+
+# ---------------------------------------------------------------------------
 # Registry — dispatched by core/ui/scaffold_ui.py's render_simulation(). Keys are whatever a
 # topic module puts in metadata["scaffold_widget"]; values are called with
 # **metadata["scaffold_widget_params"]. New widgets (own file per unit, see module docstring)

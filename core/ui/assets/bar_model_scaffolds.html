@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bar Model</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+:root{
+    --paper: #faf7f0;
+    --ink: #22282f;
+    --ink-soft: #5b6470;
+    --line: #d8d2c4;
+    --mark: #d9a62c;
+    --mark-deep: #a97a13;
+    --good: #2f6f4a;
+    --good-tint: #eaf3ec;
+    --bad: #b3402b;
+    --bad-tint: #fbeae6;
+    --exchange: #a9455f;
+    --down: #2f6f6b;
+    --down-tint: #e3efee;
+    --up: #c25b2e;
+    --up-tint: #fbeae0;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--ink);
+    background:
+      linear-gradient(var(--paper), var(--paper)),
+      repeating-linear-gradient(0deg, rgba(90,80,60,0.05) 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, rgba(90,80,60,0.05) 0 1px, transparent 1px 28px);
+    padding: 28px 18px 44px;
+  }
+  .appContainer{ display:none; }
+  .wrap{ max-width: 820px; margin: 0 auto; }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size: clamp(24px, 5vw, 36px);
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .sub{ color: var(--ink-soft); font-size: 15px; margin: 0 0 24px; max-width: 62ch; line-height:1.5; }
+
+  .panel{
+    background: #fffdf9;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+    margin-top: 16px;
+  }
+
+  label{ display:block; font-size: 13px; font-weight:600; color: var(--ink-soft); margin-bottom: 7px; }
+  .field{ margin-bottom: 18px; }
+
+  .pills{ display:flex; flex-wrap:wrap; gap: 8px; }
+  .pill{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 13.5px; font-weight:500;
+    padding: 8px 13px; border-radius: 999px;
+    border: 1.5px solid var(--line); background: #fff; color: var(--ink-soft);
+    cursor: pointer; transition: border-color .12s, color .12s, background .12s;
+  }
+  .pill:hover{ border-color: var(--mark-deep); color: var(--ink); }
+  .pill.active{ background: var(--ink); border-color: var(--ink); color: #fff; }
+
+  .btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 15px; font-weight:600;
+    padding: 12px 20px; border-radius: 8px; border: none;
+    cursor: pointer; color: #fff; background: var(--ink);
+    transition: transform .08s, opacity .12s;
+  }
+  .btn:hover{ opacity:.9; }
+  .btn:active{ transform: scale(0.98); }
+  .btn.secondary{ background:#fff; color:var(--ink); border:1.5px solid var(--line); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn.small{ font-size:13px; padding:8px 14px; }
+
+  .startRow{ margin-top: 20px; }
+
+  .shapeInput{
+    box-sizing:border-box;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:18px; font-weight:700;
+    text-align:center;
+    padding:9px 10px;
+    border:1.5px solid var(--line);
+    border-radius:7px;
+    background:#fff; color:var(--ink); outline:none;
+  }
+  .shapeInput:focus{ border-color: var(--mark-deep); }
+
+  .stageLabel{
+    font-size: 12.5px; font-weight:600; letter-spacing:.02em;
+    color: var(--mark-deep); margin-bottom: 6px;
+  }
+  .prompt{
+    font-family:'Fraunces', serif;
+    font-size: clamp(18px, 3.2vw, 22px);
+    font-weight:600; margin: 0 0 16px; line-height:1.4;
+  }
+  .stagePrompt{
+    font-family:'Fraunces', serif;
+    font-size: clamp(17px, 3vw, 20px);
+    font-weight:600; margin: 6px 0 12px; line-height:1.4;
+  }
+  .stagePrompt .n{ font-family:'IBM Plex Mono', monospace; font-weight:700; color: var(--mark-deep); }
+
+  .choiceRow{ display:flex; gap: 12px; margin: 4px 0 20px; flex-wrap:wrap; }
+  .choiceBtn{
+    flex:1 1 140px;
+    font-family:'IBM Plex Mono', monospace; font-size: 17px; font-weight:600;
+    padding: 14px 10px; border-radius: 9px; border: 2px solid var(--line);
+    background: #fff; cursor: pointer; text-align:center;
+    transition: border-color .12s, background .12s;
+  }
+  .choiceBtn:hover:not(:disabled){ border-color: var(--mark-deep); }
+  .choiceBtn:disabled{ cursor:default; }
+  .choiceBtn.correct{ border-color: var(--good); background: var(--good-tint); color: var(--good); }
+  .choiceBtn.wrong{ border-color: var(--bad); background: var(--bad-tint); color: var(--bad); }
+
+  .feedback{ font-size: 14px; font-weight:600; margin: -8px 0 18px; }
+  .feedback.good{ color: var(--good); }
+  .feedback.bad{ color: var(--bad); }
+
+  .blankInput{
+    font-family:'IBM Plex Mono', monospace; font-size: 19px; font-weight:600;
+    width: 120px; text-align:center; padding: 7px 8px;
+    border: 1.5px solid var(--line); border-radius:7px;
+    background: #fff; color: var(--ink); outline: none; margin: 0 2px;
+  }
+  .blankInput:focus{ border-color: var(--mark-deep); }
+
+  .checkRow{ display:flex; align-items:center; gap: 12px; margin-bottom: 6px; flex-wrap:wrap; }
+  .checkFeedback{ font-size: 13.5px; font-weight:600; margin: 2px 0 14px; min-height: 18px; }
+  .checkFeedback.good{ color: var(--good); }
+  .checkFeedback.bad{ color: var(--bad); }
+
+  .verdict{
+    font-family:'Fraunces', serif; font-size: clamp(17px, 3vw, 20px); font-weight: 500;
+    line-height:1.4; margin: 14px 0 4px; color: var(--ink-soft);
+  }
+  .verdict .num{ font-family:'IBM Plex Mono', monospace; font-weight:600; color: var(--ink); }
+
+  .finishBox{
+    background: var(--good-tint); border: 1.5px solid var(--good); border-radius: 8px;
+    padding: 14px 16px; margin: 10px 0 4px;
+  }
+  .finishBox .headline{ font-family:'Fraunces', serif; font-weight:700; font-size:18px; color: var(--good); margin-bottom:6px; }
+  .finishBox p{ margin: 2px 0; font-size: 14px; color: var(--ink); line-height:1.5; }
+  .finishBox .ans{ font-family:'IBM Plex Mono', monospace; font-weight:700; }
+
+  .warnBanner{
+    background: var(--bad-tint); border: 1.5px solid var(--bad); border-radius: 8px;
+    padding: 10px 14px; font-size: 13.5px; font-weight:600; color: var(--bad);
+    margin: 4px 0 16px; line-height:1.45;
+  }
+
+  .controls{ display:flex; gap: 10px; margin-top: 22px; flex-wrap:wrap; }
+  .foot{ text-align:center; font-size: 12px; color: var(--ink-soft); margin-top: 18px; }
+
+  /* ---- bar model ---- */
+  .sbmStageHead{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 4px; }
+  .sbmStageChip{
+    font-size:12px; font-weight:600; padding:4px 10px; border-radius:999px;
+    border:1.5px solid var(--line); color: var(--ink-soft); background:#fff;
+  }
+  .sbmStageChip.active{ border-color: var(--mark-deep); color: var(--mark-deep); background:#fdf6e3; }
+  .sbmStageChip.done{ border-color: var(--good); color: var(--good); background: var(--good-tint); }
+  .sbmModel{ margin: 16px 0 20px; }
+  .sbmRow{ display:flex; align-items:center; gap:10px; margin-bottom: 12px; }
+  .sbmRowName{ flex:0 0 92px; font-size:13px; font-weight:600; color: var(--ink-soft); text-align:right; line-height:1.25; }
+  .sbmTrack{ flex:1; min-width:0; }
+  .sbmBar{ display:flex; align-items:stretch; }
+  .sbmSeg{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    min-height:62px; min-width:0; padding: 6px 4px; margin-left:-2px;
+    border:2px solid var(--ink); background:#fff; text-align:center;
+  }
+  .sbmSeg:first-child{ margin-left:0; border-radius:7px 0 0 7px; }
+  .sbmSeg:last-child{ border-radius:0 7px 7px 0; }
+  .sbmSeg:only-child{ border-radius:7px; }
+  .sbmSeg.shade{ background:#fdf0d0; }
+  .sbmSeg.unknownSeg{ background: var(--up-tint); }
+  .sbmSeg.dashed{ border-style:dashed; background: transparent; }
+  .sbmSeg.gap{ border-left-style:dotted; border-right-style:dotted; color: var(--ink-soft); font-weight:700; }
+  .sbmSegName{ font-size:11.5px; font-weight:600; color: var(--ink-soft); line-height:1.2; overflow-wrap:anywhere; }
+  .sbmVal{ font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:15px; color: var(--ink); overflow-wrap:anywhere; }
+  .sbmQ{ font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:20px; color: var(--up); }
+  .sbmSolved{ font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:15px; color: var(--good); }
+  .sbmCarried{ font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:15px; color: var(--down); }
+  .sbmIn{
+    font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:700;
+    width: 100%; max-width: 96px; text-align:center; padding: 4px 4px;
+    border:1.5px solid var(--line); border-radius:6px; background:#fff; color: var(--ink); outline:none;
+  }
+  .sbmIn:focus{ border-color: var(--mark-deep); }
+  .sbmIn.bad{ border-color: var(--bad); background: var(--bad-tint); }
+  .sbmIn.ok{ border-color: var(--good); background: var(--good-tint); }
+  .sbmBrace{ height:12px; border:2px solid var(--ink); border-top:none; border-radius:0 0 6px 6px; margin-top:6px; }
+  .sbmTopBrace{ height:12px; border:2px solid var(--ink); border-bottom:none; border-radius:6px 6px 0 0; margin-bottom:6px; }
+  .sbmBraceLabel{ display:flex; flex-direction:column; align-items:center; gap:3px; margin-top:4px; text-align:center; }
+  .sbmTopLabel{ display:flex; flex-direction:column; align-items:center; gap:3px; margin-bottom:4px; text-align:center; }
+  .sbmCaption{ font-size:13px; font-weight:600; color: var(--ink-soft); margin-bottom:8px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .sbmCaption .sbmIn{ width:64px; }
+  .sbmSentence{ font-family:'IBM Plex Mono', monospace; font-size:19px; font-weight:600; display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin: 4px 0 10px; }
+  .sbmNote{ font-size:13px; color: var(--ink-soft); margin: -2px 0 10px; }
+  .sbmLegend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color: var(--ink-soft); margin-top: 4px; }
+  .sbmLegend span b{ font-family:'IBM Plex Mono', monospace; }
+  @media (max-width:480px){
+    .panel{ padding: 16px; }
+    .sbmRowName{ flex-basis:64px; font-size:11.5px; }
+    .sbmSegName{ font-size:10.5px; }
+    .sbmVal, .sbmSolved, .sbmCarried{ font-size:13px; }
+    .choiceRow{ flex-direction: row; }
+    .choiceBtn{ flex: 1 1 60px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================================================================
+     BAR MODEL
+     Driven by window.sbmStart(spec) — see core/models/bar_model.py for the spec format.
+=================================================================== -->
+<div class="appContainer" id="sbm-app">
+<div class="wrap">
+  <h1>Bar model</h1>
+  <p class="sub">Draw the problem as bars first. Fill in the numbers you know, spot where the <b style="color:var(--up)">?</b> is, then decide which operation finds it.</p>
+
+  <div class="panel" id="sbm-setup">
+    <p class="sub" style="margin:0">Practise with a randomly chosen word problem.</p>
+    <div class="startRow"><button class="btn" id="sbm-startBtn">Random question</button></div>
+  </div>
+
+  <div class="panel" id="sbm-presentation" style="display:none">
+    <div class="sbmStageHead" id="sbm-stageChips"></div>
+    <p class="stagePrompt" id="sbm-question"></p>
+    <div class="sbmModel" id="sbm-model"></div>
+    <div id="sbm-work"></div>
+    <div id="sbm-finishHost"></div>
+    <div class="controls"><button class="btn secondary" id="sbm-resetBtn">New question</button></div>
+  </div>
+  <p class="foot">Parts join together to make the whole. Bars side by side show a comparison — the gap is the difference. Equal boxes show sharing or repeated amounts.</p>
+</div>
+</div>
+
+<script>
+function showApp(id){
+  document.querySelectorAll('.appContainer').forEach(function(node){ node.style.display = 'none'; });
+  var target = document.getElementById(id);
+  if (target) target.style.display = 'block';
+}
+function el(tag, cls, text){
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined && text !== null) e.textContent = text;
+  return e;
+}
+function parseNum(s){
+  if (s === null || s === undefined) return NaN;
+  var cleaned = String(s).trim().replace(/£/g, '').replace(/,/g, '');
+  return parseFloat(cleaned);
+}
+function randInt(lo, hi){ return lo + Math.floor(Math.random() * (hi - lo + 1)); }
+function round(x, dp){ var s = Math.pow(10, dp); return Math.round(x * s) / s; }
+
+(function(){
+  var spec = null;      // {question, prefix, suffix, dp, stages:[...]}
+  var stageIdx = 0;
+  var phase = 'label';  // 'label' | 'op' | 'calc' | 'done'
+  var calcIdx = 0;
+  var calcResults = []; // answers found so far in the current stage's calc steps
+
+  var modelHost = document.getElementById('sbm-model');
+  var workHost = document.getElementById('sbm-work');
+
+  /* ---------- formatting ---------- */
+  function fmtNum(v, dp){
+    if (dp === null || dp === undefined){
+      return Number(round(v, 4)).toLocaleString('en-GB', { maximumFractionDigits: 4 });
+    }
+    return Number(v).toLocaleString('en-GB', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+  }
+  // A value with the question's unit attached, unless the item is a plain count.
+  // A stage can override the spec's units (e.g. a "boxes of tiles" stage then a "£ cost" stage).
+  function unitOf(key){
+    var st = spec.stages[stageIdx];
+    return (st && st[key] !== undefined) ? st[key] : spec[key];
+  }
+  function fmtVal(v, plain){
+    if (plain) return fmtNum(v, null);
+    var dp = unitOf('dp');
+    // Intermediate values (e.g. 1%) may need more places than the question's own dp.
+    if (dp !== null && dp !== undefined && Math.abs(round(v, dp) - v) > 1e-9) dp = null;
+    return (unitOf('prefix') || '') + fmtNum(v, dp) + (unitOf('suffix') || '');
+  }
+  function tolFor(ans){
+    var dp = unitOf('dp');
+    if (Number.isInteger(ans) && !(dp > 0)) return 0.001;
+    return Math.max(0.006, Math.abs(ans) * 0.0001);
+  }
+
+  function stage(){ return spec.stages[stageIdx]; }
+
+  /* ---------- which item is the unknown, and how is it found ---------- */
+  function givenItems(s){
+    var items = [];
+    function add(it){ if (it && it.state === 'given') items.push(it); }
+    if (s.kind === 'part_whole'){ add(s.whole); s.parts.forEach(add); }
+    else if (s.kind === 'compare'){ add(s.larger); add(s.smaller); add(s.difference); }
+    else if (s.kind === 'equal_parts'){ add(s.whole); add(s.part); add(s.count); }
+    else { add(s.whole); }
+    return items;
+  }
+  function unknownItem(s){
+    var pool = [];
+    if (s.kind === 'part_whole') pool = [s.whole].concat(s.parts);
+    else if (s.kind === 'compare') pool = [s.larger, s.smaller, s.difference];
+    else if (s.kind === 'equal_parts') pool = [s.whole, s.part, s.count];
+    else pool = [s.target];
+    for (var i = 0; i < pool.length; i++) if (pool[i] && pool[i].state === 'unknown') return pool[i];
+    return null;
+  }
+  function v(it){ return fmtVal(it.value, it.plain); }
+
+  function correctOp(s){
+    var u = unknownItem(s);
+    if (s.kind === 'part_whole') return u === s.whole ? '+' : '−';
+    if (s.kind === 'compare') return u === s.larger ? '+' : '−';
+    if (s.kind === 'equal_parts') return u === s.whole ? '×' : '÷';
+    return null;
+  }
+  function opHint(s, chosen){
+    var u = unknownItem(s);
+    if (s.kind === 'part_whole'){
+      return u === s.whole
+        ? 'The ? is the whole bar. Put the parts together to make the whole.'
+        : 'You know the whole and some of its parts. Take away the parts you know to find the part that is missing.';
+    }
+    if (s.kind === 'compare'){
+      if (u === s.difference) return 'The ? is the gap between the two bars. Take the shorter bar away from the longer one.';
+      if (u === s.larger) return 'The longer bar is the shorter bar plus the extra piece. Put them together.';
+      return 'The shorter bar is the longer bar with the extra piece taken off.';
+    }
+    if (u === s.part) return 'The whole is split into ' + s.count.value + ' equal parts. Share it out to find one part.';
+    if (u === s.whole) return 'You know one part and how many equal parts there are, so one part is repeated ' + s.count.value + ' times.';
+    return 'How many parts of ' + v(s.part) + ' fit into ' + v(s.whole) + '? Share the whole into groups of that size.';
+  }
+
+  /* calc steps: [{lhs, answer, note, plain}] */
+  function calcSteps(s){
+    var u = unknownItem(s);
+    if (s.kind === 'part_whole'){
+      if (u === s.whole) return [{ lhs: s.parts.map(v).join(' + ') + ' =', answer: u.value }];
+      var others = s.parts.filter(function(p){ return p !== u; });
+      return [{ lhs: v(s.whole) + ' − ' + others.map(v).join(' − ') + ' =', answer: u.value }];
+    }
+    if (s.kind === 'compare'){
+      if (u === s.difference) return [{ lhs: v(s.larger) + ' − ' + v(s.smaller) + ' =', answer: u.value }];
+      if (u === s.larger) return [{ lhs: v(s.smaller) + ' + ' + v(s.difference) + ' =', answer: u.value }];
+      return [{ lhs: v(s.larger) + ' − ' + v(s.difference) + ' =', answer: u.value }];
+    }
+    if (s.kind === 'equal_parts'){
+      if (u === s.part) return [{ lhs: v(s.whole) + ' ÷ ' + s.count.value + ' =', answer: u.value }];
+      if (u === s.whole) return [{ lhs: v(s.part) + ' × ' + s.count.value + ' =', answer: u.value }];
+      var exact = s.whole.value / s.part.value;
+      if (s.round_up && Math.abs(exact - Math.round(exact)) > 1e-9){
+        return [
+          { lhs: v(s.whole) + ' ÷ ' + v(s.part) + ' =', answer: round(exact, 2), plain: true,
+            note: 'Give your answer to 2 decimal places if it does not divide exactly.' },
+          { lhs: 'Round up:', answer: u.value, plain: true,
+            note: 'A part-filled group still counts, so round UP to the next whole number.' },
+        ];
+      }
+      return [{ lhs: v(s.whole) + ' ÷ ' + v(s.part) + ' =', answer: u.value, plain: true }];
+    }
+    if (s.kind === 'fraction'){
+      var one = s.whole.value / s.d;
+      var steps = [{ lhs: v(s.whole) + ' ÷ ' + s.d + ' =', answer: one,
+                     note: 'Find one part (' + s.seg_label + '): split the whole bar into ' + s.d + ' equal parts.' }];
+      if (s.k > 1) steps.push({ lhs: fmtVal(one) + ' × ' + s.k + ' =', answer: s.target.value,
+                                note: 'The shaded bit is ' + s.k + ' of those parts.' });
+      return steps;
+    }
+    // percent
+    var onePct = s.whole.value / 100;
+    return [
+      { lhs: v(s.whole) + ' ÷ 100 =', answer: onePct, note: 'The whole bar is 100%. Find 1% first.' },
+      { lhs: fmtVal(onePct) + ' × ' + s.pct + ' =', answer: s.target.value, note: 'Now find ' + s.pct + '% of the bar.' },
+    ];
+  }
+
+  /* ---------- drawing ---------- */
+  // Renders the value slot for one item: an input during 'label' phase for given values,
+  // '?' for the unknown until it's solved, otherwise the value itself.
+  function slot(it){
+    if (!it) return el('span');
+    if (it.state === 'given'){
+      if (phase === 'label'){
+        var inp = document.createElement('input');
+        inp.className = 'sbmIn'; inp.type = 'text'; inp.inputMode = 'decimal'; inp.placeholder = '…';
+        inp.dataset.expected = it.value;
+        if (it._draft !== undefined) inp.value = it._draft;
+        inp.addEventListener('input', function(){ it._draft = inp.value; inp.classList.remove('bad'); });
+        inp.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); checkLabels(); } });
+        return inp;
+      }
+      return el('span', 'sbmVal', v(it));
+    }
+    if (it.state === 'carried') return el('span', 'sbmCarried', v(it));
+    return phase === 'done' ? el('span', 'sbmSolved', v(it)) : el('span', 'sbmQ', '?');
+  }
+  function seg(widthPct, name, slotEl, extraCls){
+    var d = el('div', 'sbmSeg' + (extraCls ? ' ' + extraCls : ''));
+    d.style.flex = '0 0 ' + widthPct + '%';
+    if (name) { var n = el('div', 'sbmSegName', name); d.title = name; d.appendChild(n); }
+    if (slotEl) d.appendChild(slotEl);
+    return d;
+  }
+  function braceBelow(track, it){
+    track.appendChild(el('div', 'sbmBrace'));
+    var lab = el('div', 'sbmBraceLabel');
+    lab.appendChild(el('div', 'sbmSegName', it.label));
+    lab.appendChild(slot(it));
+    track.appendChild(lab);
+  }
+  function braceAbove(track, it, widthPct){
+    var wrap = el('div'); wrap.style.width = widthPct + '%';
+    var lab = el('div', 'sbmTopLabel');
+    lab.appendChild(el('div', 'sbmSegName', it.label));
+    lab.appendChild(slot(it));
+    wrap.appendChild(lab);
+    wrap.appendChild(el('div', 'sbmTopBrace'));
+    track.appendChild(wrap);
+  }
+  function widths(values, minPct){
+    var total = values.reduce(function(a, b){ return a + Math.abs(b); }, 0) || 1;
+    var raw = values.map(function(x){ return Math.max(Math.abs(x) / total * 100, minPct); });
+    var sum = raw.reduce(function(a, b){ return a + b; }, 0);
+    return raw.map(function(x){ return x / sum * 100; });
+  }
+
+  function drawModel(){
+    var s = stage();
+    modelHost.innerHTML = '';
+    var track = el('div', 'sbmTrack');
+
+    if (s.kind === 'part_whole'){
+      var ws = widths(s.parts.map(function(p){ return p.value; }), 14);
+      var bar = el('div', 'sbmBar');
+      s.parts.forEach(function(p, i){
+        bar.appendChild(seg(ws[i], p.label, slot(p), p.state === 'unknown' ? 'unknownSeg' : ''));
+      });
+      track.appendChild(bar);
+      braceBelow(track, s.whole);
+      modelHost.appendChild(track);
+    }
+    else if (s.kind === 'compare'){
+      var ratio = s.smaller.value / (s.larger.value || 1) * 100;
+      var wB = Math.min(Math.max(ratio, 22), 86);
+      var rowA = el('div', 'sbmRow');
+      rowA.appendChild(el('div', 'sbmRowName', s.larger.label));
+      var tA = el('div', 'sbmTrack'), barA = el('div', 'sbmBar');
+      barA.appendChild(seg(100, null, slot(s.larger), s.larger.state === 'unknown' ? 'unknownSeg' : ''));
+      tA.appendChild(barA); rowA.appendChild(tA);
+      var rowB = el('div', 'sbmRow');
+      rowB.appendChild(el('div', 'sbmRowName', s.smaller.label));
+      var tB = el('div', 'sbmTrack'), barB = el('div', 'sbmBar');
+      barB.appendChild(seg(wB, null, slot(s.smaller), s.smaller.state === 'unknown' ? 'unknownSeg' : ''));
+      barB.appendChild(seg(100 - wB, s.difference.label, slot(s.difference), 'dashed'));
+      tB.appendChild(barB); rowB.appendChild(tB);
+      modelHost.appendChild(rowA); modelHost.appendChild(rowB);
+    }
+    else if (s.kind === 'equal_parts'){
+      var cap = el('div', 'sbmCaption');
+      if (s.count.state === 'unknown' && phase !== 'done'){
+        cap.appendChild(el('span', 'sbmQ', '?'));
+        cap.appendChild(el('span', null, s.count.label));
+      } else {
+        cap.appendChild(slot(s.count));
+        cap.appendChild(el('span', null, s.count.label));
+      }
+      track.appendChild(cap);
+      var n = Math.max(1, Math.round(s.count.value));
+      var shown = n > 12 ? [0, 1, 2, 3, 'gap', n - 1] : Array.apply(null, Array(n)).map(function(_, i){ return i; });
+      var w = 100 / shown.length;
+      var barE = el('div', 'sbmBar');
+      var partKnownEverywhere = s.part.state !== 'unknown' || phase === 'done';
+      shown.forEach(function(idx, j){
+        if (idx === 'gap'){ barE.appendChild(seg(w, null, el('span', null, '…'), 'gap')); return; }
+        var content;
+        if (j === 0) content = slot(s.part);
+        else if (partKnownEverywhere && !(s.part.state === 'given' && phase === 'label'))
+          content = el('span', s.part.state === 'unknown' ? 'sbmSolved' : 'sbmVal', v(s.part));
+        else content = el('span', 'sbmSegName', '');
+        barE.appendChild(seg(w, j === 0 ? s.part.label : null, content,
+          (s.part.state === 'unknown' && phase !== 'done') ? 'unknownSeg' : ''));
+      });
+      track.appendChild(barE);
+      braceBelow(track, s.whole);
+      modelHost.appendChild(track);
+    }
+    else if (s.kind === 'fraction'){
+      var onePartKnown = phase === 'done' || (phase === 'calc' && calcIdx > 0);
+      braceAbove(track, s.target, s.k / s.d * 100);
+      var barF = el('div', 'sbmBar');
+      for (var i = 0; i < s.d; i++){
+        var c = onePartKnown ? el('span', 'sbmSolved', fmtVal(s.whole.value / s.d)) : null;
+        barF.appendChild(seg(100 / s.d, s.seg_label, c, i < s.k ? 'shade' : ''));
+      }
+      track.appendChild(barF);
+      braceBelow(track, s.whole);
+      modelHost.appendChild(track);
+    }
+    else { // percent
+      var pw = Math.min(Math.max(s.pct, 10), 90);
+      braceAbove(track, s.target, pw);
+      var barP = el('div', 'sbmBar');
+      barP.appendChild(seg(pw, s.pct + '%', null, 'shade'));
+      barP.appendChild(seg(100 - pw, (100 - s.pct) + '%', null, ''));
+      track.appendChild(barP);
+      braceBelow(track, s.whole);
+      modelHost.appendChild(track);
+    }
+
+    var legend = el('div', 'sbmLegend');
+    legend.innerHTML = '<span><b style="color:var(--up)">?</b> what we need to find</span>'
+      + (spec.stages.length > 1 ? '<span><b style="color:var(--down)">blue</b> found in an earlier step</span>' : '');
+    modelHost.appendChild(legend);
+  }
+
+  /* ---------- phases ---------- */
+  function drawChips(){
+    var host = document.getElementById('sbm-stageChips');
+    host.innerHTML = '';
+    if (spec.stages.length < 2) return;
+    spec.stages.forEach(function(st, i){
+      var cls = 'sbmStageChip' + (i < stageIdx || (i === stageIdx && phase === 'done') ? ' done' : (i === stageIdx ? ' active' : ''));
+      host.appendChild(el('span', cls, (i + 1) + '. ' + st.heading));
+    });
+  }
+
+  function render(){
+    drawChips();
+    drawModel();
+    workHost.innerHTML = '';
+    var s = stage();
+    if (spec.stages.length === 1 || phase !== 'done'){
+      workHost.appendChild(el('div', 'stageLabel', spec.stages.length > 1
+        ? 'Step ' + (stageIdx + 1) + ' of ' + spec.stages.length + ' — ' + s.heading : s.heading));
+    }
+    if (phase === 'label') renderLabel();
+    else if (phase === 'op') renderOp();
+    else if (phase === 'calc') renderCalc();
+    else renderDone();
+  }
+
+  function renderLabel(){
+    workHost.appendChild(el('p', 'prompt', 'Fill in the numbers you know from the question.'));
+    var row = el('div', 'checkRow');
+    var btn = el('button', 'btn', 'Check');
+    btn.onclick = checkLabels;
+    row.appendChild(btn);
+    workHost.appendChild(row);
+    workHost.appendChild(el('div', 'checkFeedback'));
+    var first = modelHost.querySelector('.sbmIn');
+    if (first) first.focus({ preventScroll: true });
+  }
+  function checkLabels(){
+    var inputs = modelHost.querySelectorAll('.sbmIn');
+    var allOk = true;
+    inputs.forEach(function(inp){
+      var exp = parseFloat(inp.dataset.expected);
+      var ok = Math.abs(parseNum(inp.value) - exp) <= tolFor(exp);
+      inp.classList.toggle('bad', !ok);
+      inp.classList.toggle('ok', ok);
+      if (!ok) allOk = false;
+    });
+    var fb = workHost.querySelector('.checkFeedback');
+    if (allOk){
+      phase = needsOp(stage()) ? 'op' : 'calc';
+      calcIdx = 0;
+      render();
+    } else if (fb){
+      fb.textContent = '✗ The red boxes don\'t match the question yet — read it again.';
+      fb.className = 'checkFeedback bad';
+    }
+  }
+  function needsOp(s){ return s.kind === 'part_whole' || s.kind === 'compare' || s.kind === 'equal_parts'; }
+
+  function renderOp(){
+    var s = stage();
+    workHost.appendChild(el('p', 'prompt', 'Look at where the ? is. Which operation will find it?'));
+    var row = el('div', 'choiceRow');
+    var fb = el('div', 'feedback');
+    var answer = correctOp(s);
+    ['+', '−', '×', '÷'].forEach(function(op){
+      var b = el('button', 'choiceBtn', op);
+      b.onclick = function(){
+        if (op === answer){
+          b.classList.add('correct');
+          row.querySelectorAll('.choiceBtn').forEach(function(x){ x.disabled = true; });
+          fb.className = 'feedback good'; fb.textContent = '✓ ' + opHint(s);
+          var nb = el('button', 'btn secondary', 'Now work it out');
+          nb.onclick = function(){ phase = 'calc'; calcIdx = 0; render(); };
+          workHost.appendChild(nb);
+        } else {
+          b.classList.add('wrong'); b.disabled = true;
+          fb.className = 'feedback bad'; fb.textContent = '✗ Not that one. ' + opHint(s);
+        }
+      };
+      row.appendChild(b);
+    });
+    workHost.appendChild(row);
+    workHost.appendChild(fb);
+  }
+
+  function renderCalc(){
+    var s = stage();
+    var steps = calcSteps(s);
+    var st = steps[calcIdx];
+    if (steps.length > 1) workHost.appendChild(el('div', 'stageLabel', 'Calculation ' + (calcIdx + 1) + ' of ' + steps.length));
+    if (st.note) workHost.appendChild(el('p', 'sbmNote', st.note));
+    var sentence = el('div', 'sbmSentence');
+    sentence.appendChild(el('span', null, st.lhs));
+    var inp = document.createElement('input');
+    inp.className = 'blankInput'; inp.type = 'text'; inp.inputMode = 'decimal'; inp.placeholder = '?';
+    sentence.appendChild(inp);
+    workHost.appendChild(sentence);
+    var row = el('div', 'checkRow');
+    var btn = el('button', 'btn', 'Check');
+    row.appendChild(btn);
+    workHost.appendChild(row);
+    var fb = el('div', 'checkFeedback');
+    workHost.appendChild(fb);
+    function doCheck(){
+      var ok = Math.abs(parseNum(inp.value) - st.answer) <= tolFor(st.answer);
+      if (ok){
+        if (calcIdx + 1 < steps.length){ calcIdx++; render(); }
+        else { phase = 'done'; render(); }
+      } else {
+        fb.textContent = '✗ Not quite — check your working and try again.';
+        fb.className = 'checkFeedback bad';
+      }
+    }
+    btn.onclick = doCheck;
+    inp.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); doCheck(); } });
+    inp.focus({ preventScroll: true });
+  }
+
+  function renderDone(){
+    var s = stage();
+    var u = unknownItem(s);
+    var last = stageIdx === spec.stages.length - 1;
+    var name = u.label || 'Answer';
+    var line = name.charAt(0).toUpperCase() + name.slice(1) + ' = ' + v(u);
+    if (!last){
+      workHost.appendChild(el('div', 'checkFeedback good', '✓ ' + line));
+      var nb = el('button', 'btn', 'Next step →');
+      nb.onclick = function(){ stageIdx++; phase = firstPhase(); calcIdx = 0; render(); };
+      workHost.appendChild(nb);
+    } else {
+      var box = el('div', 'finishBox');
+      box.appendChild(el('div', 'headline', 'Solved!'));
+      var p = el('p'); p.appendChild(document.createTextNode(u.label + ' = '));
+      p.appendChild(el('span', 'ans', v(u)));
+      box.appendChild(p);
+      workHost.appendChild(box);
+    }
+  }
+  function firstPhase(){
+    var s = stage();
+    if (givenItems(s).length) return 'label';
+    return needsOp(s) ? 'op' : 'calc';
+  }
+
+  function start(newSpec){
+    spec = newSpec;
+    stageIdx = 0; calcIdx = 0;
+    phase = firstPhase();
+    document.getElementById('sbm-question').textContent = spec.question || '';
+    document.getElementById('sbm-question').style.display = spec.question ? 'block' : 'none';
+    document.getElementById('sbm-setup').style.display = 'none';
+    document.getElementById('sbm-presentation').style.display = 'block';
+    render();
+  }
+
+  /* ---------- random practice questions ---------- */
+  function it(label, value, state, plain){ return { label: label, value: value, state: state, plain: !!plain }; }
+  var NAMES = ['Alex', 'Shona', 'Callum', 'Iona', 'Murdo', 'Effie', 'Kevin', 'Morag'];
+  function randomSpec(){
+    var name = NAMES[randInt(0, NAMES.length - 1)];
+    var kind = randInt(0, 4);
+    if (kind === 0){
+      var a = randInt(120, 900) / 100, b = randInt(120, 900) / 100;
+      return { question: name + ' buys a book for £' + a.toFixed(2) + ' and a pen for £' + b.toFixed(2) + '. How much is that altogether?',
+        prefix: '£', suffix: '', dp: 2, stages: [{ kind: 'part_whole', heading: 'Find the total',
+          whole: it('Total', round(a + b, 2), 'unknown'), parts: [it('Book', a, 'given'), it('Pen', b, 'given')] }] };
+    }
+    if (kind === 1){
+      var paid = [10, 20][randInt(0, 1)], cost = randInt(150, paid * 100 - 150) / 100;
+      return { question: name + ' pays with a £' + paid + ' note for a meal costing £' + cost.toFixed(2) + '. How much change?',
+        prefix: '£', suffix: '', dp: 2, stages: [{ kind: 'part_whole', heading: 'Find the change',
+          whole: it('Paid', paid, 'given'), parts: [it('Meal', cost, 'given'), it('Change', round(paid - cost, 2), 'unknown')] }] };
+    }
+    if (kind === 2){
+      var big = randInt(40, 90), small = randInt(10, big - 8);
+      return { question: name + ' has ' + big + ' stickers. Their friend has ' + small + '. How many more stickers does ' + name + ' have?',
+        prefix: '', suffix: '', dp: 0, stages: [{ kind: 'compare', heading: 'Find the difference',
+          larger: it(name, big, 'given'), smaller: it('Friend', small, 'given'), difference: it('How many more', big - small, 'unknown') }] };
+    }
+    if (kind === 3){
+      var n = randInt(3, 8), part = randInt(4, 25);
+      return { question: '£' + (n * part) + ' is shared equally between ' + n + ' people. How much does each get?',
+        prefix: '£', suffix: '', dp: 0, stages: [{ kind: 'equal_parts', heading: 'Share equally',
+          whole: it('Total', n * part, 'given'), part: it('Each share', part, 'unknown'), count: it('people', n, 'given', true) }] };
+    }
+    var d = [2, 3, 4, 5][randInt(0, 3)], k = randInt(1, d - 1), one = randInt(3, 30);
+    return { question: 'Find ' + k + '/' + d + ' of ' + (one * d) + ' sweets.',
+      prefix: '', suffix: ' sweets', dp: 0, stages: [{ kind: 'fraction', heading: 'Find ' + k + '/' + d,
+        whole: it('Whole amount', one * d, 'given'), target: it(k + '/' + d, one * k, 'unknown'), d: d, k: k, seg_label: '1/' + d }] };
+  }
+
+  document.getElementById('sbm-startBtn').addEventListener('click', function(){ start(randomSpec()); });
+  document.getElementById('sbm-resetBtn').addEventListener('click', function(){
+    document.getElementById('sbm-presentation').style.display = 'none';
+    document.getElementById('sbm-setup').style.display = 'block';
+    document.getElementById('sbm-finishHost').innerHTML = '';
+  });
+
+  window.sbmStart = function(newSpec){ showApp('sbm-app'); start(newSpec); };
+})();
+</script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 import random
+from core.models import bar_model as bm
 from core.models.question_model import Question
 
 NOTES = """
@@ -176,6 +177,20 @@ def generate_wages_and_deductions_l3():
                 "kind": "full", "basic": basic, "overtime": overtime, "bonus": bonus,
                 "tax": tax, "ni": ni, "pension": pension,
             },
+            "bar_model": bm.bar_model([
+                # £0.00 lines (no bonus / no pension) are left off the bar rather than drawn empty
+                bm.part_whole("Gross Pay", bm.unknown("Gross Pay", gross), [
+                    bm.given(label, value)
+                    for label, value in [("Basic", basic), ("Overtime", overtime), ("Bonus", bonus)] if value
+                ]),
+                bm.part_whole("Total Deductions", bm.unknown("Total Deductions", deductions), [
+                    bm.given(label, value)
+                    for label, value in [("Tax", tax), ("NI", ni), ("Pension", pension)] if value
+                ]),
+                bm.part_whole("Net Pay", bm.carried("Gross Pay", gross), [
+                    bm.carried("Deductions", deductions), bm.unknown("Net Pay", net),
+                ]),
+            ], prefix="£", dp=2),
         },
     )
 
