@@ -877,12 +877,13 @@ function mkEl(tag, cls, text){
    boxes by the pupil, not just shown), fixed to 2 decimal places for money.
 --------------------------------------------------------------------- */
 
-/* Walks a single a OP b column sum (2dp) into `host`, calling onDone(result)
-   once every column (and any final carry) has been solved. resultLabel, if
-   given, names the running total in the "Finished" box (e.g. "Gross Pay"). */
-function runDccColumn(host, aVal, bVal, op, onDone, resultLabel){
-  const aStr = roundMoney(aVal).toFixed(2);
-  const bStr = roundMoney(bVal).toFixed(2);
+/* Walks a single column sum (2dp) into `host`, calling onDone(result) once
+   every column (and any final carry) has been solved. For '+', `vals` may hold
+   any number of amounts, all stacked into one chimney; for '-' it holds exactly
+   two (a - b). resultLabel, if given, names the running total in the
+   "Finished" box (e.g. "Gross Pay"). */
+function runDccColumn(host, vals, op, onDone, resultLabel){
+  const strs = vals.map(v => roundMoney(v).toFixed(2));
 
   function digitsOf(str){
     const parts = str.split('.');
@@ -891,19 +892,19 @@ function runDccColumn(host, aVal, bVal, op, onDone, resultLabel){
   }
   function padLeft(s, len){ while (s.length < len) s = '0' + s; return s; }
 
-  let a = digitsOf(aStr), b = digitsOf(bStr);
-  const intLen = Math.max(a.ip.length, b.ip.length);
-  let aIp = padLeft(a.ip, intLen), bIp = padLeft(b.ip, intLen);
-  let aDp = a.dp, bDp = b.dp;
+  if (op === '-' && parseFloat(strs[1]) > parseFloat(strs[0])) strs.reverse();
+  const parsed = strs.map(digitsOf);
+  const intLen = Math.max(...parsed.map(p => p.ip.length));
+  const rows = parsed.map(p => padLeft(p.ip, intLen) + p.dp);
 
-  if (op === '-' && parseFloat(bStr) > parseFloat(aStr)){
-    [aIp, bIp] = [bIp, aIp]; [aDp, bDp] = [bDp, aDp];
-  }
-
+  /* Each digit column holds one digit per row; top/bottom are kept for the
+     two-row subtraction logic. */
   const columns = [];
-  for (let i = 0; i < intLen; i++) columns.push({ type: 'digit', top: +aIp[i], bottom: +bIp[i] });
-  columns.push({ type: 'point' });
-  for (let j = 0; j < 2; j++) columns.push({ type: 'digit', top: +aDp[j], bottom: +bDp[j] });
+  for (let i = 0; i < intLen + 2; i++){
+    if (i === intLen) columns.push({ type: 'point' });
+    const digits = rows.map(r => +r[i]);
+    columns.push({ type: 'digit', digits, top: digits[0], bottom: digits[digits.length - 1] });
+  }
 
   const order = [];
   for (let k = columns.length - 1; k >= 0; k--) if (columns[k].type === 'digit') order.push(k);
@@ -912,7 +913,7 @@ function runDccColumn(host, aVal, bVal, op, onDone, resultLabel){
   order.forEach((idx) => {
     const col = columns[idx];
     if (op === '+'){
-      const sum = col.top + col.bottom + carry;
+      const sum = col.digits.reduce((t, d) => t + d, 0) + carry;
       col.carryIn = carry; col.ansDigit = sum % 10; col.carryOut = Math.floor(sum / 10);
       carry = col.carryOut;
     } else {
@@ -941,10 +942,10 @@ function runDccColumn(host, aVal, bVal, op, onDone, resultLabel){
     return (idx - pIdx === 1) ? 'tenths' : 'hundredths';
   }
 
-  function mkCarryInput(wrapCls, id){
+  function mkCarryInput(wrapCls, id, maxLen){
     const wrap = mkEl('div', wrapCls);
     const inp = document.createElement('input');
-    inp.type = 'text'; inp.inputMode = 'numeric'; inp.maxLength = 1; inp.autocomplete = 'off';
+    inp.type = 'text'; inp.inputMode = 'numeric'; inp.maxLength = maxLen || 1; inp.autocomplete = 'off';
     inp.className = 'carryInputBox'; inp.id = id;
     wrap.appendChild(inp);
     return wrap;
@@ -959,7 +960,7 @@ function runDccColumn(host, aVal, bVal, op, onDone, resultLabel){
   }
   function overflowAnswerCell(act){
     if (finalCarryConfirmed) return mkEl('div', 'subAnswerCell', finalCarryDigit ? String(finalCarryDigit) : '');
-    if (act !== null) return mkCarryInput('subAnswerCell', 'mc-finalCarryInput');
+    if (act !== null) return mkCarryInput('subAnswerCell', 'mc-finalCarryInput', 2);
     return mkEl('div', 'dccOverflowGap');
   }
 
@@ -969,41 +970,38 @@ function runDccColumn(host, aVal, bVal, op, onDone, resultLabel){
     const act = activeIdx();
     const addMode = (op === '+');
     const makeRow = (cls) => mkEl('div', 'dccRow' + (cls ? ' ' + cls : ''));
-    const carryRow = makeRow(), topRow = makeRow(), bottomRow = makeRow('subBottomRow'), ansRow = makeRow();
+    const carryRow = makeRow(), ansRow = makeRow();
+    const numRows = rows.map((_, r) => makeRow(r === rows.length - 1 ? 'subBottomRow' : ''));
 
     if (addMode){
       carryRow.appendChild(mkEl('div', 'dccOverflowGap'));
-      topRow.appendChild(mkEl('div', 'dccOverflowGap'));
-      bottomRow.appendChild(mkEl('div', 'dccOverflowGap'));
+      numRows.forEach(row => row.appendChild(mkEl('div', 'dccOverflowGap')));
       ansRow.appendChild(overflowAnswerCell(act));
     }
     carryRow.appendChild(mkEl('div', 'dccGutter'));
-    topRow.appendChild(mkEl('div', 'dccGutter'));
-    bottomRow.appendChild(mkEl('div', 'dccGutter', op === '+' ? '+' : '−'));
+    numRows.forEach((row, r) => row.appendChild(mkEl('div', 'dccGutter', r === rows.length - 1 ? (op === '+' ? '+' : '−') : '')));
     ansRow.appendChild(mkEl('div', 'dccGutter'));
 
     columns.forEach((col, idx) => {
       if (col.type === 'point'){
         carryRow.appendChild(mkEl('div', 'carryCell pointCol'));
-        topRow.appendChild(mkEl('div', 'subDigitCell pointCol', '.'));
-        bottomRow.appendChild(mkEl('div', 'subDigitCell pointCol', '.'));
+        numRows.forEach(row => row.appendChild(mkEl('div', 'subDigitCell pointCol', '.')));
         ansRow.appendChild(mkEl('div', 'subAnswerCell pointCol', '.'));
         return;
       }
       const known = isSolved(idx) || idx === act;
       carryRow.appendChild(carryCellFor(idx, known, act));
-      topRow.appendChild(mkEl('div', 'subDigitCell', String(col.top)));
-      bottomRow.appendChild(mkEl('div', 'subDigitCell', String(col.bottom)));
+      numRows.forEach((row, r) => row.appendChild(mkEl('div', 'subDigitCell', String(col.digits[r]))));
       if (isSolved(idx)) ansRow.appendChild(mkEl('div', 'subAnswerCell', String(col.ansDigit)));
       else if (idx === act) ansRow.appendChild(mkEl('div', 'subAnswerCell placeholder active', '?'));
       else ansRow.appendChild(mkEl('div', 'subAnswerCell placeholder', ''));
     });
 
-    gridHost.appendChild(carryRow); gridHost.appendChild(topRow); gridHost.appendChild(bottomRow); gridHost.appendChild(ansRow);
+    [carryRow, ...numRows, ansRow].forEach(row => gridHost.appendChild(row));
 
     if (addMode && act !== null){
       gridHost.querySelectorAll('.carryInputBox').forEach((inp) => {
-        inp.addEventListener('input', () => { inp.value = inp.value.replace(/[^0-9]/g, '').slice(0, 1); });
+        inp.addEventListener('input', () => { inp.value = inp.value.replace(/[^0-9]/g, '').slice(0, inp.maxLength); });
         inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') el('mc-checkBtn').click(); });
       });
     }
@@ -1031,7 +1029,7 @@ function runDccColumn(host, aVal, bVal, op, onDone, resultLabel){
       let extra = '';
       if (op === '+' && col.carryIn) extra = ', plus the ' + col.carryIn + ' carried in';
       if (op === '-' && col.borrowIn) extra = ' (remember you borrowed a ten from this column)';
-      promptEl.textContent = 'Work out the ' + placeName(act) + ' column: ' + col.top + ' ' + op + ' ' + col.bottom + extra + '.';
+      promptEl.textContent = 'Work out the ' + placeName(act) + ' column: ' + col.digits.join(' ' + op + ' ') + extra + '.';
       checkRow.style.display = 'flex';
       if (op === '+'){
         hintEl.textContent = (order.indexOf(act) === order.length - 1)
@@ -1045,12 +1043,11 @@ function runDccColumn(host, aVal, bVal, op, onDone, resultLabel){
       checkRow.style.display = 'none';
       hintEl.textContent = '';
       stageLbl.textContent = 'Finished';
-      const aTop = columns.map(c => c.type === 'point' ? '.' : c.top).join('');
-      const bBottom = columns.map(c => c.type === 'point' ? '.' : c.bottom).join('');
+      const sumLine = strs.map(s => '£' + s).join(' ' + op + ' ');
       promptEl.textContent = 'Every column is solved.';
       const labelLine = resultLabel ? `<p>${resultLabel} = <span class="ans">£${finalAnswerStr()}</span></p>` : '';
       finishHost.innerHTML = `<div class="finishBox"><div class="headline">${op === '+' ? 'Added!' : 'Subtracted!'}</div>
-        <p>£${aTop} ${op} £${bBottom} = £${finalAnswerStr()}</p>${labelLine}</div>`;
+        <p>${sumLine} = £${finalAnswerStr()}</p>${labelLine}</div>`;
       setTimeout(() => onDone(parseFloat(finalAnswerStr())), 900);
     }
   }
@@ -1085,18 +1082,18 @@ function runDccColumn(host, aVal, bVal, op, onDone, resultLabel){
 
     if (answerOk && carryOk){
       fb.textContent = '✓ Correct!'; fb.className = 'checkFeedback good';
-      if (isLast){ finalCarryDigit = col.carryOut === 1 ? 1 : 0; finalCarryConfirmed = true; }
+      if (isLast){ finalCarryDigit = col.carryOut; finalCarryConfirmed = true; }
       else { carryConfirmed[order[posIdx + 1]] = true; }
       pos++; answerInput.disabled = true; el('mc-checkBtn').disabled = true;
       setTimeout(updateStage, 350);
       return;
     }
-    if (!answerOk && col.carryOut === 1 && val === col.top + col.bottom + (col.carryIn || 0)){
+    if (!answerOk && col.carryOut >= 1 && val === col.digits.reduce((t, d) => t + d, 0) + (col.carryIn || 0)){
       fb.textContent = "That's the full total for this column. Write just the last digit here, and carry the other digit into the box above the next column.";
     } else if (!answerOk){
       fb.textContent = '✗ Not quite — check the answer digit and try again.';
-    } else if (col.carryOut === 1){
-      fb.textContent = "The answer digit is right, but this column totals 10 or more — don't forget to carry the ten.";
+    } else if (col.carryOut >= 1){
+      fb.textContent = "The answer digit is right, but this column totals 10 or more — don't forget to carry the tens.";
     } else {
       fb.textContent = "The answer digit is right, but check the carry box — this column doesn't need one.";
     }
@@ -1126,8 +1123,8 @@ function runDccColumn(host, aVal, bVal, op, onDone, resultLabel){
    items: [{label,value}] | (stageResults => [...]) }]. For each stage, every
    named value is asked for in turn (stacked into a running list as it's
    confirmed), the pupil then picks + or - for that stage, and the resulting
-   values are combined via runDccColumn (chained pairwise when there are more
-   than two). onAllDone(finalResult) fires once every stage is solved. */
+   values are combined via runDccColumn (all stacked into one chimney for +,
+   chained pairwise for -). onAllDone(finalResult) fires once every stage is solved. */
 function runMoneyChimney(hostId, overallLabelId, stages, onAllDone){
   const host = el(hostId);
   const overallLabel = overallLabelId ? el(overallLabelId) : null;
@@ -1231,11 +1228,12 @@ function runMoneyChimney(hostId, overallLabelId, stages, onAllDone){
   function runChain(stage, done){
     const values = stage.items.map(it => roundMoney(it.value));
     if (values.length === 1){ done(values[0]); return; }
+    if (stage.op === '+'){ runDccColumn(host, values, '+', done, stage.label); return; }
     let running = values[0];
     let idx = 1;
     function next(){
       const isFinalOfStage = (idx === values.length - 1);
-      runDccColumn(host, running, values[idx], stage.op, (result) => {
+      runDccColumn(host, [running, values[idx]], stage.op, (result) => {
         running = result;
         idx++;
         if (idx >= values.length) done(running);
